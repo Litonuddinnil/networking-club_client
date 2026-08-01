@@ -6,6 +6,7 @@ import {
   Bell, Calendar, BookOpen, Cpu, Briefcase, CreditCard, Trophy 
 } from "lucide-react";
 import CommandPalette from "../components/CommandPalette";
+import ClubLogo from "../components/ClubLogo";
 
 export default function DashboardLayout() {
   const { user, loading, logout } = useAuth();
@@ -76,8 +77,8 @@ export default function DashboardLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 border-r border-white/5 bg-[#03070E] flex-col shrink-0">
         <div className="p-6 border-b border-white/5 flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
-            <Shield className="w-4.5 h-4.5 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+            <ClubLogo size={28} compact />
           </div>
           <div>
             <div className="font-display font-bold text-white text-sm">JSTU Portal</div>
@@ -150,11 +151,11 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Mobile Top Navigation layout */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 border-b border-white/5 bg-[#020408]/80 backdrop-blur-md px-6 lg:px-8 flex items-center justify-between shrink-0 lg:hidden">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <header className="h-16 border-b border-white/5 bg-[#020408]/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 lg:hidden">
           <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center">
-              <Shield className="w-4.5 h-4.5 text-white" />
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+              <ClubLogo size={24} compact />
             </div>
             <span className="font-display font-extrabold text-white text-xs tracking-wider font-mono">JSTU NetClub</span>
           </div>
@@ -176,7 +177,7 @@ export default function DashboardLayout() {
         </header>
 
         {/* Primary Nested Routing Content */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#020408]">
+        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain custom-scrollbar bg-[#020408]">
           <div data-barba="page" data-barba-namespace="dashboard" className="barba-page">
             <Outlet />
           </div>
@@ -185,12 +186,12 @@ export default function DashboardLayout() {
 
       {/* Mobile Menu Drawer Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
           <div className="space-y-8">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
-                  <Shield className="w-4.5 h-4.5 text-white" />
+                <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+                  <ClubLogo size={28} compact />
                 </div>
                 <span className="font-display font-extrabold text-white text-sm font-mono">JSTU NetClub</span>
               </div>

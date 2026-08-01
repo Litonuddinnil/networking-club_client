@@ -59,10 +59,8 @@ export default function Register() {
         updatedAt: currentIsoTime,
       };
 
-      // 3. Save into MongoDB
-      const response = await axiosPublic.post("/api/members", memberPayload);
-      const mongoId = response.data._id || response.data.insertedId;
-      //console.log("MongoDB ID:", mongoId);
+      // 3. Save the complete member profile
+      await axiosPublic.post("/api/members", memberPayload);
 
       // Success Alert
       await Swal.fire({

@@ -81,7 +81,7 @@ export default function AdminPanelView({
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 animate-fade-in text-slate-300 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-in text-slate-300 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-white/5">
         <div className="flex items-center space-x-3">
           <button 
@@ -94,7 +94,7 @@ export default function AdminPanelView({
             <h1 className="text-xl font-display font-extrabold text-white tracking-wide">
               System Administration Auditor Panel
             </h1>
-            <p className="text-xs text-slate-500">Manage MongoDB cluster nodes, members, notices and inventory</p>
+            <p className="text-xs text-slate-500">Manage members, notices, activities and lab inventory</p>
           </div>
         </div>
 
@@ -288,7 +288,7 @@ export default function AdminPanelView({
         <div className="bg-[#03070E] border border-white/10 rounded-3xl p-12 text-center space-y-3">
           <ShieldAlert className="w-8 h-8 text-orange-500 mx-auto" />
           <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">Module Node Ready</h3>
-          <p className="text-xs text-slate-500">You can manage {activeSubTab} directly through automated MongoDB API endpoints.</p>
+          <p className="text-xs text-slate-500">Manage {activeSubTab} records from the club administration panel.</p>
         </div>
       )}
     </div>

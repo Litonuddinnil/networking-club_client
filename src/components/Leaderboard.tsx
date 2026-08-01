@@ -30,7 +30,7 @@ export default function Leaderboard({ members }: LeaderboardProps) {
   const topThree = sortedMembers.slice(0, 3);
 
   return (
-    <div className="bg-[#03070E] border border-white/10 rounded-3xl p-6 space-y-6 relative overflow-hidden shadow-xl">
+    <div className="bg-[#03070E] border border-white/10 rounded-3xl p-4 sm:p-6 space-y-5 sm:space-y-6 relative overflow-hidden shadow-xl">
       <div className="absolute inset-0 bg-linear-to-tr from-amber-500/5 to-transparent pointer-events-none" />
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/5 relative z-10">
@@ -42,8 +42,8 @@ export default function Leaderboard({ members }: LeaderboardProps) {
           <p className="text-[10px] text-slate-500 mt-0.5">Track CCNA simulator XP & lab activity points</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <div className="flex bg-[#020408] border border-white/10 p-0.5 rounded-xl text-[9px] font-bold">
+        <div className="flex flex-col sm:flex-row gap-2 min-w-0">
+          <div className="flex max-w-full overflow-x-auto scrollbar-hide bg-[#020408] border border-white/10 p-0.5 rounded-xl text-[9px] font-bold">
             {["ALL", "CSE", "EEE", "Social Work", "Management", "Geology", "Fisheries", "Math"].map((dept) => (
               <button
                 key={dept}
@@ -59,7 +59,7 @@ export default function Leaderboard({ members }: LeaderboardProps) {
             ))}
           </div>
 
-          <div className="relative flex items-center bg-[#020408] border border-white/10 rounded-xl px-2.5 py-1.5 w-40">
+          <div className="relative flex items-center bg-[#020408] border border-white/10 rounded-xl px-2.5 py-1.5 w-full sm:w-40">
             <Search className="w-3.5 h-3.5 text-slate-500 mr-1.5" />
             <input
               type="text"
@@ -78,9 +78,9 @@ export default function Leaderboard({ members }: LeaderboardProps) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-3 relative z-10 text-center items-end pt-4 pb-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 relative z-10 text-center items-end pt-4 pb-2">
             {topThree[1] && (
-              <div className="bg-slate-900/40 border border-white/5 hover:border-orange-500/10 rounded-2xl p-4 flex flex-col items-center justify-between h-[150px] transition-all relative group">
+              <div className="bg-slate-900/40 border border-white/5 hover:border-orange-500/10 rounded-2xl p-2 sm:p-4 flex flex-col items-center justify-between h-[140px] sm:h-[150px] transition-all relative group">
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 text-slate-400 border border-slate-500/20 flex items-center justify-center font-mono text-[10px] font-bold">
                   2
                 </div>
@@ -98,7 +98,7 @@ export default function Leaderboard({ members }: LeaderboardProps) {
             )}
 
             {topThree[0] && (
-              <div className="bg-linear-to-b from-amber-500/10 to-transparent border border-amber-500/20 hover:border-amber-500/30 rounded-2xl p-4 flex flex-col items-center justify-between h-[180px] transition-all relative shadow-xl shadow-amber-500/5 group">
+              <div className="bg-linear-to-b from-amber-500/10 to-transparent border border-amber-500/20 hover:border-amber-500/30 rounded-2xl p-2 sm:p-4 flex flex-col items-center justify-between h-[165px] sm:h-[180px] transition-all relative shadow-xl shadow-amber-500/5 group">
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-amber-500 text-slate-950 border border-amber-400 flex items-center justify-center font-mono text-xs font-bold animate-bounce">
                   👑
                 </div>
@@ -117,7 +117,7 @@ export default function Leaderboard({ members }: LeaderboardProps) {
             )}
 
             {topThree[2] && (
-              <div className="bg-slate-900/40 border border-white/5 hover:border-orange-500/10 rounded-2xl p-4 flex flex-col items-center justify-between h-[135px] transition-all relative group">
+              <div className="bg-slate-900/40 border border-white/5 hover:border-orange-500/10 rounded-2xl p-2 sm:p-4 flex flex-col items-center justify-between h-[130px] sm:h-[135px] transition-all relative group">
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-slate-800 text-amber-700 border border-amber-700/20 flex items-center justify-center font-mono text-[10px] font-bold">
                   3
                 </div>

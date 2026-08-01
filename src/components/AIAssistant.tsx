@@ -135,7 +135,7 @@ export default function AIAssistant({ isAiLoading, onSendAiMessage }: AIAssistan
   }, [isAiLoading]);
 
   return (
-    <div className="bg-[#03070E] border border-white/10 rounded-3xl p-6 space-y-4 shadow-xl relative overflow-hidden backdrop-blur-md">
+    <div className="bg-[#03070E] border border-white/10 rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl relative overflow-hidden backdrop-blur-md">
       {/* Subtle animated radial wash */}
       <div className="absolute inset-0 bg-linear-to-tr from-cyan-500/5 to-transparent pointer-events-none" />
       <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl animate-pulse pointer-events-none" />

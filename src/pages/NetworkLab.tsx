@@ -626,8 +626,7 @@ export default function NetworkLab() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative rounded-2xl border border-white/10 bg-[#0d1117]/60 backdrop-blur-xl shadow-2xl shadow-purple-500/10 overflow-hidden"
-            style={{ minHeight: 580 }}
+            className="relative min-h-[460px] sm:min-h-[580px] rounded-2xl border border-white/10 bg-[#0d1117]/60 backdrop-blur-xl shadow-2xl shadow-purple-500/10 overflow-hidden"
           >
             {/* Aurora wash */}
             <div aria-hidden className="absolute inset-0 pointer-events-none opacity-60 aurora-bg" />
@@ -680,7 +679,7 @@ export default function NetworkLab() {
             {/* Lab */}
             <div
               ref={containerRef}
-              className="relative w-full h-[640px]"
+              className="relative w-full h-[500px] sm:h-[640px]"
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
@@ -688,7 +687,7 @@ export default function NetworkLab() {
               <svg
                 viewBox={`0 0 ${containerSize.w} ${containerSize.h}`}
                 className="absolute inset-0 h-full w-full"
-                style={{ minHeight: 640 }}
+                style={{ minHeight: 0 }}
               >
                 {/* Wires */}
                 {wiresWithPackets.map((w, i) => (
@@ -765,8 +764,7 @@ export default function NetworkLab() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
-            className="rounded-2xl border border-white/10 bg-[#0d1117]/60 backdrop-blur-xl shadow-2xl shadow-cyan-500/10 p-5 space-y-4"
-            style={{ minHeight: 580 }}
+            className="min-h-0 sm:min-h-[580px] rounded-2xl border border-white/10 bg-[#0d1117]/60 backdrop-blur-xl shadow-2xl shadow-cyan-500/10 p-4 sm:p-5 space-y-4"
           >
             <div className="flex items-center gap-3">
               <div className="grid place-items-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-white/10">

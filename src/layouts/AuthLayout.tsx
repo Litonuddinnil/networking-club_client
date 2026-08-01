@@ -1,7 +1,8 @@
 import React from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import NetworkBackground from "../components/NetworkBackground";
+import ClubLogo from "../components/ClubLogo";
 
 export default function AuthLayout() {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ export default function AuthLayout() {
       {/* Floating Logo header */}
       <header className="w-full max-w-7xl flex justify-between items-center relative z-10">
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
-            <Shield className="w-4.5 h-4.5 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+            <ClubLogo size={28} compact />
           </div>
           <div>
             <h1 className="text-xs font-bold text-white uppercase tracking-wider font-mono">JSTU NetClub</h1>

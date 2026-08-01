@@ -115,7 +115,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("No member record found in database for this account.");
       }
 
-      const role = await getRoleFromClaims(userCredential.user);
+      const claimRole = await getRoleFromClaims(userCredential.user);
+      const role = dbMember.role === "admin" || claimRole === "admin" ? "admin" : "member";
       const enriched = {
         ...userCredential.user,
         uid: userCredential.user.uid,
@@ -194,7 +195,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (currentUser && currentUser.email) {
         const dbMember = await fetchMemberByEmail(currentUser.email);
 
-        const role = await getRoleFromClaims(currentUser);
+        const claimRole = await getRoleFromClaims(currentUser);
+        const role = dbMember?.role === "admin" || claimRole === "admin" ? "admin" : "member";
         const enrichedUser = {
           ...currentUser,
           uid: currentUser.uid,

@@ -35,29 +35,37 @@ export default function Dashboard() {
   const [devices, setDevices] = useState<any[]>([]);
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [dbLoading, setDbLoading] = useState(true);
+  const [unavailableCollections, setUnavailableCollections] = useState<string[]>([]);
 
   const fetchAllData = async () => {
-    try {
-      setDbLoading(true);
-      const [membersRes, noticesRes, eventsRes, coursesRes, devicesRes, sponsorsRes] = await Promise.all([
-        axiosPublic.get("/api/members"),
-        axiosPublic.get("/api/notices"),
-        axiosPublic.get("/api/events"),
-        axiosPublic.get("/api/courses"),
-        axiosPublic.get("/api/devices"),
-        axiosPublic.get("/api/sponsors")
-      ]);
-      setMembers(membersRes.data || []);
-      setNotices(noticesRes.data || []);
-      setEvents(eventsRes.data || []);
-      setCourses(coursesRes.data || []);
-      setDevices(devicesRes.data || []);
-      setSponsors(sponsorsRes.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDbLoading(false);
-    }
+    setDbLoading(true);
+    const requests = [
+      { name: "members", request: axiosPublic.get("/api/members"), setData: setMembers },
+      { name: "notices", request: axiosPublic.get("/api/notices"), setData: setNotices },
+      { name: "events", request: axiosPublic.get("/api/events"), setData: setEvents },
+      { name: "courses", request: axiosPublic.get("/api/courses"), setData: setCourses },
+      { name: "devices", request: axiosPublic.get("/api/devices"), setData: setDevices },
+      { name: "sponsors", request: axiosPublic.get("/api/sponsors"), setData: setSponsors },
+    ];
+
+    // A missing or failing collection must not prevent the rest of the
+    // dashboard from rendering. `Promise.all` previously discarded every
+    // successful response as soon as one endpoint failed.
+    const results = await Promise.allSettled(requests.map(({ request }) => request));
+    const failed: string[] = [];
+
+    results.forEach((result, index) => {
+      const collection = requests[index];
+      if (result.status === "fulfilled") {
+        collection.setData(Array.isArray(result.value.data) ? result.value.data : []);
+      } else {
+        failed.push(collection.name);
+        console.error(`Could not load ${collection.name}:`, result.reason);
+      }
+    });
+
+    setUnavailableCollections(failed);
+    setDbLoading(false);
   };
 
   useEffect(() => {
@@ -247,10 +255,19 @@ export default function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 text-white font-mono text-xs">
         <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
-        <p className="animate-pulse">SYNCHRONIZING DYNAMIC MONGO RECORDS...</p>
+        <p className="animate-pulse">SYNCHRONIZING CLUB RECORDS...</p>
       </div>
     );
   }
+
+  const dataWarning = unavailableCollections.length > 0 && (
+    <div className="mx-6 mt-6 lg:mx-10 max-w-7xl rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+      কিছু collection লোড হয়নি: {unavailableCollections.join(", ")}. বাকি dashboard data ব্যবহার করা যাচ্ছে।
+      <button onClick={fetchAllData} className="ml-3 font-bold text-amber-400 hover:text-amber-300 underline">
+        আবার চেষ্টা করুন
+      </button>
+    </div>
+  );
 
   // Admin View Handling
   if (user?.role === "admin" && (tab === "admin" || tab === "dashboard")) {
@@ -294,18 +311,18 @@ export default function Dashboard() {
   // Member Tab Views Handling
   if (tab === "payment") {
     return (
-      <PaymentView
-        memberName={activeStudent.name}
-        memberId={activeStudent.id}
-        onBack={() => navigate("/dashboard")}
-        onSubmitPayment={handleSubmitPayment}
-      />
+      <>{dataWarning}<PaymentView
+          memberName={activeStudent.name}
+          memberId={activeStudent.id}
+          onBack={() => navigate("/dashboard")}
+          onSubmitPayment={handleSubmitPayment}
+        /></>
     );
   }
 
   if (tab === "cert") {
     return (
-      <div className="p-8 max-w-3xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
         <div>
           <h1 className="text-xl font-display font-extrabold text-white">Dynamic Course Credentials</h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -323,19 +340,19 @@ export default function Dashboard() {
 
   if (tab === "leaderboard") {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6">
+      <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6">
         <h1 className="text-xl font-display font-extrabold text-white flex items-center">
           <Trophy className="w-6 h-6 text-amber-500 mr-2.5" />
           Club Merit Leaderboard
         </h1>
         <Leaderboard members={members} />
-      </div>
+      </div></>
     );
   }
 
   if (tab === "notices") {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
+      <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
         <h1 className="text-xl font-display font-extrabold text-white flex items-center">
           <Bell className="w-6 h-6 text-orange-500 mr-2.5" />
           Club Notices & Announcements
@@ -349,13 +366,13 @@ export default function Dashboard() {
           ))}
           {notices.length === 0 && <p className="text-xs text-slate-500">No notices found.</p>}
         </div>
-      </div>
+      </div></>
     );
   }
 
   if (tab === "events") {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
+      <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
         <h1 className="text-xl font-display font-extrabold text-white flex items-center">
           <Calendar className="w-6 h-6 text-rose-500 mr-2.5" />
           Workshops & Events
@@ -369,13 +386,13 @@ export default function Dashboard() {
           ))}
           {events.length === 0 && <p className="text-xs text-slate-500">No events scheduled.</p>}
         </div>
-      </div>
+      </div></>
     );
   }
 
   if (tab === "courses") {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
+      <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
         <h1 className="text-xl font-display font-extrabold text-white flex items-center">
           <BookOpen className="w-6 h-6 text-blue-500 mr-2.5" />
           CCNA & Networking Courses
@@ -389,13 +406,13 @@ export default function Dashboard() {
           ))}
           {courses.length === 0 && <p className="text-xs text-slate-500">No active courses listed.</p>}
         </div>
-      </div>
+      </div></>
     );
   }
 
   if (tab === "devices") {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
+      <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
         <h1 className="text-xl font-display font-extrabold text-white flex items-center">
           <Cpu className="w-6 h-6 text-cyan-500 mr-2.5" />
           Lab Hardware Inventory
@@ -409,13 +426,13 @@ export default function Dashboard() {
           ))}
           {devices.length === 0 && <p className="text-xs text-slate-500">No lab devices registered.</p>}
         </div>
-      </div>
+      </div></>
     );
   }
 
   if (tab === "sponsors") {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
+      <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
         <h1 className="text-xl font-display font-extrabold text-white flex items-center">
           <Briefcase className="w-6 h-6 text-purple-500 mr-2.5" />
           Club Sponsors & Partners
@@ -429,13 +446,13 @@ export default function Dashboard() {
           ))}
           {sponsors.length === 0 && <p className="text-xs text-slate-500">No sponsors listed.</p>}
         </div>
-      </div>
+      </div></>
     );
   }
 
   if (tab === "sys") {
     return (
-      <div className="p-8 max-w-xl mx-auto space-y-8 font-mono">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-xl mx-auto space-y-8 font-mono">
         <div>
           <h1 className="text-xl font-display font-extrabold text-white">Core System Config</h1>
           <p className="text-xs text-slate-500 mt-1">Configuring virtual backend variables and telemetry ports</p>
@@ -456,7 +473,7 @@ export default function Dashboard() {
 
   // Default Dashboard View
   return (
-    <div className="p-6 lg:p-10 space-y-8 max-w-7xl mx-auto animate-fade-in">
+    <>{dataWarning}<div className="p-4 sm:p-6 lg:p-10 space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-white/5">
         <div>
           <h1 className="text-2xl font-display font-extrabold text-white tracking-wide">
@@ -543,6 +560,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }

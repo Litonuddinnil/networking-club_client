@@ -293,7 +293,7 @@ export default function MainLayout() {
                   <Menu className="w-4 h-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 sm:w-96">
+              <SheetContent side="right" className="w-[calc(100vw-1rem)] max-w-80 sm:w-96 sm:max-w-96">
                 <SheetHeader className="mb-6">
                   <Brand size="sm" />
                   <SheetTitle className="sr-only">JSTU NetClub menu</SheetTitle>

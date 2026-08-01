@@ -18,7 +18,7 @@ export default function AdminDashboardOverview({ members, notices, events, onNav
   const totalCollection = members.reduce((acc, curr) => acc + (curr.totalPaid || 0), 0);
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 animate-fade-in text-slate-300">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-in text-slate-300">
       
       {/* Welcome Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-2">
@@ -174,7 +174,7 @@ export default function AdminDashboardOverview({ members, notices, events, onNav
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 pt-4 border-t border-white/5 text-center font-mono">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4 border-t border-white/5 text-center font-mono">
               <div className="bg-white/5 p-2.5 rounded-xl">
                 <span className="text-[9px] text-slate-500 block">Total Revenue</span>
                 <span className="text-xs font-bold text-white">৳ {totalCollection}</span>

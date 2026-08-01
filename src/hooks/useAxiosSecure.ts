@@ -2,9 +2,10 @@ import axios from "axios";
 import { getAuth } from "firebase/auth";
 
 import app from "../firebase/firebase.config";
+import { apiBaseUrl } from "../lib/api";
 
 const axiosSecure = axios.create({
-  baseURL: (import.meta as any).env.VITE_API_URL || "/",
+  baseURL: apiBaseUrl || "/",
   headers: { "Content-Type": "application/json" },
 });
 

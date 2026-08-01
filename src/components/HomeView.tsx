@@ -43,6 +43,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { fetchApiJson } from "@/lib/api";
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import NetworkGlobe3D from "./NetworkGlobe3D";
 import { type TopologyMode } from "./three/TopologyLab3D";
@@ -643,8 +644,7 @@ export default function HomeView() {
   const { data: topologyMetrics = [] } = useQuery<TopologyMetric[]>({
     queryKey: ["public-topology-metrics"],
     queryFn: async () => {
-      const res = await fetch("/api/topology-metrics");
-      return res.json();
+      return fetchApiJson<TopologyMetric[]>("/api/topology-metrics");
     },
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
@@ -673,40 +673,35 @@ export default function HomeView() {
   const { data: notices = [] } = useQuery<Notice[]>({
     queryKey: ["public-notices"],
     queryFn: async () => {
-      const res = await fetch("/api/notices");
-      return res.json();
+      return fetchApiJson<Notice[]>("/api/notices");
     },
   });
 
   const { data: events = [] } = useQuery<EventItem[]>({
     queryKey: ["public-events"],
     queryFn: async () => {
-      const res = await fetch("/api/events");
-      return res.json();
+      return fetchApiJson<EventItem[]>("/api/events");
     },
   });
 
   const { data: members = [] } = useQuery<Member[]>({
     queryKey: ["public-members"],
     queryFn: async () => {
-      const res = await fetch("/api/members");
-      return res.json();
+      return fetchApiJson<Member[]>("/api/members");
     },
   });
 
   const { data: courses = [] } = useQuery<Course[]>({
     queryKey: ["public-courses"],
     queryFn: async () => {
-      const res = await fetch("/api/courses");
-      return res.json();
+      return fetchApiJson<Course[]>("/api/courses");
     },
   });
 
   const { data: devices = [] } = useQuery<Device[]>({
     queryKey: ["public-devices"],
     queryFn: async () => {
-      const res = await fetch("/api/devices");
-      return res.json();
+      return fetchApiJson<Device[]>("/api/devices");
     },
   });
 
@@ -745,8 +740,7 @@ export default function HomeView() {
   const { data: sponsors = [] } = useQuery<Sponsor[]>({
     queryKey: ["public-sponsors"],
     queryFn: async () => {
-      const res = await fetch("/api/sponsors");
-      return res.json();
+      return fetchApiJson<Sponsor[]>("/api/sponsors");
     },
   });
 
@@ -981,7 +975,7 @@ export default function HomeView() {
                 </div>
                 <div>
                   <h2 className="text-2xl md:text-3xl font-black text-foreground">Upcoming Workshops</h2>
-                  <p className="text-xs text-emerald-400 font-mono uppercase tracking-widest mt-1">Live MongoDB Events Stream</p>
+                  <p className="text-xs text-emerald-400 font-mono uppercase tracking-widest mt-1">Live Club Events</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -1005,7 +999,7 @@ export default function HomeView() {
                 </div>
                 <div>
                   <h2 className="text-2xl md:text-3xl font-black text-foreground">Official Notices</h2>
-                  <p className="text-xs text-accent font-mono uppercase tracking-widest mt-1">Live MongoDB Circulars</p>
+                  <p className="text-xs text-accent font-mono uppercase tracking-widest mt-1">Official Club Circulars</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -1086,7 +1080,7 @@ export default function HomeView() {
                   <div>
                     <CardTitle className="text-xl font-black text-white">Live Network Lab Simulation Engine</CardTitle>
                     <div className="text-xs text-muted-foreground font-mono mt-1 flex items-center gap-2">
-                      <Database size={12} className="text-secondary" /> Telemetry Stream: <span className="text-emerald-400 font-bold">MongoDB Nominal</span>
+                      <Database size={12} className="text-secondary" /> Telemetry Stream: <span className="text-emerald-400 font-bold">Live &amp; Healthy</span>
                     </div>
                   </div>
                 </div>
