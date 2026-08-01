@@ -1,21 +1,4 @@
-/**
- * useGsapReveal — declarative scroll-triggered entrance animation.
- *
- * Drop the hook onto any container and use `data-reveal` attributes on
- * its children to opt into the reveal. Variants:
- *   data-reveal                  -> fade + 16px slide up
- *   data-reveal="slide-left"     -> fade + 24px slide from left
- *   data-reveal="slide-right"    -> fade + 24px slide from right
- *   data-reveal="scale"          -> fade + scale 0.92 -> 1
- *   data-reveal="parallax"       -> translateY parallax (0 -> -40px)
- *
- * Network/tech vibe: short duration (0.7s), power3.out easing, small
- * scale + glow flash on the most decorated elements.
- *
- * Respects prefers-reduced-motion (no animation, instant show).
- * Re-runs on every Barba.js `enter` event so freshly mounted route
- * content gets animated too.
- */
+ 
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";

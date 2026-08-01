@@ -1,23 +1,22 @@
-import axios from 'axios';
+import axios from "axios";
+import { getAuth } from "firebase/auth";
+
+import app from "../firebase/firebase.config";
 
 const axiosSecure = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  baseURL: (import.meta as any).env.VITE_API_URL || "/",
+  headers: { "Content-Type": "application/json" },
 });
 
-// Request interceptor to add authorization header dynamically
-axiosSecure.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('jstu_net_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+axiosSecure.interceptors.request.use(async (config) => {
+  const user = getAuth(app).currentUser;
 
-export const useAxiosSecure = () => {
-  return axiosSecure;
-};
+  if (!user) {
+    return Promise.reject(new Error("Authentication is required."));
+  }
+
+  config.headers.Authorization = `Bearer ${await user.getIdToken()}`;
+  return config;
+});
+
+export const useAxiosSecure = () => axiosSecure;

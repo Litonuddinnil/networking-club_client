@@ -62,7 +62,7 @@ export default function Register() {
       // 3. Save into MongoDB
       const response = await axiosPublic.post("/api/members", memberPayload);
       const mongoId = response.data._id || response.data.insertedId;
-      console.log("MongoDB ID:", mongoId);
+      //console.log("MongoDB ID:", mongoId);
 
       // Success Alert
       await Swal.fire({

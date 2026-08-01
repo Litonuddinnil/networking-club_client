@@ -5,6 +5,7 @@ import {
   RefreshCw, CreditCard, Trophy, Bell, Calendar, BookOpen, Cpu, Briefcase 
 } from "lucide-react";
 import { useAxiosPublic } from "../hooks/useAxiosPublic";
+import { useAxiosSecure } from "../hooks/useAxiosSecure";
 import { useAiDiagnostics } from "../hooks/useAiDiagnostics";
 import { NoticeItem, ClubMember, EventItem } from "../types";
 
@@ -19,13 +20,13 @@ import AdminDashboardOverview from "../AdminDashboard/AdminDashboardOverview";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { tab: tabParam } = useParams(); // পাথ প্যারামিটার থেকে 'tab' গ্রহণ করা হয়েছে
-  const [searchParams] = useSearchParams(); // পুরোনো লিংক বা এক্সটারনাল রেফারেন্সের জন্য রাখা হলো, যদিও এখন থেকে অপ্রয়োজনীয়
+  const { tab: tabParam } = useParams(); 
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const axiosPublic = useAxiosPublic();
+  const axiosSecure = useAxiosSecure();
 
-  // tab নির্ধারণ: প্রথমে পাথ প্যারামিটার, তারপর যদি না থাকে তবে ডিফল্ট 'dashboard'
-  const tab = tabParam || "dashboard";
+  const tab = tabParam || searchParams.get("tab") || "dashboard";
 
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [notices, setNotices] = useState<NoticeItem[]>([]);
@@ -63,6 +64,12 @@ export default function Dashboard() {
     fetchAllData();
   }, []);
 
+  useEffect(() => {
+    if (tab === "admin" && user?.role !== "admin") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate, tab, user?.role]);
+
   const matchedStudent = members.find((m) => m.email === user?.email) || members[0];
   const activeStudent = {
     id: matchedStudent?.memberId || matchedStudent?.id || "JNC-MOCK",
@@ -85,7 +92,7 @@ export default function Dashboard() {
       category
     };
     try {
-      await axiosPublic.post("/api/notices", newNotice);
+      await axiosSecure.post("/api/notices", newNotice);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -94,7 +101,7 @@ export default function Dashboard() {
 
   const handleDeleteNotice = async (id: string) => {
     try {
-      await axiosPublic.delete(`/api/notices/${id}`);
+      await axiosSecure.delete(`/api/notices/${id}`);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -118,7 +125,7 @@ export default function Dashboard() {
       email: `${name.toLowerCase().replace(/\s+/g, "")}@jstu.edu`
     };
     try {
-      await axiosPublic.post("/api/members", newMember);
+      await axiosSecure.post("/api/members", newMember);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -127,7 +134,7 @@ export default function Dashboard() {
 
   const handleDeleteMember = async (id: string) => {
     try {
-      await axiosPublic.delete(`/api/members/${id}`);
+      await axiosSecure.delete(`/api/members/${id}`);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -136,7 +143,7 @@ export default function Dashboard() {
 
   const handleAddEvent = async (eventData: any) => {
     try {
-      await axiosPublic.post("/api/events", eventData);
+      await axiosSecure.post("/api/events", eventData);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -145,7 +152,7 @@ export default function Dashboard() {
 
   const handleDeleteEvent = async (id: string) => {
     try {
-      await axiosPublic.delete(`/api/events/${id}`);
+      await axiosSecure.delete(`/api/events/${id}`);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -154,7 +161,7 @@ export default function Dashboard() {
 
   const handleAddCourse = async (courseData: any) => {
     try {
-      await axiosPublic.post("/api/courses", courseData);
+      await axiosSecure.post("/api/courses", courseData);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -163,7 +170,7 @@ export default function Dashboard() {
 
   const handleDeleteCourse = async (id: string) => {
     try {
-      await axiosPublic.delete(`/api/courses/${id}`);
+      await axiosSecure.delete(`/api/courses/${id}`);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -172,7 +179,7 @@ export default function Dashboard() {
 
   const handleAddDevice = async (deviceData: any) => {
     try {
-      await axiosPublic.post("/api/devices", deviceData);
+      await axiosSecure.post("/api/devices", deviceData);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -181,7 +188,7 @@ export default function Dashboard() {
 
   const handleDeleteDevice = async (id: string) => {
     try {
-      await axiosPublic.delete(`/api/devices/${id}`);
+      await axiosSecure.delete(`/api/devices/${id}`);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -190,7 +197,7 @@ export default function Dashboard() {
 
   const handleAddSponsor = async (sponsorData: any) => {
     try {
-      await axiosPublic.post("/api/sponsors", sponsorData);
+      await axiosSecure.post("/api/sponsors", sponsorData);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -199,7 +206,7 @@ export default function Dashboard() {
 
   const handleDeleteSponsor = async (name: string) => {
     try {
-      await axiosPublic.delete(`/api/sponsors/${name}`);
+      await axiosSecure.delete(`/api/sponsors/${name}`);
       fetchAllData();
     } catch (err) {
       console.error(err);
@@ -211,7 +218,7 @@ export default function Dashboard() {
     const updatedTotalPaid = (activeStudent.totalPaid || 0) + amount;
 
     try {
-      await axiosPublic.patch(`/api/members/${activeStudent.id}`, {
+      await axiosSecure.patch(`/api/members/${activeStudent.id}`, {
         paidMonths: updatedPaidMonths,
         totalPaid: updatedTotalPaid
       });
@@ -314,7 +321,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 1. LEADERBOARD TAB VIEW
   if (tab === "leaderboard") {
     return (
       <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6">
@@ -327,7 +333,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 2. NOTICES TAB VIEW
   if (tab === "notices") {
     return (
       <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
@@ -348,7 +353,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 3. EVENTS TAB VIEW
   if (tab === "events") {
     return (
       <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
@@ -369,7 +373,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 4. COURSES TAB VIEW
   if (tab === "courses") {
     return (
       <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
@@ -390,7 +393,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 5. DEVICES TAB VIEW
   if (tab === "devices") {
     return (
       <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">
@@ -411,7 +413,6 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 6. SPONSORS TAB VIEW
   if (tab === "sponsors") {
     return (
       <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-slate-300">

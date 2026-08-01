@@ -54,7 +54,6 @@ export default function DashboardLayout() {
     navigate("/");
   };
 
-  // ক্লাবের জন্য প্রয়োজনীয় গুরুত্বপূর্ণ মেনু ও পেজসমূহ
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard Console", path: "/dashboard", icon: <Layers className="w-4.5 h-4.5" /> },
     { id: "leaderboard", label: "Merit Leaderboard", path: "/dashboard?tab=leaderboard", icon: <Trophy className="w-4.5 h-4.5" /> },

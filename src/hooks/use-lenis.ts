@@ -1,18 +1,4 @@
-/**
- * useLenis — singleton smooth-scroll manager.
- *
- * Lenis (https://www.lenis.dev) drives window.scrollY with a damped lerp so
- * navigation across the page feels weighty. We:
- *   - Initialise Lenis once at the React root
- *   - Pump its rAF loop until unmount
- *   - Wire ScrollTrigger.refresh() so GSAP stays in sync with Lenis's
- *     virtual scroll position
- *   - Respect prefers-reduced-motion (instant scroll instead of smooth)
- *
- * Usage in App.tsx:
- *   useLenis();        // call once at the top of the tree
- */
-
+ 
 import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap } from "gsap";

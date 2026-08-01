@@ -30,7 +30,6 @@ declare module "*.webp" {
   export default src;
 }
 
-// Allow path-aliased asset imports (e.g. @/asset/foo.png)
 declare module "@/asset/*" {
   const src: string;
   export default src;

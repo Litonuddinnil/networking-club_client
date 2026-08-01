@@ -80,12 +80,6 @@ export interface Connection {
   bandwidth?: number;
 }
 
-/**
- * Live network topology metric. One record per topology (mesh, hybrid, tree,
- * bus, star, ring). The Resources Hub polls this collection and renders the
- * latency / throughput / uptime / packet-health cards from it instead of
- * simulating values locally.
- */
 export interface TopologyMetric {
   _id?: string;
   id?: string;

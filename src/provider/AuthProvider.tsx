@@ -22,16 +22,12 @@ import app from "../firebase/firebase.config";
 import { AuthContextType, UserProfile } from "../types/auth";
 import { useAxiosPublic } from "../hooks/useAxiosPublic";
 
-// Defensive: getAuth may throw if Firebase app failed to initialize (e.g. env
-// vars missing). We wrap so the module doesn't crash the entire app on import.
 let auth: ReturnType<typeof getAuth>;
 try {
   auth = getAuth(app);
 } catch (err) {
   // eslint-disable-next-line no-console
   console.error("[AuthProvider] Firebase init failed:", err);
-  // Re-export a proxy that throws only when actually used, so calling
-  // AuthProvider without Firebase configured still renders the UI.
   auth = new Proxy({} as any, {
     get() {
       throw new Error(
@@ -55,31 +51,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Firebase: Register
   const createUser = (email: string, password: string) => {
     setLoading(true);
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
-  // Firebase: Login
   const signInUser = (email: string, password: string) => {
     setLoading(true);
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  // Firebase: Google Login
   const googleLogIn = () => {
     setLoading(true);
     return signInWithPopup(auth, provider);
   };
 
-  // Firebase: Logout
   const logOut = async () => {
     setLoading(true);
     await signOut(auth);
   };
 
-  // Firebase: Update Profile
   const userUpdateProfile = async (name: string, photo: string) => {
     if (!auth.currentUser) return;
 
@@ -91,12 +82,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser((prev: any) => (prev ? { ...prev, displayName: name, photoURL: photo } : null));
   };
 
-  // Firebase: Reset Password
   const resetPassword = (email: string) => {
     return sendPasswordResetEmail(auth, email);
   };
 
-  // --- Helper: fetch member record from MongoDB by email ---
   const fetchMemberByEmail = async (email: string): Promise<UserProfile | null> => {
     try {
       const { data } = await axiosPublic.get("/api/members");
@@ -110,7 +99,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // --- LOGIN ---
+  const getRoleFromClaims = async (currentUser: NonNullable<typeof auth.currentUser>) => {
+    const token = await currentUser.getIdTokenResult();
+    return token.claims.admin === true ? "admin" : "member";
+  };
+
   const login = async (email: string, pass: string) => {
     setLoading(true);
     setError(null);
@@ -122,12 +115,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("No member record found in database for this account.");
       }
 
+      const role = await getRoleFromClaims(userCredential.user);
       const enriched = {
         ...userCredential.user,
         uid: userCredential.user.uid,
         email: userCredential.user.email || "",
         displayName: dbMember.displayName || userCredential.user.displayName || "",
-        role: dbMember.role,
+        role,
         memberId: dbMember.memberId,
         department: dbMember.department,
         xp: dbMember.xp,
@@ -144,7 +138,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // --- REGISTER ---
   const register = async (email: string, pass: string, name: string, dept: string) => {
     setLoading(true);
     setError(null);
@@ -166,7 +159,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         joinedDate: new Date().toISOString(),
       };
 
-      // Save new member to MongoDB via backend API
       await axiosPublic.post("/api/members", newMember);
 
       const enriched = { ...userCredential.user, ...newMember };
@@ -197,18 +189,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // --- Auth state listener (on refresh / app load) ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser && currentUser.email) {
         const dbMember = await fetchMemberByEmail(currentUser.email);
 
+        const role = await getRoleFromClaims(currentUser);
         const enrichedUser = {
           ...currentUser,
           uid: currentUser.uid,
           email: currentUser.email,
           displayName: dbMember?.displayName || currentUser.displayName || "",
-          role: dbMember?.role || "member",
+          role,
           memberId: dbMember?.memberId,
           department: dbMember?.department,
           xp: dbMember?.xp,
@@ -216,20 +208,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         };
 
         setUser(enrichedUser);
-
-        try {
-          const { data } = await axiosPublic.post("/jwt", {
-            email: currentUser.email,
-          });
-          if (data?.token) {
-            localStorage.setItem("access-token", data.token);
-          }
-        } catch (err) {
-          console.error(err);
-        }
       } else {
         setUser(null);
-        localStorage.removeItem("access-token");
       }
 
       setLoading(false);
