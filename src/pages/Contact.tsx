@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Mail, Github, Send, Copy, Check, Phone, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Mail,
+  Github,
+  Send,
+  Copy,
+  Check,
+  Phone,
+  MapPin,
+  Linkedin,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +20,7 @@ import { fadeUp, EASE_OUT, stagger } from "@/lib/motion";
 
 const CLUB_EMAIL = "networkingclub@jstu.ac.bd";
 const FACEBOOK_URL = "https://www.facebook.com/networkingclub.jstu/";
+const LINKEDIN_URL = "https://www.linkedin.com/company/networkingclub-jstu/";
 
 /**
  * Split-flap / terminal-flavored contact page.
@@ -100,7 +111,7 @@ export default function Contact() {
           variants={stagger(0.04, 0.08)}
           initial="hidden"
           animate="show"
-          className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
         >
           <ChannelCard
             icon={Mail}
@@ -111,11 +122,18 @@ export default function Contact() {
             copied={copied}
           />
           <ChannelCard
+            icon={Linkedin}
+            label="LinkedIn"
+            value="Networking Club, JSTU"
+            actionLabel="View page"
+            href={LINKEDIN_URL}
+          />
+          <ChannelCard
             icon={MapPin}
             label="Lab"
-            value="Jashore University of Science & Technology"
+            value="Jamalpur Science & Technology University"
             actionLabel="Open map"
-            href="#map"
+            href="https://jstu.ac.bd/"
           />
           <ChannelCard
             icon={Phone}
@@ -146,7 +164,7 @@ export default function Contact() {
                 <Input
                   id="c-name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e: any) => setName(e.target.value)}
                   placeholder="Your name"
                 />
               </div>
@@ -158,7 +176,7 @@ export default function Contact() {
                   id="c-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: any) => setEmail(e.target.value)}
                   placeholder="you@university.edu"
                 />
               </div>
@@ -185,13 +203,18 @@ export default function Contact() {
           <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-xl space-y-4">
             <h3 className="font-display text-lg font-bold">Other channels</h3>
             <p className="text-sm text-muted-foreground">
-              Prefer socials? Reach us on Facebook or open a GitHub issue on the
-              club repo.
+              Prefer socials? Reach us on Facebook, LinkedIn, or open a GitHub
+              issue on the club repo.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" size="sm">
                 <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer">
                   Facebook
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+                  <Linkedin className="mr-2 h-4 w-4" /> LinkedIn
                 </a>
               </Button>
               <Button asChild variant="outline" size="sm">
@@ -287,21 +310,28 @@ function ChannelCard({
     >
       {Body}
       <div className="mt-4 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onAction}
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-primary hover:text-secondary transition"
-        >
-          {copied ? <Check size={14} /> : onAction ? <Copy size={14} /> : null}
-          {actionLabel}
-        </button>
-        {href && (
+        {onAction ? (
+          <button
+            type="button"
+            onClick={onAction}
+            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-primary hover:text-secondary transition"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {actionLabel}
+          </button>
+        ) : href ? (
           <a
             href={href}
-            className="text-xs font-mono text-muted-foreground hover:text-primary transition"
+            target={href.startsWith("http") ? "_blank" : undefined}
+            rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-primary hover:text-secondary transition"
           >
-            open →
+            {actionLabel} <span aria-hidden>→</span>
           </a>
+        ) : (
+          <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            {actionLabel}
+          </span>
         )}
       </div>
     </motion.div>
