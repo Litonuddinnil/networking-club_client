@@ -1,0 +1,6 @@
+{
+  "name": "University Networking Club",
+  "description": "Enterprise-level platform for learning, membership management, certificate issuance, event coordination, and AI-powered networking assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
