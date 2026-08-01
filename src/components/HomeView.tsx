@@ -746,10 +746,10 @@ export default function HomeView() {
 
   const upcomingEvents = safeArr(events).slice(0, 4);
   const recentNotices = safeArr(notices).slice(0, 4);
-  const memberCount = safeArr(members).length || 300;
-  const courseCount = safeArr(courses).length || 12;
-  const deviceCount = safeArr(devices).length || 45;
-  const sponsorCount = safeArr(sponsors).length || 8;
+  const memberCount = safeArr(members).length;
+  const courseCount = safeArr(courses).length;
+  const deviceCount = safeArr(devices).length;
+  const sponsorCount = safeArr(sponsors).length;
 
   const stats = [
     { value: memberCount, label: "Active Members", icon: Users, tone: "primary" },

@@ -42,10 +42,6 @@ import { useAuth } from "@/provider/AuthProvider";
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Lab", path: "/lab" },
-  { label: "About", path: "/#about" },
-  { label: "Events", path: "/#events" },
-  { label: "Team", path: "/#team" },
-  { label: "Members", path: "/dashboard/leaderboard" },
   { label: "Contact", path: "/contact" },
   { label: "Facebook", path: "/connect/facebook" },
 ];

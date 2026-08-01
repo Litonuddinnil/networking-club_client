@@ -6,15 +6,15 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* Dev-portfolio palette: #0D1117 base, purple #7C3AED, blue #3B82F6, cyan #06B6D4, pink #EC4899 */
-  --color-bg-deep: #0d1117;
-  --color-bg-soft: #11161d;
+  /* Club palette: deep evergreen with emerald, teal and lime highlights. */
+  --color-bg-deep: #07150f;
+  --color-bg-soft: #0d2118;
   --color-fg: #ffffff;
   --color-fg-muted: #9ca3af;
-  --color-purple: #7c3aed;
-  --color-blue: #3b82f6;
-  --color-cyan: #06b6d4;
-  --color-pink: #ec4899;
+  --color-purple: #22c55e;
+  --color-blue: #14b8a6;
+  --color-cyan: #2dd4bf;
+  --color-pink: #a3e635;
   --color-success: #39ff88;
 
   /* Router LED accent palette — kept for nostalgia accents */
@@ -24,25 +24,25 @@
   --color-router-led-4: #39ff88;
 
   /* shadcn tokens — dark by default, dev-portfolio palette */
-  --color-background: #0c1410;
+  --color-background: #06130d;
   --color-foreground: #f3f4f6;
-  --color-card: #11161d;
+  --color-card: #0d2118;
   --color-card-foreground: #f3f4f6;
-  --color-popover: #161b22;
+  --color-popover: #10281d;
   --color-popover-foreground: #f3f4f6;
-  --color-primary: #7c3aed;
+  --color-primary: #22c55e;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #06b6d4;
-  --color-secondary-foreground: #061012;
-  --color-muted: #161b22;
+  --color-secondary: #2dd4bf;
+  --color-secondary-foreground: #06130d;
+  --color-muted: #10281d;
   --color-muted-foreground: #9ca3af;
-  --color-accent: #ec4899;
-  --color-accent-foreground: #ffffff;
+  --color-accent: #a3e635;
+  --color-accent-foreground: #10220d;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #fff5f5;
   --color-border: rgba(255, 255, 255, 0.08);
   --color-input: rgba(255, 255, 255, 0.06);
-  --color-ring: #7c3aed;
+  --color-ring: #22c55e;
   --radius-lg: 1rem;
   --radius-md: 0.75rem;
   --radius-sm: 0.5rem;
@@ -59,19 +59,19 @@ html[data-theme="light"] {
   --color-card-foreground: #0b0d14;
   --color-popover: #ffffff;
   --color-popover-foreground: #0b0d14;
-  --color-primary: #7c3aed;
+  --color-primary: #16a34a;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #0891b2;
+  --color-secondary: #0f766e;
   --color-secondary-foreground: #ffffff;
   --color-muted: #f1f5f9;
   --color-muted-foreground: #64748b;
-  --color-accent: #db2777;
+  --color-accent: #65a30d;
   --color-accent-foreground: #ffffff;
   --color-destructive: #dc2626;
   --color-destructive-foreground: #fff5f5;
   --color-border: rgba(15, 23, 42, 0.10);
   --color-input: rgba(15, 23, 42, 0.08);
-  --color-ring: #7c3aed;
+  --color-ring: #16a34a;
 }
 
 /* Base style resets and cyber defaults */
@@ -89,29 +89,29 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: #07150f;
 }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #7c3aed, #06b6d4);
+  background: linear-gradient(180deg, #22c55e, #2dd4bf);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #a78bfa, #22d3ee);
+  background: linear-gradient(180deg, #86efac, #5eead4);
 }
 
 /* Grid Matrix effect */
 .cyber-grid {
   background-size: 40px 40px;
   background-image: 
-    linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(6, 182, 212, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(34, 197, 94, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(45, 212, 191, 0.05) 1px, transparent 1px);
 }
 
 .cyber-grid-dense {
   background-size: 20px 20px;
   background-image: 
-    linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(6, 182, 212, 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgba(34, 197, 94, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(45, 212, 191, 0.08) 1px, transparent 1px);
 }
 
 /* Glow utilities */
