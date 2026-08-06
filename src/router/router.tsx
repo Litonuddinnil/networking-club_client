@@ -27,11 +27,6 @@ export const router = createBrowserRouter([
       { path: "connect/facebook", element: <FacebookRedirect /> },
       { path: "contact", element: <Contact /> },
       { path: "lab", element: <NetworkLab /> },
-      // হ্যান্ডেল করার জন্য যদি কেউ সরাসরি কুয়েরি দিয়ে লেডারবোর্ডে আসে
-      { 
-        path: "dashboard", 
-        element: <Navigate to="/dashboard" replace /> 
-      },
     ],
   },
 
@@ -65,7 +60,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // 4. WILD CARD 404 CATCH-ALL (সঠিকভাবে সবার শেষে)
+  // Fallback for any unhandled routes
   {
     path: "*",
     element: <ErrorPage />,

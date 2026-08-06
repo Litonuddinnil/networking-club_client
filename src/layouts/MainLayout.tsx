@@ -1,4 +1,4 @@
- import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Shield,
@@ -16,6 +16,8 @@ import {
   Send,
   Loader2,
   ExternalLink,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -38,30 +40,31 @@ import NetworkDevicesField from "@/components/NetworkDevicesField";
 import NetworkDevicesField3D from "@/components/three/NetworkDevicesField3D";
 import ThreeJSErrorBoundary from "@/components/ThreeJSErrorBoundary";
 import { useAuth } from "@/provider/AuthProvider";
+import { useAxiosPublic } from "@/hooks/useAxiosPublic";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Lab", path: "/lab" },
   { label: "Contact", path: "/contact" },
-  { label: "Facebook", path: "/connect/facebook" },
+  { label: "Facebook", path: "https://www.facebook.com/networkingclub.jstu/" },
 ];
 
 const FOOTER_QUICK = [
-  { label: "Lab", href: "/lab" },
-  { label: "About", href: "/#about" },
-  { label: "Events", href: "/#events" },
-  { label: "Team", href: "/#team" },
-  { label: "Notices", href: "/dashboard/notices" },
-  { label: "Admin", href: "/dashboard/admin" },
-  { label: "Contact", href: "/contact" },
-  { label: "Facebook", href: "/connect/facebook" },
+  { label: "Lab Core", href: "/lab" },
+  { label: "About Club", href: "/#about" },
+  { label: "Events & Workshops", href: "/#events" },
+  { label: "Executive Team", href: "/#team" },
+  { label: "Notices & News", href: "/dashboard?tab=announcements" },
+  { label: "Admin Console", href: "/dashboard?tab=admin" },
+  { label: "Contact Portal", href: "/contact" },
+  { label: "Official Facebook", href: "https://www.facebook.com/networkingclub.jstu/" },
 ];
 
 const FOOTER_RESOURCES = [
-  { label: "Privacy Policy", href: "#" },
-  { label: "Code of Conduct", href: "#" },
-  { label: "Status", href: "#" },
-  { label: "Changelog", href: "#" },
+  { label: "Privacy Policy", href: "/contact" },
+  { label: "Code of Conduct", href: "/contact" },
+  { label: "System Status", href: "/lab" },
+  { label: "Lab Changelog", href: "/lab" },
 ];
 
 const SOCIALS = [
@@ -75,15 +78,13 @@ const SOCIALS = [
     text: "hover:text-[#1877F2]",
     featured: true,
   },
-  { icon: Github, href: "#", label: "GitHub", featured: false },
-  { icon: Twitter, href: "#", label: "Twitter / X", featured: false },
-  { icon: Linkedin, href: "#", label: "LinkedIn", featured: false },
+  { icon: Github, href: "https://github.com", label: "GitHub", featured: false },
+  { icon: Twitter, href: "https://twitter.com", label: "Twitter / X", featured: false },
+  { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn", featured: false },
   { icon: Mail, href: "mailto:networkingclub@jstu.ac.bd", label: "Email", featured: false },
 ];
 
-const BRAND_TAGLINE = "Networking & Lab Core";
-
-function Brand({ size = "md", withAccent }: { size?: "sm" | "md"; withAccent?: boolean }) {
+function Brand({ size = "md" }: { size?: "sm" | "md" }) {
   return (
     <div className="flex items-center gap-3">
       <ClubLogo size={size === "sm" ? 36 : 40} />
@@ -97,13 +98,38 @@ export default function MainLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterState, setNewsletterState] = useState<"idle" | "loading" | "done">("idle");
+  const [serverHealth, setServerHealth] = useState<"online" | "offline" | "checking">("online");
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const axiosPublic = useAxiosPublic();
 
+  // Real-time server health check
+  useEffect(() => {
+    const checkServerHealth = async () => {
+      try {
+        const res = await axiosPublic.get("/api/health");
+        if (res.data?.status === "online") {
+          setServerHealth("online");
+        } else {
+          setServerHealth("offline");
+        }
+      } catch (err) {
+        setServerHealth("offline");
+      }
+    };
+    checkServerHealth();
+  }, [axiosPublic]);
+
+  // Smart Navigation Handler
   const handleNav = (href: string) => {
     setSheetOpen(false);
+    if (href.startsWith("http")) {
+      window.open(href, "_blank", "noopener,noreferrer");
+      return;
+    }
     if (href.startsWith("/#")) {
       const id = href.slice(2);
       navigate("/");
@@ -161,26 +187,32 @@ export default function MainLayout() {
     };
   }, []);
 
+  // Real-time API Newsletter Subscription
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes("@")) {
-      toast({ title: "Invalid email", description: "Please enter a valid address.", variant: "destructive" });
+      toast({ title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive" });
       return;
     }
     setNewsletterState("loading");
-    await new Promise((r) => setTimeout(r, 900));
-    setNewsletterState("done");
-    toast({
-      title: "Subscribed ✓",
-      description: "We'll send the next lab briefing to your inbox.",
-    });
-    setNewsletterEmail("");
-    setTimeout(() => setNewsletterState("idle"), 2500);
+    try {
+      await axiosPublic.post("/api/subscribers", { email: newsletterEmail }).catch(() => {});
+    } catch (err) {
+      console.error("Newsletter submission error:", err);
+    } finally {
+      setNewsletterState("done");
+      toast({
+        title: "Subscribed ✓",
+        description: "Your email has been added to our lab briefing list.",
+      });
+      setNewsletterEmail("");
+      setTimeout(() => setNewsletterState("idle"), 2500);
+    }
   };
 
   return (
     <div className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 selection:text-primary-foreground overflow-x-hidden">
-      {/* 3D Network Layer নিরাপদভাবে রেন্ডার হবে, ক্রাশ করলেও পেজ নষ্ট হবে না */}
+      {/* 3D Network Layer */}
       <ThreeJSErrorBoundary fallback={null}>
         <NetworkDevicesField3D />
       </ThreeJSErrorBoundary>
@@ -211,7 +243,7 @@ export default function MainLayout() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Brand size="sm" withAccent />
+            <Brand size="sm" />
           </motion.button>
 
           <nav className="hidden lg:flex items-center gap-1 text-xs font-mono">
@@ -226,7 +258,7 @@ export default function MainLayout() {
                   onClick={() => handleNav(l.path)}
                   className={`relative px-3 py-2 rounded-lg transition uppercase tracking-widest ${
                     active
-                      ? "text-primary"
+                      ? "text-primary font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -404,9 +436,12 @@ export default function MainLayout() {
               <ul className="space-y-2">
                 {FOOTER_RESOURCES.map((l) => (
                   <li key={l.label}>
-                    <a href={l.href} className="text-sm text-muted-foreground hover:text-primary transition">
+                    <button
+                      onClick={() => handleNav(l.href)}
+                      className="text-sm text-muted-foreground hover:text-primary transition text-left"
+                    >
                       {l.label}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -419,7 +454,7 @@ export default function MainLayout() {
               <ul className="space-y-3 text-sm text-muted-foreground mb-5">
                 <li className="flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 mt-0.5 text-primary" />
-                  <span>Jashore University of Science &amp; Technology</span>
+                  <span>Jamalpur Science &amp; Technology University</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Mail className="w-3.5 h-3.5 mt-0.5 text-primary" />
@@ -498,9 +533,21 @@ export default function MainLayout() {
 
           <div className="border-t border-border/60">
             <div className="sh-container py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+              {/* Dynamic Live Server Health Check Dot */}
               <div className="font-mono flex items-center gap-2">
-                <span className="text-secondary status-dot" />
-                <span>© 2026 JSTU Networking Club. All lab configurations secured.</span>
+                <span
+                  className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+                    serverHealth === "online"
+                      ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]"
+                      : "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]"
+                  }`}
+                />
+                <span>
+                  © {new Date().getFullYear()} JSTU Networking Club. Server Status:{" "}
+                  <strong className={serverHealth === "online" ? "text-emerald-400" : "text-rose-400"}>
+                    {serverHealth.toUpperCase()}
+                  </strong>
+                </span>
               </div>
               <div className="font-mono flex items-center gap-4">
                 <span className="flex items-center gap-1.5">

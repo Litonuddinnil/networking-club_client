@@ -19,11 +19,6 @@ import {
   Wifi,
   ChevronDown,
   Terminal,
-  Cpu as CpuIcon,
-  Quote,
-  Mail,
-  User as UserIcon,
-  MessageSquare,
   Building2,
   GraduationCap,
   Briefcase,
@@ -31,16 +26,11 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Linkedin,
-  Twitter,
+  Mail,
   Search,
   Filter,
   RefreshCw,
   Database,
-  Signal,
-  Flame,
-  Play,
-  CheckCircle2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchApiJson } from "@/lib/api";
@@ -62,15 +52,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useGsapReveal } from "@/hooks/use-gsap-reveal";
 import SportsEventSpotlight from "@/components/SportsEventSpotlight";
 import { fadeUp, stagger, sectionView, EASE_OUT } from "@/lib/motion";
-
-// Lenis smooth scrolling import (Ensure package is installed: npm i lenis)
 import Lenis from "lenis";
+
+// Local static member photos for Executive Board
+import litonPhoto from "@/asset/liton.jpg";
+import anantoPhoto from "@/asset/ananto.jpg";
+import fahadPhoto from "@/asset/fahad.jpg";
+import hrittikPhoto from "@/asset/hrittik.jpg";
+import istiaquePhoto from "@/asset/istiaque.jpg";
+import mehediPhoto from "@/asset/mehedi.jpg";
+import mouliPhoto from "@/asset/mouli.jpg";
+import mubinPhoto from "@/asset/mubin.jpg";
+import muktiPhoto from "@/asset/Mukti.jpg";
+import newazPhoto from "@/asset/newaz.jpg";
+import prokritPhoto from "@/asset/prokrit.jpg";
+import shajedulPhoto from "@/asset/shajedul.jpg";
+import tanvirPhoto from "@/asset/tanvir_riad.jpg";
 
 interface Notice {
   _id?: string;
@@ -114,123 +116,11 @@ interface Device {
   throughput?: string;
 }
 
-interface TopologyMetric {
-  _id?: string;
-  id?: string;
-  topology: TopologyMode | string;
-  label?: string;
-  latencyMs: number;
-  throughputGbps: number;
-  uptimePct: number;
-  packetHealth: number;
-  status?: "live" | "synthetic" | "degraded" | string;
-  nodes?: number;
-  source?: string;
-  lastUpdated?: string;
-}
-
 interface Sponsor {
   _id?: string;
   name?: string;
   tier?: string;
 }
-
-/* ===========================================================
-   Animated counter (IntersectionObserver-based)
-   =========================================================== */
-const Counter: React.FC<{ value: number; suffix?: string; duration?: number }> = ({
-  value,
-  suffix = "",
-  duration = 1500,
-}) => {
-  const [n, setN] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
-  useEffect(() => {
-    if (!ref.current) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const start = performance.now();
-          const step = (t: number) => {
-            const p = Math.min(1, (t - start) / duration);
-            const eased = 1 - Math.pow(1 - p, 3);
-            setN(Math.floor(eased * value));
-            if (p < 1) requestAnimationFrame(step);
-            else setN(value);
-          };
-          requestAnimationFrame(step);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, [value, duration]);
-  return (
-    <span ref={ref} className="tabular-nums">
-      {n}
-      {suffix}
-    </span>
-  );
-};
-
-/* ===========================================================
-   Typewriter terminal-style cycling words
-   =========================================================== */
-const TYPEWRITER_WORDS = [
-  "ping club.net",
-  "ssh member@lab",
-  "trace route to future",
-  "build the network",
-  "learn. hack. ship.",
-];
-const Typewriter: React.FC<{ words?: string[] }> = ({ words = TYPEWRITER_WORDS }) => {
-  const [text, setText] = useState("");
-  const [wi, setWi] = useState(0);
-  const [deleting, setDeleting] = useState(false);
-  useEffect(() => {
-    const word = words[wi];
-    const speed = deleting ? 40 : 90;
-    const t = setTimeout(() => {
-      if (!deleting) {
-        const next = word.substring(0, text.length + 1);
-        setText(next);
-        if (next === word) setTimeout(() => setDeleting(true), 1400);
-      } else {
-        const next = word.substring(0, text.length - 1);
-        setText(next);
-        if (next.length === 0) {
-          setDeleting(false);
-          setWi((wi + 1) % words.length);
-        }
-      }
-    }, speed);
-    return () => clearTimeout(t);
-  }, [text, deleting, wi, words]);
-  return (
-    <span className="text-primary font-mono">
-      {text}
-      <span className="text-primary animate-caret">▌</span>
-    </span>
-  );
-};
-
-// Local member photos
-import litonPhoto from "@/asset/liton.jpg";
-import anantoPhoto from "@/asset/ananto.jpg";
-import fahadPhoto from "@/asset/fahad.jpg";
-import hrittikPhoto from "@/asset/hrittik.jpg";
-import istiaquePhoto from "@/asset/istiaque.jpg";
-import mehediPhoto from "@/asset/mehedi.jpg";
-import mouliPhoto from "@/asset/mouli.jpg";
-import mubinPhoto from "@/asset/mubin.jpg";
-import muktiPhoto from "@/asset/Mukti.jpg";
-import newazPhoto from "@/asset/newaz.jpg";
-import prokritPhoto from "@/asset/prokrit.jpg";
-import shajedulPhoto from "@/asset/shajedul.jpg";
-import tanvirPhoto from "@/asset/tanvir_riad.jpg"; 
 
 type TeamMember = {
   name: string;
@@ -248,6 +138,7 @@ type TeamMember = {
   socials?: { facebook?: string; linkedin?: string; twitter?: string; mail?: string };
 };
 
+/* Static Executive Board Data */
 const TEAM: TeamMember[] = [
   {
     name: "Ahaduzaman Ananto",
@@ -407,37 +298,104 @@ const TEAM: TeamMember[] = [
   },
 ];
 
-type Advisor = {
-  name: string;
-  role: string;
-  initials: string;
-  tone: string;
+/* ===========================================================
+   Animated counter
+   =========================================================== */
+const Counter: React.FC<{ value: number; suffix?: string; duration?: number }> = ({
+  value,
+  suffix = "",
+  duration = 1500,
+}) => {
+  const [n, setN] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const start = performance.now();
+          const step = (t: number) => {
+            const p = Math.min(1, (t - start) / duration);
+            const eased = 1 - Math.pow(1 - p, 3);
+            setN(Math.floor(eased * value));
+            if (p < 1) requestAnimationFrame(step);
+            else setN(value);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [value, duration]);
+
+  return (
+    <span ref={ref} className="tabular-nums">
+      {n}
+      {suffix}
+    </span>
+  );
 };
 
-const ADVISORS: Advisor[] = [
-  {
-    name: "Dr. Al Amin",
-    role: "Faculty Advisor · CSE",
-    initials: "AA",
-    tone: "from-amber-500/30 via-orange-500/20 to-rose-500/20",
-  },
-  {
-    name: "Engr. Kamrul Hasan",
-    role: "Industry Mentor · Cisco",
-    initials: "KH",
-    tone: "from-cyan-500/30 via-blue-500/20 to-indigo-500/20",
-  },
+/* ===========================================================
+   Typewriter terminal-style cycling words
+   =========================================================== */
+const TYPEWRITER_WORDS = [
+  "ping club.net",
+  "ssh member@lab",
+  "trace route to future",
+  "build the network",
+  "learn. hack. ship.",
 ];
 
+const Typewriter: React.FC<{ words?: string[] }> = ({ words = TYPEWRITER_WORDS }) => {
+  const [text, setText] = useState("");
+  const [wi, setWi] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const word = words[wi];
+    const speed = deleting ? 40 : 90;
+    const t = setTimeout(() => {
+      if (!deleting) {
+        const next = word.substring(0, text.length + 1);
+        setText(next);
+        if (next === word) setTimeout(() => setDeleting(true), 1400);
+      } else {
+        const next = word.substring(0, text.length - 1);
+        setText(next);
+        if (next.length === 0) {
+          setDeleting(false);
+          setWi((wi + 1) % words.length);
+        }
+      }
+    }, speed);
+    return () => clearTimeout(t);
+  }, [text, deleting, wi, words]);
+
+  return (
+    <span className="text-primary font-mono">
+      {text}
+      <span className="text-primary animate-caret">▌</span>
+    </span>
+  );
+};
+
+/* Static Team Slider Component */
 function TeamSlider({ team }: { team: TeamMember[] }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
-  const railRef = useRef<HTMLDivElement | null>(null);
 
   const active = team[idx];
   const avatarSrc = (m: TeamMember) =>
     m.photo ||
-    `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(m.name)}&backgroundType=gradientLinear&backgroundColor=7c3aed,06b6d4,ec4899`;
+    `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(
+      m.name
+    )}&backgroundType=gradientLinear&backgroundColor=7c3aed,06b6d4,ec4899`;
 
   useEffect(() => {
     if (paused || team.length < 2) return;
@@ -527,11 +485,13 @@ function TeamSlider({ team }: { team: TeamMember[] }) {
                 "{active.quote || active.bio}"
               </blockquote>
 
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Node ID &amp; Verification</div>
-                <div className="flex items-center justify-between text-xs font-mono">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 font-mono text-xs">
+                <div className="text-muted-foreground uppercase tracking-widest text-[10px]">Node ID &amp; Verification</div>
+                <div className="flex items-center justify-between">
                   <span className="text-cyan-400">JNC-EXEC-{active.memberId}</span>
-                  <span className="text-emerald-400 flex items-center gap-1"><ShieldCheck size={14} /> Verified Core</span>
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <ShieldCheck size={14} /> Verified Core
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -570,16 +530,12 @@ function TeamSlider({ team }: { team: TeamMember[] }) {
         </div>
       </div>
 
-      <div
-        ref={railRef}
-        className="mt-6 flex gap-3 overflow-x-auto pb-3 scrollbar-thin snap-x snap-mandatory"
-      >
+      <div className="mt-6 flex gap-3 overflow-x-auto pb-3 scrollbar-thin snap-x snap-mandatory">
         {team.map((m, i) => {
           const isActive = i === idx;
           return (
             <button
               key={m.name}
-              data-thumb-idx={i}
               onClick={() => setIdx(i)}
               className={`group relative shrink-0 snap-center w-[160px] sm:w-[180px] h-[110px] rounded-2xl overflow-hidden border transition-all ${
                 isActive
@@ -631,79 +587,80 @@ export default function HomeView() {
   }, []);
 
   useGsapReveal();
-  const [topology, setTopology] = useState<TopologyMode>("mesh");
-  const TOPOLOGY_TABS: { id: TopologyMode; label: string; icon: string }[] = [
-    { id: "mesh",   label: "Mesh",   icon: "◇◇◇" },
-    { id: "hybrid", label: "Hybrid", icon: "✦✧" },
-    { id: "tree",   label: "Tree",   icon: "▲▼" },
-    { id: "bus",    label: "Bus",    icon: "──" },
-    { id: "star",   label: "Star",   icon: "☆" },
-    { id: "ring",   label: "Ring",   icon: "◯" },
-  ];
-
-  const { data: topologyMetrics = [] } = useQuery<TopologyMetric[]>({
-    queryKey: ["public-topology-metrics"],
-    queryFn: async () => {
-      return fetchApiJson<TopologyMetric[]>("/api/topology-metrics");
-    },
-    refetchInterval: 5000,
-    refetchOnWindowFocus: true,
-  });
 
   const safeArr = <T,>(v: T[] | undefined): T[] => (Array.isArray(v) ? v : []);
-
-  const currentMetric =
-    topologyMetrics.find((m) => m.topology === topology) || topologyMetrics[0];
-
-  const latencyMs = currentMetric?.latencyMs ?? 14;
-  const throughputGbps = currentMetric?.throughputGbps ?? 2.4;
-  const uptimePct = currentMetric?.uptimePct ?? 99.98;
-  const packetHealth = currentMetric?.packetHealth ?? 97.4;
-
-  const latencyPct = Math.min(100, Math.max(2, Math.round((latencyMs / 60) * 100)));
-  const throughputPct = Math.min(100, Math.max(4, Math.round((throughputGbps / 4) * 100)));
-  const uptimePctBar = Math.min(100, Math.round(uptimePct));
-  const healthPct = Math.min(100, Math.max(20, Math.round(packetHealth)));
 
   const [courseQuery, setCourseQuery] = useState("");
   const [courseLevel, setCourseLevel] = useState<string>("all");
   const [deviceQuery, setDeviceQuery] = useState("");
   const [deviceCategory, setDeviceCategory] = useState<string>("all");
 
+  // React Query MongoDB Live Data Fetching
   const { data: notices = [] } = useQuery<Notice[]>({
     queryKey: ["public-notices"],
-    queryFn: async () => {
-      return fetchApiJson<Notice[]>("/api/notices");
-    },
+    queryFn: async () => fetchApiJson<Notice[]>("/api/notices"),
   });
 
   const { data: events = [] } = useQuery<EventItem[]>({
     queryKey: ["public-events"],
-    queryFn: async () => {
-      return fetchApiJson<EventItem[]>("/api/events");
-    },
+    queryFn: async () => fetchApiJson<EventItem[]>("/api/events"),
   });
 
   const { data: members = [] } = useQuery<Member[]>({
     queryKey: ["public-members"],
-    queryFn: async () => {
-      return fetchApiJson<Member[]>("/api/members");
-    },
+    queryFn: async () => fetchApiJson<Member[]>("/api/members"),
   });
 
   const { data: courses = [] } = useQuery<Course[]>({
     queryKey: ["public-courses"],
-    queryFn: async () => {
-      return fetchApiJson<Course[]>("/api/courses");
-    },
+    queryFn: async () => fetchApiJson<Course[]>("/api/courses"),
   });
 
   const { data: devices = [] } = useQuery<Device[]>({
     queryKey: ["public-devices"],
-    queryFn: async () => {
-      return fetchApiJson<Device[]>("/api/devices");
-    },
+    queryFn: async () => fetchApiJson<Device[]>("/api/devices"),
   });
+
+  const { data: sponsors = [] } = useQuery<Sponsor[]>({
+    queryKey: ["public-sponsors"],
+    queryFn: async () => fetchApiJson<Sponsor[]>("/api/sponsors"),
+  });
+
+  // Dynamic Ticker compiled from Live Database Notices & Events
+  const ticker = React.useMemo(() => {
+    const items: { icon: any; text: string }[] = [];
+    safeArr(notices).forEach((n) => {
+      if (n.title) {
+        items.push({
+          icon: Megaphone,
+          text: `NOTICE: ${n.title} ${n.date ? `(${n.date})` : ""}`,
+        });
+      }
+    });
+    safeArr(events).forEach((e) => {
+      if (e.title) {
+        items.push({
+          icon: Calendar,
+          text: `EVENT: ${e.title} ${e.date ? `- ${e.date}` : ""}`,
+        });
+      }
+    });
+    safeArr(courses).forEach((c) => {
+      if (c.title) {
+        items.push({
+          icon: Terminal,
+          text: `COURSE TRACK: ${c.title}`,
+        });
+      }
+    });
+    if (items.length === 0) {
+      items.push(
+        { icon: Radio, text: "LIVE: JSTU Networking Club Central Hub Online" },
+        { icon: ShieldCheck, text: "Lab Security Protocols Verified" }
+      );
+    }
+    return items;
+  }, [notices, events, courses]);
 
   const filteredCourses = React.useMemo(() => {
     const q = courseQuery.trim().toLowerCase();
@@ -737,13 +694,6 @@ export default function HomeView() {
       .slice(0, 6);
   }, [devices, deviceQuery, deviceCategory]);
 
-  const { data: sponsors = [] } = useQuery<Sponsor[]>({
-    queryKey: ["public-sponsors"],
-    queryFn: async () => {
-      return fetchApiJson<Sponsor[]>("/api/sponsors");
-    },
-  });
-
   const upcomingEvents = safeArr(events).slice(0, 4);
   const recentNotices = safeArr(notices).slice(0, 4);
   const memberCount = safeArr(members).length;
@@ -756,15 +706,6 @@ export default function HomeView() {
     { value: courseCount, label: "Training Tracks", icon: Activity, tone: "secondary" },
     { value: deviceCount, label: "IoT Devices", icon: Cpu, tone: "accent" },
     { value: sponsorCount, label: "Industry Partners", icon: Trophy, tone: "primary" },
-  ];
-
-  const ticker = [
-    { icon: Radio, text: "LIVE: Campus Wi-Fi Maintenance — Block C, 2026-08-02" },
-    { icon: ShieldCheck, text: "Cybersecurity Workshop registration is now OPEN" },
-    { icon: Server, text: "New Rack 14 deployed — 6 servers online" },
-    { icon: Wifi, text: "Captive Portal upgraded to v4.2" },
-    { icon: Layers, text: "Member count milestone: 300+ active learners" },
-    { icon: Terminal, text: "Hackathon 2026 — 48 hours, 1 mission, infinite packets" },
   ];
 
   const featureList = [
@@ -787,6 +728,7 @@ export default function HomeView() {
   const { toast } = useToast();
   const [contactState, setContactState] = useState<"idle" | "sending" | "sent">("idle");
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.email.includes("@") || !contactForm.message) {
@@ -1019,7 +961,7 @@ export default function HomeView() {
         </div>
       </motion.section>
 
-      {/* RESOURCES HUB & ANIMATED LAB VIDEO SECTION */}
+      {/* RESOURCES HUB */}
       <motion.section {...sectionView} variants={fadeUp} data-reveal="up" className="py-28 relative">
         <div className="sh-container">
           <div className="text-center mb-16">
@@ -1068,94 +1010,11 @@ export default function HomeView() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Animated Lab Simulation Box with Built-in Cyber CSS Animation */}
-          <Card className="mt-8 overflow-hidden bg-card/60 backdrop-blur-2xl border-white/20 shadow-2xl p-2">
-            <CardHeader className="p-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-secondary/20 border border-secondary/40 flex items-center justify-center shadow-inner">
-                    <Network className="text-secondary animate-pulse" size={24} />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-black text-white">Live Network Lab Simulation Engine</CardTitle>
-                    <div className="text-xs text-muted-foreground font-mono mt-1 flex items-center gap-2">
-                      <Database size={12} className="text-secondary" /> Telemetry Stream: <span className="text-emerald-400 font-bold">Live &amp; Healthy</span>
-                    </div>
-                  </div>
-                </div>
-                <Badge variant="outline" className="font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/30 px-3 py-1 text-xs">
-                  <span className="text-emerald-400 status-dot mr-2 animate-ping" /> SECURE FEED
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="scene-stage h-[420px] sm:h-[480px] relative rounded-2xl overflow-hidden border border-white/25 bg-slate-950 shadow-2xl flex flex-col items-center justify-center group">
-
-                {/* ব্যাকগ্রাউন্ড মুভিং সাইবার গ্রিড ও স্ক্যানার অ্যানিমেশন */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 animate-pulse" />
-
-                {/* স্ক্যানার লাইন যা ওপর থেকে নিচে নামবে */}
-                <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_20px_#22d3ee] animate-[scanline_4s_ease-in-out_infinite]" />
-
-                {/* মাঝখানে রাউটার নোড পালস এফেক্ট */}
-                <div className="relative z-10 flex flex-col items-center space-y-4">
-                  <div className="relative flex items-center justify-center">
-                    <div className="absolute w-28 h-28 rounded-full bg-cyan-500/10 animate-ping" />
-                    <div className="absolute w-20 h-20 rounded-full bg-primary/20 animate-pulse" />
-                    <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.4)] text-cyan-400">
-                      <Server size={28} className="animate-bounce" />
-                    </div>
-                  </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-xs font-mono text-cyan-300 tracking-widest uppercase">Routing Packets via {topology.toUpperCase()} Node</p>
-                    <p className="text-[10px] font-mono text-slate-500">JSTU Backbone Hub • Latency: {latencyMs}ms</p>
-                  </div>
-                </div>
-
-                {/* ফ্লোটিং ডেটা প্যাকেট ডেকোরেশন */}
-                <div className="absolute bottom-6 left-6 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-[10px] font-mono text-emerald-400 backdrop-blur-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  TCP Handshake Established
-                </div>
-
-                <div className="absolute top-5 left-5 z-10 px-4 py-1.5 rounded-full bg-black/70 backdrop-blur-xl border border-white/30 text-xs font-mono text-cyan-400 flex items-center gap-2 shadow-xl">
-                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-                  Mode: {topology.toUpperCase()} TOPOLOGY ACTIVE
-                </div>
-              </div>
-
-              {currentMetric && (
-                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-2xl bg-card/60 backdrop-blur-md border border-white/10 shadow-lg">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Avg Latency</div>
-                    <div className="text-xl font-black text-foreground mt-1">{latencyMs} <span className="text-xs font-normal text-muted-foreground">ms</span></div>
-                    <Progress value={latencyPct} className="mt-3" />
-                  </div>
-                  <div className="p-4 rounded-2xl bg-card/60 backdrop-blur-md border border-white/10 shadow-lg">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Throughput</div>
-                    <div className="text-xl font-black text-foreground mt-1">{throughputGbps} <span className="text-xs font-normal text-muted-foreground">Gbps</span></div>
-                    <Progress value={throughputPct} className="mt-3" />
-                  </div>
-                  <div className="p-4 rounded-2xl bg-card/60 backdrop-blur-md border border-white/10 shadow-lg">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">System Uptime</div>
-                    <div className="text-xl font-black text-foreground mt-1">{uptimePct}%</div>
-                    <Progress value={uptimePctBar} className="mt-3" />
-                  </div>
-                  <div className="p-4 rounded-2xl bg-card/60 backdrop-blur-md border border-white/10 shadow-lg">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground">Packet Health</div>
-                    <div className="text-xl font-black text-foreground mt-1">{packetHealth}%</div>
-                    <Progress value={healthPct} className="mt-3" />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </motion.section>
 
-      {/* TEAM SECTION */}
-      <motion.section {...sectionView} variants={fadeUp} data-reveal="up" className="py-28 relative bg-card/20 border-t border-white/10">
+      {/* STATIC EXECUTIVE BOARD SECTION */}
+      <motion.section {...sectionView} variants={fadeUp} id="team" data-reveal="up" className="py-28 relative bg-card/20 border-t border-white/10">
         <div className="sh-container">
           <div className="text-center mb-16">
             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-mono uppercase tracking-widest mb-4 shadow-lg shadow-primary/10">

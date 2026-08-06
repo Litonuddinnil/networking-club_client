@@ -1,9 +1,21 @@
- import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../provider/AuthProvider";
-import { 
-  Shield, Layers, Award, LogOut, Settings, Command, Menu, X, 
-  Bell, Calendar, BookOpen, Cpu, Briefcase, CreditCard, Trophy 
+import { useAxiosPublic } from "../hooks/useAxiosPublic";
+import {
+  Layers,
+  Users,
+  FileText,
+  Calendar,
+  Megaphone,
+  Image,
+  BarChart2,
+  Settings,
+  User,
+  LogOut,
+  Command,
+  Menu,
+  X,
 } from "lucide-react";
 import CommandPalette from "../components/CommandPalette";
 import ClubLogo from "../components/ClubLogo";
@@ -12,8 +24,33 @@ export default function DashboardLayout() {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const axiosPublic = useAxiosPublic();
   const [showPalette, setShowPalette] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dbRole, setDbRole] = useState<string>("member");
+
+  // MongoDB থেকে ইউজারের রিয়েল-টাইম রোল ফেচ করা
+  useEffect(() => {
+    const fetchUserRoleFromDB = async () => {
+      if (user?.email) {
+        try {
+          const res = await axiosPublic.get("/api/members");
+          const members = res.data;
+          const matched = members.find(
+            (m: any) => m.email?.toLowerCase() === user.email?.toLowerCase()
+          );
+          if (matched && matched.role) {
+            setDbRole(matched.role.toLowerCase());
+          } else if (user.role) {
+            setDbRole(user.role.toLowerCase());
+          }
+        } catch (err) {
+          console.error("Failed to fetch role in layout:", err);
+        }
+      }
+    };
+    fetchUserRoleFromDB();
+  }, [user, axiosPublic]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -41,7 +78,12 @@ export default function DashboardLayout() {
     );
   }
 
-  const handleNavigateCommand = (view: "home" | "login" | "dashboard" | "admin" | "payment" | "lab") => {
+  // ডিবি রোল অথবা অথ রোল চেক করে অ্যাডমিন কিনা নিশ্চিত হওয়া
+  const isAdmin = dbRole === "admin" || user.role === "admin";
+
+  const handleNavigateCommand = (
+    view: "home" | "login" | "dashboard" | "admin" | "payment" | "lab"
+  ) => {
     if (view === "home") navigate("/");
     else if (view === "login") navigate("/login");
     else if (view === "dashboard") navigate("/dashboard");
@@ -55,34 +97,47 @@ export default function DashboardLayout() {
     navigate("/");
   };
 
-  const sidebarItems = [
-    { id: "dashboard", label: "Dashboard Console", path: "/dashboard", icon: <Layers className="w-4.5 h-4.5" /> },
-    { id: "leaderboard", label: "Merit Leaderboard", path: "/dashboard?tab=leaderboard", icon: <Trophy className="w-4.5 h-4.5" /> },
-    { id: "notices", label: "Club Notices", path: "/dashboard?tab=notices", icon: <Bell className="w-4.5 h-4.5" /> },
-    { id: "events", label: "Events & Workshops", path: "/dashboard?tab=events", icon: <Calendar className="w-4.5 h-4.5" /> },
-    { id: "courses", label: "CCNA & Courses", path: "/dashboard?tab=courses", icon: <BookOpen className="w-4.5 h-4.5" /> },
-    { id: "payment", label: "Subscription & Dues", path: "/dashboard?tab=payment", icon: <CreditCard className="w-4.5 h-4.5" /> },
-    { id: "devices", label: "Lab Inventory", path: "/dashboard?tab=devices", icon: <Cpu className="w-4.5 h-4.5" /> },
-    { id: "sponsors", label: "Club Sponsors", path: "/dashboard?tab=sponsors", icon: <Briefcase className="w-4.5 h-4.5" /> },
-    { id: "cert", label: "My Certificates", path: "/dashboard?tab=cert", icon: <Award className="w-4.5 h-4.5" /> },
-    { id: "admin", label: "Admin Auditor", path: "/dashboard?tab=admin", icon: <Shield className="w-4.5 h-4.5" />, adminOnly: true },
-    { id: "sys", label: "System Config", path: "/dashboard?tab=sys", icon: <Settings className="w-4.5 h-4.5" /> }
-  ];
+  // অ্যাডমিন এবং মেম্বার রোল অনুযায়ী পৃথক সাইডবার আইটেম লিস্ট
+  const sidebarItems = isAdmin
+    ? [
+        { id: "dashboard", label: "Dashboard", path: "/dashboard", icon: <Layers className="w-4.5 h-4.5" /> },
+        { id: "members", label: "Members", path: "/dashboard?tab=members", icon: <Users className="w-4.5 h-4.5" /> },
+        { id: "posts", label: "Posts", path: "/dashboard?tab=posts", icon: <FileText className="w-4.5 h-4.5" /> },
+        { id: "events", label: "Events", path: "/dashboard?tab=events", icon: <Calendar className="w-4.5 h-4.5" /> },
+        { id: "announcements", label: "Announcements", path: "/dashboard?tab=announcements", icon: <Megaphone className="w-4.5 h-4.5" /> },
+        { id: "gallery", label: "Gallery", path: "/dashboard?tab=gallery", icon: <Image className="w-4.5 h-4.5" /> },
+        { id: "analytics", label: "Analytics", path: "/dashboard?tab=analytics", icon: <BarChart2 className="w-4.5 h-4.5" /> },
+        { id: "settings", label: "Settings", path: "/dashboard?tab=settings", icon: <Settings className="w-4.5 h-4.5" /> },
+        { id: "profile", label: "Profile", path: "/dashboard?tab=profile", icon: <User className="w-4.5 h-4.5" /> },
+      ]
+    : [
+        { id: "dashboard", label: "Dashboard", path: "/dashboard", icon: <Layers className="w-4.5 h-4.5" /> },
+        { id: "posts", label: "Posts", path: "/dashboard?tab=posts", icon: <FileText className="w-4.5 h-4.5" /> },
+        { id: "events", label: "Events", path: "/dashboard?tab=events", icon: <Calendar className="w-4.5 h-4.5" /> },
+        { id: "announcements", label: "Announcements", path: "/dashboard?tab=announcements", icon: <Megaphone className="w-4.5 h-4.5" /> },
+        { id: "gallery", label: "Gallery", path: "/dashboard?tab=gallery", icon: <Image className="w-4.5 h-4.5" /> },
+        { id: "profile", label: "My Profile", path: "/dashboard?tab=profile", icon: <User className="w-4.5 h-4.5" /> },
+        { id: "settings", label: "Settings", path: "/dashboard?tab=settings", icon: <Settings className="w-4.5 h-4.5" /> },
+      ];
 
   const currentTab = new URLSearchParams(location.search).get("tab") || "dashboard";
 
   return (
     <div className="min-h-screen bg-[#020408] text-slate-300 flex overflow-hidden font-sans">
-      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 border-r border-white/5 bg-[#03070E] flex-col shrink-0">
-        <div className="p-6 border-b border-white/5 flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
+        <div
+          className="p-6 border-b border-white/5 flex items-center space-x-3 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
             <ClubLogo size={28} compact />
           </div>
           <div>
             <div className="font-display font-bold text-white text-sm">JSTU Portal</div>
-            <div className="text-[8px] text-orange-500 font-mono tracking-widest uppercase">Networking Club</div>
+            <div className="text-[8px] text-orange-500 font-mono tracking-widest uppercase">
+              Networking Club
+            </div>
           </div>
         </div>
 
@@ -95,16 +150,18 @@ export default function DashboardLayout() {
               <Command className="w-3.5 h-3.5 text-orange-500" />
               <span>Search Commands</span>
             </div>
-            <span className="bg-slate-900 px-1 py-0.5 border border-white/5 rounded text-[8px] text-slate-500">⌘K</span>
+            <span className="bg-slate-900 px-1 py-0.5 border border-white/5 rounded text-[8px] text-slate-500">
+              ⌘K
+            </span>
           </button>
         </div>
 
         {/* Sidebar Nav links */}
         <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto custom-scrollbar">
           {sidebarItems.map((item) => {
-            if (item.adminOnly && user.role !== "admin") return null;
-
-            const isActive = (currentTab === item.id || (item.id === "dashboard" && !location.search)) && location.pathname === "/dashboard";
+            const isActive =
+              (currentTab === item.id || (item.id === "dashboard" && !location.search)) &&
+              location.pathname === "/dashboard";
             return (
               <button
                 key={item.id}
@@ -113,8 +170,8 @@ export default function DashboardLayout() {
                   setMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
-                  isActive 
-                    ? "bg-orange-600/10 text-orange-400 border-orange-500/25" 
+                  isActive
+                    ? "bg-orange-600/10 text-orange-400 border-orange-500/25"
                     : "text-slate-400 hover:text-white hover:bg-white/5 border-transparent"
                 }`}
               >
@@ -135,7 +192,7 @@ export default function DashboardLayout() {
               <div className="min-w-0">
                 <div className="text-xs font-bold text-white truncate">{user.displayName}</div>
                 <div className="text-[8px] text-slate-500 font-mono uppercase tracking-wider truncate">
-                  {user.role === "admin" ? "Super Admin" : "Audited Member"}
+                  {isAdmin ? "Super Admin" : "Audited Member"}
                 </div>
               </div>
             </div>
@@ -157,7 +214,9 @@ export default function DashboardLayout() {
             <div className="w-7 h-7 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
               <ClubLogo size={24} compact />
             </div>
-            <span className="font-display font-extrabold text-white text-xs tracking-wider font-mono">JSTU NetClub</span>
+            <span className="font-display font-extrabold text-white text-xs tracking-wider font-mono">
+              JSTU NetClub
+            </span>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -193,7 +252,9 @@ export default function DashboardLayout() {
                 <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
                   <ClubLogo size={28} compact />
                 </div>
-                <span className="font-display font-extrabold text-white text-sm font-mono">JSTU NetClub</span>
+                <span className="font-display font-extrabold text-white text-sm font-mono">
+                  JSTU NetClub
+                </span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -205,8 +266,9 @@ export default function DashboardLayout() {
 
             <nav className="space-y-2">
               {sidebarItems.map((item) => {
-                if (item.adminOnly && user.role !== "admin") return null;
-                const isActive = currentTab === item.id && location.pathname === "/dashboard";
+                const isActive =
+                  (currentTab === item.id || (item.id === "dashboard" && !location.search)) &&
+                  location.pathname === "/dashboard";
                 return (
                   <button
                     key={item.id}
@@ -231,11 +293,13 @@ export default function DashboardLayout() {
           <div className="border-t border-white/5 pt-6 mt-6 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full bg-slate-900 border border-orange-500/20 flex items-center justify-center font-mono font-bold text-orange-500 text-xs">
-                {(user?.displayName || "NA").slice(0,2).toUpperCase()}
+                {(user?.displayName || "NA").slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <p className="text-sm font-bold text-white">{user.displayName}</p>
-                <p className="text-[9px] text-slate-500 font-mono tracking-wider">{(user?.role || "").toUpperCase()}</p>
+                <p className="text-[9px] text-slate-500 font-mono tracking-wider">
+                  {isAdmin ? "SUPER ADMIN" : "AUDITED MEMBER"}
+                </p>
               </div>
             </div>
 

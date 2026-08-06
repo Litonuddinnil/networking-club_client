@@ -6,7 +6,7 @@
  * to override the fallback when the Render service URL changes.
  */
 const configuredApiUrl = (import.meta as any).env.VITE_API_URL as string | undefined;
-const productionApiUrl = "https://networking-club-server.onrender.com";
+const productionApiUrl = "http://localhost:5000";
 
 export const apiBaseUrl = (configuredApiUrl ||
   ((import.meta as any).env.PROD ? productionApiUrl : ""))

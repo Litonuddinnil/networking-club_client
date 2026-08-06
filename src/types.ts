@@ -1,23 +1,26 @@
 export interface ClubMember {
+  _id?: string | { $oid: string };
   id?: string;
   memberId?: string;
-  name: string;
-  role: string;
-  xp: number;
-  avatar?: string;
-  status: "Active" | "Inactive" | "pending" | "approved";
-  joinedDate: string;
-  department: string;
-  batch?: string;
-  attendance: number;
-  paidMonths: string[];
-  totalPaid: number;
-  email: string;
   studentId?: string;
+  name: string;
+  email: string;
   photoURL?: string;
+  department: string;
+  role: "admin" | "member" | string;
+  status: "Active" | "Inactive" | "pending" | "approved" | "active" | "suspended";
+  xp: number;
+  joinedDate: string;
+  lastLogin?: string | null;
+  avatar?: string;
+  batch?: string;
+  attendance?: number;
+  paidMonths?: string[];
+  totalPaid?: number;
 }
 
 export interface NoticeItem {
+  _id?: string | { $oid: string };
   id: string;
   title: string;
   date: string;
@@ -25,71 +28,57 @@ export interface NoticeItem {
 }
 
 export interface EventItem {
+  _id?: string | { $oid: string };
   id: string;
   title: string;
-  date: string;
-  location: string;
-  isRegistered?: boolean;
-  description?: string;
-  image?: string;
   type?: string;
+  date: string;
   time?: string;
+  location: string;
+  image?: string;
+  isRegistered?: boolean;
 }
 
 export interface TrainingCourse {
+  _id?: string | { $oid: string };
   id: string;
   title?: string;
   name?: string;
-  level?: string;
-  duration?: string;
-  description?: string;
-  instructor?: string;
-  thumbnail?: string;
+  description: string;
   progress?: number;
   provider?: string;
+  instructor?: string;
 }
 
-export interface PaymentRecord {
-  id: string;
-  memberId?: string;
-  amount: number;
-  month: string;
-  date?: string;
-  status: "paid" | "pending" | "failed" | "Paid" | "Pending" | "Failed";
-  method?: string;
-  paymentDate?: string;
-  transactionId?: string;
-}
-
-export interface NetworkNode {
+export interface DeviceItem {
+  _id?: string | { $oid: string };
   id: string;
   name: string;
   type: string;
-  status: "online" | "offline" | "warning";
-  x: number;
-  y: number;
-  ip?: string;
-  traffic?: number;
-  uptime?: number;
-  alertsCount?: number;
+  status: string;
+  location: string;
+  ports?: string;
+  throughput?: string;
 }
 
-export interface Connection {
-  from: string;
-  to: string;
-  bandwidth?: number;
+export interface SponsorItem {
+  _id?: string | { $oid: string };
+  id: string;
+  name: string;
+  tier: string;
+  contribution: string;
 }
 
 export interface TopologyMetric {
-  _id?: string;
+  _id?: string | { $oid: string };
   id?: string;
-  topology: "mesh" | "hybrid" | "tree" | "bus" | "star" | "ring" | string;
+  topology: string;
   label?: string;
   latencyMs: number;
   throughputGbps: number;
   uptimePct: number;
   packetHealth: number;
-  status?: "live" | "synthetic" | "degraded" | string;
+  status?: string;
   nodes?: number;
   source?: string;
   lastUpdated?: string;
