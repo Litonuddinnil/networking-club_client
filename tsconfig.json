@@ -18,7 +18,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    "baseUrl": "http://localhost:5000",
+    "baseUrl": "https://networking-club-server.onrender.com",
     "paths": {
       "@/*": ["src/*"]
     },
