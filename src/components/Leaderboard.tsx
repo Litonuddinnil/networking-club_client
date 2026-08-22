@@ -158,10 +158,10 @@ export default function Leaderboard({ members }: LeaderboardProps) {
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <p className="font-mono font-extrabold text-orange-400">{m.xp} XP</p>
-                    <p className="text-[8px] text-slate-600 font-mono">Mult: {m.attendance > 90 ? "1.2x" : "1.0x"}</p>
+                    <p className="text-[8px] text-slate-600 font-mono">Mult: {(m.attendance ?? 0) > 90 ? "1.2x" : "1.0x"}</p>
                   </div>
 
-                  {m.attendance >= 90 && (
+                  {(m.attendance ?? 0) >= 90 && (
                     <span className="p-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg" title="Active Attendance streak">
                       <Flame className="w-3.5 h-3.5 animate-pulse" />
                     </span>

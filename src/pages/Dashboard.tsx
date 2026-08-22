@@ -25,23 +25,31 @@ export default function Dashboard() {
   const [courses, setCourses] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [sponsors, setSponsors] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [eventRegistrations, setEventRegistrations] = useState<any[]>([]);
   const [dbLoading, setDbLoading] = useState(true);
 
   const fetchAllData = async () => {
     setDbLoading(true);
     try {
-      const [mRes, pRes, eRes, aRes, gRes, nRes, cRes, dRes, sRes] =
-        await Promise.allSettled([
-          axiosPublic.get("/api/members"),
-          axiosPublic.get("/api/posts"),
-          axiosPublic.get("/api/events"),
-          axiosPublic.get("/api/announcements"),
-          axiosPublic.get("/api/gallery"),
-          axiosPublic.get("/api/notices"),
-          axiosPublic.get("/api/courses"),
-          axiosPublic.get("/api/devices"),
-          axiosPublic.get("/api/sponsors"),
-        ]);
+      const [
+        mRes, pRes, eRes, aRes, gRes, nRes, cRes, dRes, sRes,
+        payRes, attRes, regRes,
+      ] = await Promise.allSettled([
+        axiosPublic.get("/api/members"),
+        axiosPublic.get("/api/posts"),
+        axiosPublic.get("/api/events"),
+        axiosPublic.get("/api/announcements"),
+        axiosPublic.get("/api/gallery"),
+        axiosPublic.get("/api/notices"),
+        axiosPublic.get("/api/courses"),
+        axiosPublic.get("/api/devices"),
+        axiosPublic.get("/api/sponsors"),
+        axiosPublic.get("/api/payments"),
+        axiosPublic.get("/api/attendance"),
+        axiosPublic.get("/api/event-registrations"),
+      ]);
 
       if (mRes.status === "fulfilled") setMembers(mRes.value.data);
       if (pRes.status === "fulfilled") setPosts(pRes.value.data);
@@ -58,6 +66,9 @@ export default function Dashboard() {
       if (cRes.status === "fulfilled") setCourses(cRes.value.data);
       if (dRes.status === "fulfilled") setDevices(dRes.value.data);
       if (sRes.status === "fulfilled") setSponsors(sRes.value.data);
+      if (payRes.status === "fulfilled") setPayments(payRes.value.data);
+      if (attRes.status === "fulfilled") setAttendance(attRes.value.data);
+      if (regRes.status === "fulfilled") setEventRegistrations(regRes.value.data);
     } catch (err) {
       console.error("Dashboard sync error:", err);
     } finally {
@@ -111,6 +122,9 @@ export default function Dashboard() {
         courses={courses}
         devices={devices}
         sponsors={sponsors}
+        payments={payments}
+        attendance={attendance}
+        eventRegistrations={eventRegistrations}
         onNavigate={handleTabNavigate}
         onLogout={() => navigate("/")}
         onRefreshData={fetchAllData}
@@ -142,6 +156,34 @@ export default function Dashboard() {
           await axiosPublic.delete(`/api/courses/${id}`);
           fetchAllData();
         }}
+        onDeletePayment={async (id) => {
+          await axiosPublic.delete(`/api/payments/${id}`);
+          fetchAllData();
+        }}
+        onDeleteAttendance={async (id) => {
+          await axiosPublic.delete(`/api/attendance/${id}`);
+          fetchAllData();
+        }}
+        onDeleteRegistration={async (id) => {
+          await axiosPublic.delete(`/api/event-registrations/${id}`);
+          fetchAllData();
+        }}
+        onApprovePayment={async (id) => {
+          await axiosPublic.patch(`/api/payments/${id}`, { status: "approved" });
+          fetchAllData();
+        }}
+        onRejectPayment={async (id) => {
+          await axiosPublic.patch(`/api/payments/${id}`, { status: "rejected" });
+          fetchAllData();
+        }}
+        onEditAttendance={async (id, status) => {
+          await axiosPublic.patch(`/api/attendance/${id}`, { status });
+          fetchAllData();
+        }}
+        onCancelRegistration={async (id) => {
+          await axiosPublic.patch(`/api/event-registrations/${id}`, { status: "cancelled" });
+          fetchAllData();
+        }}
       />
     );
   }
@@ -160,6 +202,9 @@ export default function Dashboard() {
       courses={courses}
       devices={devices}
       sponsors={sponsors}
+      payments={payments}
+      attendance={attendance}
+      eventRegistrations={eventRegistrations}
       onNavigate={handleTabNavigate}
       onRefreshData={fetchAllData}
     />

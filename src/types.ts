@@ -83,3 +83,50 @@ export interface TopologyMetric {
   source?: string;
   lastUpdated?: string;
 }
+
+/**
+ * A payment record persisted in MongoDB. Returned by GET /api/payments.
+ * Field names are aligned with the server schema; legacy fields (`id`,
+ * `month`, `paymentDate`, `transactionId`) are kept optional so older
+ * client code and admin UIs can still render historical rows.
+ */
+export interface PaymentRecord {
+  _id?: string | { $oid: string } | string;
+  id?: string;
+  memberId?: string;
+  memberName?: string;
+  memberEmail?: string;
+  month?: string;
+  amount: number;
+  purpose?: string;
+  status: "pending" | "approved" | "rejected" | "Paid" | "Unpaid" | string;
+  paymentDate?: string;
+  transactionId?: string;
+  method?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  note?: string;
+}
+
+/** Visual representation of a node on the network topology canvas. */
+export interface NetworkNode {
+  id: string;
+  label?: string;
+  name?: string;
+  type?: string;
+  category?: string;
+  status?: string;
+  x?: number;
+  y?: number;
+  z?: number;
+  group?: string | number;
+}
+
+/** A logical link between two network nodes in the topology. */
+export interface Connection {
+  from: string;
+  to: string;
+  type?: string;
+  label?: string;
+  weight?: number;
+}

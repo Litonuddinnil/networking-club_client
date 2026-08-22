@@ -1,17 +1,33 @@
- import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { 
-  Users, FileText, Calendar, Bell, ShieldAlert, TrendingUp, 
-  Plus, Search, CheckCircle, XCircle, Trash2, Edit, Eye, 
-  MoreHorizontal, Image as ImageIcon, BarChart2, Settings, User, LogOut, Shield, 
-  ArrowRight, ArrowLeft, Send, Globe, Sliders, Save, Database, Lock, MapPin, Clock, Upload, Loader2, Compass
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Shield,
+  Search,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import { 
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
-  XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend 
-} from "recharts";
 import { useAxiosSecure } from "../../hooks/useAxiosSecure";
+import { ViewMode } from "@/components/admin/AdminCrudToolbar";
+import SectionHeading from "@/components/admin/SectionHeading";
+import ConfirmActionDialog from "@/components/admin/ConfirmActionDialog";
+import EntityFormDialog from "@/components/admin/EntityFormDialog";
+import {
+  TextField,
+  TextAreaField,
+  SelectField,
+} from "@/components/admin/Field";
+import ImageDropzone from "@/components/admin/ImageDropzone";
+
+import DashboardTab from "./tabs/DashboardTab";
+import AnalyticsTab from "./tabs/AnalyticsTab";
+import SettingsTab from "./tabs/SettingsTab";
+import ProfileTab from "./tabs/ProfileTab";
+import MembersTab from "./tabs/MembersTab";
+import PostsTab from "./tabs/PostsTab";
+import EventsTab from "./tabs/EventsTab";
+import AnnouncementsTab from "./tabs/AnnouncementsTab";
+import GalleryTab from "./tabs/GalleryTab";
+import PaymentsTab from "./tabs/PaymentsTab";
+import AttendanceTab from "./tabs/AttendanceTab";
+import EventRegistrationsTab from "./tabs/EventRegistrationsTab";
 
 interface AdminDashboardProps {
   activeTab?: string;
@@ -25,6 +41,9 @@ interface AdminDashboardProps {
   courses?: any[];
   devices?: any[];
   sponsors?: any[];
+  payments?: any[];
+  attendance?: any[];
+  eventRegistrations?: any[];
   onNavigate?: (tab: string) => void;
   onLogout?: () => void;
   onRefreshData?: () => void;
@@ -35,73 +54,94 @@ interface AdminDashboardProps {
   onDeleteGallery?: (id: string) => void;
   onDeleteNotice?: (id: string) => void;
   onDeleteCourse?: (id: string) => void;
+  onDeletePayment?: (id: string) => void;
+  onDeleteAttendance?: (id: string) => void;
+  onDeleteRegistration?: (id: string) => void;
+  onApprovePayment?: (id: string) => void;
+  onRejectPayment?: (id: string) => void;
+  onEditAttendance?: (id: string, status: string) => void;
+  onCancelRegistration?: (id: string) => void;
 }
 
-// ImgBB Image Upload Helper
-const uploadImageToImgBB = async (imageFile: File): Promise<string> => {
-  const formData = new FormData();
-  formData.append("image", imageFile);
-  
-  // ImgBB API Key (from env or fallback key)
-  const apiKey = import.meta.env.VITE_IMGBB_API_KEY || "6d25783f05b0b40d35d070669229e611"; 
-  const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-    method: "POST",
-    body: formData,
-  });
-  const data = await response.json();
-  if (data.success) {
-    return data.data.display_url || data.data.url;
-  } else {
-    throw new Error(data.error?.message || "ImgBB Image Upload Failed");
-  }
-};
+const swalTheme = {
+  background: "#03070E",
+  color: "#fff",
+  confirmButtonColor: "#10b981",
+} as const;
 
-// Recharts Custom Dark Tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-[#020408] border border-emerald-500/30 p-3 rounded-xl shadow-2xl text-xs font-mono text-white">
-        <p className="font-bold text-emerald-400 mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color || "#10b981" }} className="flex items-center space-x-2">
-            <span>{entry.name}:</span>
-            <span className="font-bold">{entry.value}</span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+function toastSuccess(title: string) {
+  Swal.fire({
+    title,
+    icon: "success",
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2500,
+    background: "#03070E",
+    color: "#fff",
+  });
+}
+
+function swalError(text: string) {
+  Swal.fire({ title: "Error!", text, icon: "error", ...swalTheme });
+}
 
 export default function AdminDashboard(props: AdminDashboardProps) {
   const axiosSecure = useAxiosSecure();
-  
-  // Tab state management
   const [localTab, setLocalTab] = useState<string>("dashboard");
   const activeTab = props.activeTab || localTab;
 
   const [members, setMembers] = useState<any[]>(props.members || []);
   const [posts, setPosts] = useState<any[]>(props.posts || []);
   const [events, setEvents] = useState<any[]>(props.events || []);
-  const [announcements, setAnnouncements] = useState<any[]>(props.announcements || props.notices || []);
+  const [announcements, setAnnouncements] = useState<any[]>(
+    props.announcements || props.notices || []
+  );
   const [gallery, setGallery] = useState<any[]>(props.gallery || []);
+  const [payments, setPayments] = useState<any[]>(props.payments || []);
+  const [attendance, setAttendance] = useState<any[]>(props.attendance || []);
+  const [eventRegistrations, setEventRegistrations] = useState<any[]>(
+    props.eventRegistrations || []
+  );
   const [loading, setLoading] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // ImgBB Image Upload & Map States
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
-  const [selectedMapLocation, setSelectedLocation] = useState("CSE Lab 1, JSTU Campus");
-  const [isMapPreviewOpen, setIsMapPreviewOpen] = useState(false);
+  const [postDialogOpen, setPostDialogOpen] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [annDialogOpen, setAnnDialogOpen] = useState(false);
+  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
 
-  // React Hook Form Integration
-  const { register: regPost, handleSubmit: handlePostSubmit, reset: resetPostForm } = useForm();
-  const { register: regEvent, handleSubmit: handleEventSubmit, reset: resetEventForm, setValue: setEventValue } = useForm();
-  const { register: regAnn, handleSubmit: handleAnnSubmit, reset: resetAnnForm } = useForm();
-  const { register: regGal, handleSubmit: handleGalSubmit, reset: resetGalForm } = useForm();
+  const [postForm, setPostForm] = useState({ title: "", category: "General", content: "" });
+  const [eventForm, setEventForm] = useState({
+    title: "",
+    type: "Workshop",
+    eventDateTime: "",
+    location: "CSE Lab 1, JSTU Campus",
+    description: "",
+    image: "",
+  });
+  const [annForm, setAnnForm] = useState({ title: "", category: "Notice", content: "" });
+  const [galleryForm, setGalleryForm] = useState({ title: "", category: "Workshop", imageUrl: "" });
+  const [formSubmitting, setFormSubmitting] = useState(false);
 
-  // Persistent Working System Settings State
+  const [confirm, setConfirm] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant: "danger" | "primary";
+    onConfirm: () => Promise<void> | void;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    confirmLabel: "Confirm",
+    variant: "danger",
+    onConfirm: () => {},
+  });
+
   const [appSettings, setAppSettings] = useState({
     language: "en",
     allowRegistration: true,
@@ -111,44 +151,53 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     autoBackup: true,
   });
 
-  // Load saved settings
+  // settings persistence
   useEffect(() => {
-    const savedSettings = localStorage.getItem("jstu_portal_config");
-    if (savedSettings) {
+    const saved = localStorage.getItem("jstu_portal_config");
+    if (saved) {
       try {
-        setAppSettings(JSON.parse(savedSettings));
+        setAppSettings(JSON.parse(saved));
       } catch (e) {
-        console.error("Failed to parse portal settings:", e);
+        console.error("Failed to parse settings:", e);
       }
     }
   }, []);
 
-  // Save Settings Handler
   const handleSaveSettings = () => {
     localStorage.setItem("jstu_portal_config", JSON.stringify(appSettings));
-    const isBn = appSettings.language === "bn";
     Swal.fire({
-      title: isBn ? "কনফিগারেশন সেভ হয়েছে!" : "Settings Saved!",
-      text: isBn 
-        ? "পোর্টাল কনফিগারেশন সফলভাবে আপডেট করা হয়েছে।" 
-        : "System configuration settings updated successfully.",
+      title: appSettings.language === "bn" ? "কনফিগারেশন সেভ হয়েছে!" : "Settings Saved!",
+      text:
+        appSettings.language === "bn"
+          ? "পোর্টাল কনফিগারেশন সফলভাবে আপডেট করা হয়েছে।"
+          : "System configuration updated successfully.",
       icon: "success",
-      background: "#03070E",
-      color: "#fff",
-      confirmButtonColor: "#10b981",
+      ...swalTheme,
     });
   };
 
-  // Sync props
   useEffect(() => {
     if (props.members) setMembers(props.members);
     if (props.posts) setPosts(props.posts);
     if (props.events) setEvents(props.events);
-    if (props.announcements || props.notices) setAnnouncements(props.announcements || props.notices || []);
+    if (props.announcements || props.notices)
+      setAnnouncements(props.announcements || props.notices || []);
     if (props.gallery) setGallery(props.gallery);
-  }, [props.members, props.posts, props.events, props.announcements, props.notices, props.gallery]);
+    if (props.payments) setPayments(props.payments);
+    if (props.attendance) setAttendance(props.attendance);
+    if (props.eventRegistrations) setEventRegistrations(props.eventRegistrations);
+  }, [
+    props.members,
+    props.posts,
+    props.events,
+    props.announcements,
+    props.notices,
+    props.gallery,
+    props.payments,
+    props.attendance,
+    props.eventRegistrations,
+  ]);
 
-  // Fetch admin data
   const fetchAdminData = async () => {
     if (props.onRefreshData) {
       props.onRefreshData();
@@ -156,18 +205,26 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     }
     setLoading(true);
     try {
-      const [memRes, postRes, evRes, annRes, galRes] = await Promise.all([
+      const results = await Promise.allSettled([
         axiosSecure.get("/api/members"),
         axiosSecure.get("/api/posts"),
         axiosSecure.get("/api/events"),
         axiosSecure.get("/api/announcements"),
-        axiosSecure.get("/api/gallery")
+        axiosSecure.get("/api/gallery"),
+        axiosSecure.get("/api/payments"),
+        axiosSecure.get("/api/attendance"),
+        axiosSecure.get("/api/event-registrations"),
       ]);
-      setMembers(memRes.data);
-      setPosts(postRes.data);
-      setEvents(evRes.data);
-      setAnnouncements(annRes.data);
-      setGallery(galRes.data);
+      const get = (i: number) =>
+        results[i].status === "fulfilled" ? (results[i] as any).value.data : [];
+      setMembers(get(0));
+      setPosts(get(1));
+      setEvents(get(2));
+      setAnnouncements(get(3));
+      setGallery(get(4));
+      setPayments(get(5));
+      setAttendance(get(6));
+      setEventRegistrations(get(7));
     } catch (err) {
       console.error("Admin data fetch error:", err);
     } finally {
@@ -176,37 +233,166 @@ export default function AdminDashboard(props: AdminDashboardProps) {
   };
 
   useEffect(() => {
-    if (!props.members && !props.posts) {
-      fetchAdminData();
-    }
+    if (!props.members && !props.posts) fetchAdminData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const totalMembers = members.length;
-  const activeMembers = members.filter(
-    (m) => m.status === "active" || m.status === "Active" || m.status === "approved"
-  ).length;
-  const pendingApprovals = members.filter(
-    (m) => m.status === "pending" || m.status === "Pending"
-  ).length;
+  const navigateTab = (tab: string) => {
+    if (props.onNavigate) props.onNavigate(tab);
+    else setLocalTab(tab);
+  };
+
+  const ask = (cfg: {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant?: "danger" | "primary";
+    onConfirm: () => Promise<void> | void;
+  }) => {
+    setConfirm({
+      open: true,
+      title: cfg.title,
+      description: cfg.description,
+      confirmLabel: cfg.confirmLabel,
+      variant: cfg.variant || "danger",
+      onConfirm: cfg.onConfirm,
+    });
+  };
+
+  const handleToggleRole = (member: any) => {
+    const recordKey = member._id || member.id || member.memberId || member.email;
+    const currentRole = (member.role || "member").toLowerCase();
+    const newRole = currentRole === "admin" ? "member" : "admin";
+    const actionText = newRole === "admin" ? "Promote to Admin" : "Demote to Member";
+    ask({
+      title: `${actionText}?`,
+      description: `Change ${member.name || member.displayName}'s role to ${newRole.toUpperCase()}.`,
+      confirmLabel: `Yes, ${actionText}`,
+      variant: "primary",
+      onConfirm: async () => {
+        try {
+          await axiosSecure.patch(`/api/members/${recordKey}`, { role: newRole });
+          fetchAdminData();
+          setConfirm((c) => ({ ...c, open: false }));
+          toastSuccess(`Role updated to ${newRole.toUpperCase()}`);
+        } catch (err: any) {
+          swalError(err.message || "Failed to update role.");
+        }
+      },
+    });
+  };
+
+  const handleUpdateStatus = (id: string, status: string) => {
+    ask({
+      title: "Approve Member?",
+      description: "Activate this member's account now.",
+      confirmLabel: "Yes, Approve",
+      variant: "primary",
+      onConfirm: async () => {
+        try {
+          await axiosSecure.patch(`/api/members/${id}`, { status });
+          fetchAdminData();
+          setConfirm((c) => ({ ...c, open: false }));
+          toastSuccess(`Member status: ${status}`);
+        } catch (err: any) {
+          swalError(err.message || "Failed to update member status.");
+        }
+      },
+    });
+  };
+
+  const handleDelete = (
+    kind: string,
+    id: string,
+    propHandler?: (id: string) => Promise<void> | void
+  ) => {
+    const titles: Record<string, string> = {
+      member: "Delete Member?",
+      post: "Delete Post?",
+      event: "Delete Event?",
+      announcement: "Delete Announcement?",
+      gallery: "Delete Gallery Image?",
+      payment: "Delete Payment Record?",
+      attendance: "Delete Attendance Record?",
+      registration: "Delete Registration?",
+    };
+    const messages: Record<string, string> = {
+      member: "This member record will be permanently deleted.",
+      post: "This post will be removed.",
+      event: "This event will be removed.",
+      announcement: "This announcement will be removed.",
+      gallery: "This image will be removed.",
+      payment: "This payment record will be permanently deleted.",
+      attendance: "This attendance entry will be removed.",
+      registration: "This event registration will be cancelled and removed.",
+    };
+    const endpoints: Record<string, string> = {
+      member: "members",
+      post: "posts",
+      event: "events",
+      announcement: "announcements",
+      gallery: "gallery",
+      payment: "payments",
+      attendance: "attendance",
+      registration: "event-registrations",
+    };
+    ask({
+      title: titles[kind],
+      description: messages[kind],
+      confirmLabel: "Yes, Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        try {
+          if (propHandler) await propHandler(id);
+          else {
+            await axiosSecure.delete(`/api/${endpoints[kind] || kind + "s"}/${id}`);
+            fetchAdminData();
+          }
+          setConfirm((c) => ({ ...c, open: false }));
+          toastSuccess("Deleted");
+        } catch (err: any) {
+          swalError(err.message || "Delete failed.");
+        }
+      },
+    });
+  };
 
   const adminName = props.matchedUser?.name || props.matchedUser?.displayName || "Admin User";
   const adminEmail = props.matchedUser?.email || "admin@portal.com";
 
-  // Recharts Visualization Dataset
-  const memberGrowthData = [
-    { month: "Jan", members: Math.max(1, Math.floor(totalMembers * 0.2)), active: Math.max(1, Math.floor(totalMembers * 0.15)) },
-    { month: "Feb", members: Math.max(2, Math.floor(totalMembers * 0.35)), active: Math.max(2, Math.floor(totalMembers * 0.28)) },
-    { month: "Mar", members: Math.max(3, Math.floor(totalMembers * 0.55)), active: Math.max(3, Math.floor(totalMembers * 0.45)) },
-    { month: "Apr", members: Math.max(4, Math.floor(totalMembers * 0.75)), active: Math.max(4, Math.floor(totalMembers * 0.65)) },
-    { month: "May", members: totalMembers, active: activeMembers },
-  ];
+  // charts data
+  const memberGrowthData = useMemo(() => {
+    const tot = members.length;
+    return [
+      { month: "Jan", members: Math.max(1, Math.floor(tot * 0.2)) },
+      { month: "Feb", members: Math.max(2, Math.floor(tot * 0.35)) },
+      { month: "Mar", members: Math.max(3, Math.floor(tot * 0.55)) },
+      { month: "Apr", members: Math.max(4, Math.floor(tot * 0.75)) },
+      { month: "May", members: tot },
+    ];
+  }, [members]);
 
-  const departmentData = [
-    { name: "CSE", value: members.filter((m) => m.department?.toUpperCase() === "CSE").length || 4 },
-    { name: "EEE", value: members.filter((m) => m.department?.toUpperCase() === "EEE").length || 2 },
-    { name: "Geology", value: members.filter((m) => m.department?.toUpperCase() === "GEOLOGY").length || 1 },
-    { name: "Math", value: members.filter((m) => m.department?.toUpperCase() === "MATH").length || 1 },
-  ];
+  const departmentData = useMemo(
+    () => [
+      {
+        name: "CSE",
+        value: members.filter((m) => m.department?.toUpperCase() === "CSE").length || 4,
+      },
+      {
+        name: "EEE",
+        value: members.filter((m) => m.department?.toUpperCase() === "EEE").length || 2,
+      },
+      {
+        name: "Geology",
+        value: members.filter((m) => m.department?.toUpperCase() === "GEOLOGY").length || 1,
+      },
+      {
+        name: "Math",
+        value: members.filter((m) => m.department?.toUpperCase() === "MATH").length || 1,
+      },
+    ],
+    [members]
+  );
 
   const eventMetricsData = [
     { name: "Cisco Intro", attendees: 45, registrations: 50 },
@@ -217,1444 +403,637 @@ export default function AdminDashboard(props: AdminDashboardProps) {
 
   const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
 
-  // Navigate to path/tab directly
-  const handleNavigatePath = (pathTab: string) => {
-    if (props.onNavigate) {
-      props.onNavigate(pathTab);
-    } else {
-      setLocalTab(pathTab);
-    }
-  };
+  // filtered lists
+  const filteredMembers = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return members;
+    return members.filter(
+      (m) =>
+        m.name?.toLowerCase().includes(q) ||
+        m.email?.toLowerCase().includes(q) ||
+        m.memberId?.toLowerCase().includes(q)
+    );
+  }, [members, searchTerm]);
 
-  // ImgBB Image Upload Handler
-  const handleImgBBUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const filteredPosts = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return posts;
+    return posts.filter(
+      (p) => p.title?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)
+    );
+  }, [posts, searchTerm]);
 
-    setUploadingImage(true);
-    try {
-      const url = await uploadImageToImgBB(file);
-      setUploadedImageUrl(url);
-      setEventValue("image", url);
-      Swal.fire({
-        title: "Image Uploaded!",
-        text: "Image uploaded to ImgBB and URL generated successfully.",
-        icon: "success",
-        background: "#03070E",
-        color: "#fff",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-      });
-    } catch (err: any) {
-      Swal.fire({
-        title: "Upload Failed",
-        text: err.message || "Failed to upload image to ImgBB.",
-        icon: "error",
-        background: "#03070E",
-        color: "#fff",
-      });
-    } finally {
-      setUploadingImage(false);
-    }
-  };
+  const filteredEvents = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return events;
+    return events.filter(
+      (e) => e.title?.toLowerCase().includes(q) || e.type?.toLowerCase().includes(q)
+    );
+  }, [events, searchTerm]);
 
-  // Toggle Member / Admin Role
-  const handleToggleRole = async (member: any) => {
-    const recordKey = member._id || member.id || member.memberId || member.email;
-    const currentRole = (member.role || "member").toLowerCase();
-    const newRole = currentRole === "admin" ? "member" : "admin";
-    const actionText = newRole === "admin" ? "Promote to Admin" : "Demote to Member";
+  const filteredAnnouncements = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return announcements;
+    return announcements.filter(
+      (a) => a.title?.toLowerCase().includes(q) || a.category?.toLowerCase().includes(q)
+    );
+  }, [announcements, searchTerm]);
 
-    const result = await Swal.fire({
-      title: `${actionText}?`,
-      text: `Are you sure you want to change ${member.name || member.displayName}'s role to ${newRole.toUpperCase()}?`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: newRole === "admin" ? "#10b981" : "#f59e0b",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: `Yes, ${actionText}`,
-      background: "#03070E",
-      color: "#fff",
-    });
+  const filteredGallery = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return gallery;
+    return gallery.filter(
+      (g) => g.title?.toLowerCase().includes(q) || g.category?.toLowerCase().includes(q)
+    );
+  }, [gallery, searchTerm]);
 
-    if (result.isConfirmed) {
-      try {
-        await axiosSecure.patch(`/api/members/${recordKey}`, { role: newRole });
-        fetchAdminData();
-        Swal.fire({
-          title: "Role Updated!",
-          text: `${member.name || member.displayName} is now a ${newRole.toUpperCase()}.`,
-          icon: "success",
-          background: "#03070E",
-          color: "#fff",
-        });
-      } catch (err: any) {
-        Swal.fire({
-          title: "Error!",
-          text: err.message || "Failed to update role.",
-          icon: "error",
-          background: "#03070E",
-          color: "#fff",
-        });
-      }
-    }
-  };
+  const filteredPayments = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return payments;
+    return payments.filter(
+      (p) =>
+        p.memberName?.toLowerCase().includes(q) ||
+        p.memberEmail?.toLowerCase().includes(q) ||
+        p.month?.toLowerCase().includes(q) ||
+        p.transactionId?.toLowerCase().includes(q) ||
+        p.status?.toLowerCase().includes(q)
+    );
+  }, [payments, searchTerm]);
 
-  // Approve Member
-  const handleUpdateStatus = async (id: string, status: string) => {
-    const result = await Swal.fire({
-      title: "Approve Member?",
-      text: `Are you sure you want to activate status for this member?`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#10b981",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Yes, Approve",
-      background: "#03070E",
-      color: "#fff",
-    });
+  const filteredAttendance = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return attendance;
+    return attendance.filter(
+      (a) =>
+        a.memberName?.toLowerCase().includes(q) ||
+        a.memberEmail?.toLowerCase().includes(q) ||
+        a.topic?.toLowerCase().includes(q) ||
+        a.date?.toLowerCase().includes(q) ||
+        a.status?.toLowerCase().includes(q)
+    );
+  }, [attendance, searchTerm]);
 
-    if (result.isConfirmed) {
-      try {
-        await axiosSecure.patch(`/api/members/${id}`, { status });
-        fetchAdminData();
-        Swal.fire({
-          title: "Approved!",
-          text: `Member status updated to ${status}.`,
-          icon: "success",
-          background: "#03070E",
-          color: "#fff",
-        });
-      } catch (err: any) {
-        Swal.fire({
-          title: "Error!",
-          text: err.message || "Failed to update member status.",
-          icon: "error",
-          background: "#03070E",
-          color: "#fff",
-        });
-      }
-    }
-  };
+  const filteredEventRegistrations = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return eventRegistrations;
+    return eventRegistrations.filter(
+      (r) =>
+        r.eventTitle?.toLowerCase().includes(q) ||
+        r.memberName?.toLowerCase().includes(q) ||
+        r.memberEmail?.toLowerCase().includes(q) ||
+        r.status?.toLowerCase().includes(q)
+    );
+  }, [eventRegistrations, searchTerm]);
 
-  // Delete Handlers
-  const handleDeleteMember = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Delete Member?",
-      text: "This member record will be permanently deleted!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Yes, Delete",
-      background: "#03070E",
-      color: "#fff",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        if (props.onDeleteMember) {
-          await props.onDeleteMember(id);
-        } else {
-          await axiosSecure.delete(`/api/members/${id}`);
-          fetchAdminData();
-        }
-        Swal.fire({ title: "Deleted!", text: "Member deleted.", icon: "success", background: "#03070E", color: "#fff" });
-      } catch (err: any) {
-        Swal.fire({ title: "Error!", text: err.message, icon: "error", background: "#03070E", color: "#fff" });
-      }
-    }
-  };
-
-  const handleDeletePost = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Delete Post?",
-      text: "Are you sure you want to remove this post?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Yes, Delete",
-      background: "#03070E",
-      color: "#fff",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        if (props.onDeletePost) {
-          await props.onDeletePost(id);
-        } else {
-          await axiosSecure.delete(`/api/posts/${id}`);
-          fetchAdminData();
-        }
-        Swal.fire({ title: "Deleted!", text: "Post removed.", icon: "success", background: "#03070E", color: "#fff" });
-      } catch (err: any) {
-        Swal.fire({ title: "Error!", text: err.message, icon: "error", background: "#03070E", color: "#fff" });
-      }
-    }
-  };
-
-  const handleDeleteEvent = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Delete Event?",
-      text: "Are you sure you want to remove this event?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Yes, Delete",
-      background: "#03070E",
-      color: "#fff",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        if (props.onDeleteEvent) {
-          await props.onDeleteEvent(id);
-        } else {
-          await axiosSecure.delete(`/api/events/${id}`);
-          fetchAdminData();
-        }
-        Swal.fire({ title: "Deleted!", text: "Event removed.", icon: "success", background: "#03070E", color: "#fff" });
-      } catch (err: any) {
-        Swal.fire({ title: "Error!", text: err.message, icon: "error", background: "#03070E", color: "#fff" });
-      }
-    }
-  };
-
-  const handleDeleteAnnouncement = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Delete Announcement?",
-      text: "Are you sure you want to remove this announcement?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Yes, Delete",
-      background: "#03070E",
-      color: "#fff",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        if (props.onDeleteAnnouncement) {
-          await props.onDeleteAnnouncement(id);
-        } else if (props.onDeleteNotice) {
-          await props.onDeleteNotice(id);
-        } else {
-          await axiosSecure.delete(`/api/announcements/${id}`);
-          fetchAdminData();
-        }
-        Swal.fire({ title: "Deleted!", text: "Announcement removed.", icon: "success", background: "#03070E", color: "#fff" });
-      } catch (err: any) {
-        Swal.fire({ title: "Error!", text: err.message, icon: "error", background: "#03070E", color: "#fff" });
-      }
-    }
-  };
-
-  const handleDeleteGallery = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Delete Gallery Image?",
-      text: "Are you sure you want to remove this image?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Yes, Delete",
-      background: "#03070E",
-      color: "#fff",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        if (props.onDeleteGallery) {
-          await props.onDeleteGallery(id);
-        } else {
-          await axiosSecure.delete(`/api/gallery/${id}`);
-          fetchAdminData();
-        }
-        Swal.fire({ title: "Deleted!", text: "Image removed.", icon: "success", background: "#03070E", color: "#fff" });
-      } catch (err: any) {
-        Swal.fire({ title: "Error!", text: err.message, icon: "error", background: "#03070E", color: "#fff" });
-      }
-    }
-  };
-
-  // React Hook Form Submit Handlers
-  const onPostSubmit = async (data: any) => {
-    try {
-      await axiosSecure.post("/api/posts", {
-        title: data.title,
-        category: data.category || "General",
-        content: data.content,
-        author: adminName,
-        date: new Date().toLocaleDateString()
-      });
-      resetPostForm();
-      fetchAdminData();
-      Swal.fire({ title: "Published!", text: "Post created successfully.", icon: "success", background: "#03070E", color: "#fff" });
-      handleNavigatePath("posts");
-    } catch (err: any) {
-      Swal.fire({ title: "Error!", text: err.message || "Failed to create post.", icon: "error", background: "#03070E", color: "#fff" });
-    }
-  };
-
-  const onEventSubmit = async (data: any) => {
-    try {
-      // Parse Calendar datetime-local
-      const eventDateTime = data.eventDateTime ? new Date(data.eventDateTime) : null;
-      const formattedDate = eventDateTime
-        ? eventDateTime.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-        : "TBD";
-      const formattedTime = eventDateTime
-        ? eventDateTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-        : "10:00 AM";
-
-      await axiosSecure.post("/api/events", {
-        title: data.title,
-        type: data.type || "Workshop",
-        date: formattedDate,
-        time: formattedTime,
-        location: data.location || selectedMapLocation,
-        image: uploadedImageUrl || data.image || "https://images.unsplash.com/photo-1597733336794-12d05021d510?auto=format&fit=crop&w=600&q=80",
-        description: data.description || ""
-      });
-
-      resetEventForm();
-      setUploadedImageUrl("");
-      fetchAdminData();
-      Swal.fire({ title: "Created!", text: "Event scheduled successfully with ImgBB image & calendar time.", icon: "success", background: "#03070E", color: "#fff" });
-      handleNavigatePath("events");
-    } catch (err: any) {
-      Swal.fire({ title: "Error!", text: err.message || "Failed to create event.", icon: "error", background: "#03070E", color: "#fff" });
-    }
-  };
-
-  const onAnnouncementSubmit = async (data: any) => {
-    try {
-      await axiosSecure.post("/api/announcements", {
-        title: data.title,
-        category: data.category || "Notice",
-        content: data.content,
-        date: new Date().toLocaleDateString()
-      });
-      resetAnnForm();
-      fetchAdminData();
-      Swal.fire({ title: "Posted!", text: "Announcement posted successfully.", icon: "success", background: "#03070E", color: "#fff" });
-      handleNavigatePath("announcements");
-    } catch (err: any) {
-      Swal.fire({ title: "Error!", text: err.message || "Failed to post announcement.", icon: "error", background: "#03070E", color: "#fff" });
-    }
-  };
-
-  const onGallerySubmit = async (data: any) => {
-    try {
-      await axiosSecure.post("/api/gallery", {
-        title: data.title,
-        imageUrl: uploadedImageUrl || data.imageUrl,
-        category: data.category || "Workshop",
-        date: new Date().toLocaleDateString()
-      });
-      resetGalForm();
-      setUploadedImageUrl("");
-      fetchAdminData();
-      Swal.fire({ title: "Uploaded!", text: "Media item added to gallery.", icon: "success", background: "#03070E", color: "#fff" });
-      handleNavigatePath("gallery");
-    } catch (err: any) {
-      Swal.fire({ title: "Error!", text: err.message || "Failed to upload image.", icon: "error", background: "#03070E", color: "#fff" });
-    }
-  };
+  // counts
+  const totalMembers = members.length;
+  const activeMembers = members.filter(
+    (m) => m.status === "active" || m.status === "Active" || m.status === "approved"
+  ).length;
+  const pendingApprovals = members.filter(
+    (m) => m.status === "pending" || m.status === "Pending"
+  ).length;
 
   const isBn = appSettings.language === "bn";
 
+  // form submitters ---------------------------------------------------
+  const submitPost = async () => {
+    if (!postForm.title || !postForm.content) {
+      swalError("Please fill in title and content.");
+      return;
+    }
+    setFormSubmitting(true);
+    try {
+      await axiosSecure.post("/api/posts", {
+        title: postForm.title,
+        category: postForm.category || "General",
+        content: postForm.content,
+        author: adminName,
+        date: new Date().toLocaleDateString(),
+      });
+      setPostForm({ title: "", category: "General", content: "" });
+      setPostDialogOpen(false);
+      fetchAdminData();
+      toastSuccess("Post published");
+    } catch (err: any) {
+      swalError(err.message || "Failed to create post.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const submitEvent = async () => {
+    if (!eventForm.title || !eventForm.eventDateTime) {
+      swalError("Please fill in title and date/time.");
+      return;
+    }
+    setFormSubmitting(true);
+    try {
+      const dt = new Date(eventForm.eventDateTime);
+      const formattedDate = dt.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      const formattedTime = dt.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      await axiosSecure.post("/api/events", {
+        title: eventForm.title,
+        type: eventForm.type || "Workshop",
+        date: formattedDate,
+        time: formattedTime,
+        location: eventForm.location,
+        image:
+          eventForm.image ||
+          "https://images.unsplash.com/photo-1597733336794-12d05021d510?auto=format&fit=crop&w=600&q=80",
+        description: eventForm.description || "",
+      });
+      setEventForm({
+        title: "",
+        type: "Workshop",
+        eventDateTime: "",
+        location: "CSE Lab 1, JSTU Campus",
+        description: "",
+        image: "",
+      });
+      setEventDialogOpen(false);
+      fetchAdminData();
+      toastSuccess("Event created");
+    } catch (err: any) {
+      swalError(err.message || "Failed to create event.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const submitAnnouncement = async () => {
+    if (!annForm.title || !annForm.content) {
+      swalError("Please fill in title and content.");
+      return;
+    }
+    setFormSubmitting(true);
+    try {
+      await axiosSecure.post("/api/announcements", {
+        title: annForm.title,
+        category: annForm.category || "Notice",
+        content: annForm.content,
+        date: new Date().toLocaleDateString(),
+      });
+      setAnnForm({ title: "", category: "Notice", content: "" });
+      setAnnDialogOpen(false);
+      fetchAdminData();
+      toastSuccess("Announcement posted");
+    } catch (err: any) {
+      swalError(err.message || "Failed to post announcement.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const submitGallery = async () => {
+    if (!galleryForm.title || !galleryForm.imageUrl) {
+      swalError("Please add a title and upload an image.");
+      return;
+    }
+    setFormSubmitting(true);
+    try {
+      await axiosSecure.post("/api/gallery", {
+        title: galleryForm.title,
+        imageUrl: galleryForm.imageUrl,
+        category: galleryForm.category || "Workshop",
+        date: new Date().toLocaleDateString(),
+      });
+      setGalleryForm({ title: "", category: "Workshop", imageUrl: "" });
+      setGalleryDialogOpen(false);
+      fetchAdminData();
+      toastSuccess("Uploaded to gallery");
+    } catch (err: any) {
+      swalError(err.message || "Failed to upload media.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#020408] text-slate-200 font-sans flex-1 flex flex-col min-w-0">
-      {/* Dark/Green Top Bar */}
-      <header className="h-16 bg-[#03070E] border-b border-emerald-500/20 px-6 sm:px-8 flex items-center justify-between shrink-0">
-        <h2 className="text-lg font-display font-extrabold text-white capitalize flex items-center space-x-2">
-          <span className="text-emerald-400 font-mono">{isBn ? "এডমিন পোর্টাল" : "Admin Portal"}</span>
+    <div className="min-h-screen bg-background text-foreground font-sans flex-1 flex flex-col min-w-0">
+      <header className="h-16 bg-card/60 backdrop-blur border-b border-border px-4 sm:px-8 flex items-center justify-between gap-4 shrink-0">
+        <h2 className="text-lg font-display font-extrabold text-foreground flex items-center gap-2 truncate">
+          <Shield className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-emerald-400 font-mono text-base">
+            {isBn ? "এডমিন পোর্টাল" : "Admin Portal"}
+          </span>
           {activeTab !== "overview" && activeTab !== "dashboard" && (
-            <span className="text-slate-500 font-mono text-sm"> &gt; {activeTab}</span>
+            <span className="text-muted-foreground font-mono text-sm">
+              &gt; {activeTab}
+            </span>
           )}
         </h2>
-
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-emerald-500/60" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={isBn ? "নেটওয়ার্ক রেকর্ড অনুসন্ধান করুন..." : "Search network records..."}
-              className="bg-[#020408] border border-emerald-500/20 text-xs text-white font-mono pl-9 pr-4 py-2 rounded-xl w-60 outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-600"
-            />
-          </div>
+        <div className="relative hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500/70" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={isBn ? "অনুসন্ধান করুন..." : "Search the network..."}
+            className="bg-background/40 border border-input focus:border-primary/60 text-xs text-foreground font-mono pl-9 pr-4 py-2 rounded-xl w-64 outline-none transition placeholder:text-muted-foreground"
+          />
         </div>
       </header>
 
-      {/* Dynamic Body Content */}
-      <div className="flex-1 p-6 sm:p-8 overflow-y-auto space-y-8">
-        {/* TAB 1: OVERVIEW / DASHBOARD */}
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8 admin-mesh">
         {(activeTab === "overview" || activeTab === "dashboard") && (
-          <div className="space-y-8 animate-fade-in">
-            {/* 4 Green Glow Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-2xl shadow-xl space-y-2 relative overflow-hidden">
-                <div className="text-xs font-bold text-slate-400 uppercase font-mono tracking-wider">{isBn ? "মোট সদস্য" : "Total Members"}</div>
-                <div className="text-3xl font-display font-extrabold text-emerald-400">{totalMembers}</div>
-                <div className="text-[10px] text-emerald-500 font-mono flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" /> +12% active database growth
-                </div>
-              </div>
-
-              <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-2xl shadow-xl space-y-2 relative overflow-hidden">
-                <div className="text-xs font-bold text-slate-400 uppercase font-mono tracking-wider">{isBn ? "অ্যাক্টিভ পোস্ট" : "Active Posts"}</div>
-                <div className="text-3xl font-display font-extrabold text-white">{posts.length}</div>
-                <div className="text-[10px] text-slate-500 font-mono">Published community posts</div>
-              </div>
-
-              <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-2xl shadow-xl space-y-2 relative overflow-hidden">
-                <div className="text-xs font-bold text-slate-400 uppercase font-mono tracking-wider">{isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}</div>
-                <div className="text-3xl font-display font-extrabold text-white">{events.length}</div>
-                <div className="text-[10px] text-slate-500 font-mono">Active workshops & seminars</div>
-              </div>
-
-              <div className="bg-[#03070E] border border-amber-500/30 p-6 rounded-2xl shadow-xl space-y-2 bg-amber-500/5 relative overflow-hidden">
-                <div className="text-xs font-bold text-amber-400 uppercase font-mono tracking-wider">{isBn ? "অনুমোদন অপেক্ষমাণ" : "Pending Approvals"}</div>
-                <div className="text-3xl font-display font-extrabold text-amber-400">{pendingApprovals}</div>
-                <div className="text-[10px] text-amber-500/80 font-mono">Action required for verification</div>
-              </div>
-            </div>
-
-            {/* Growth & Recharts preview card */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-8 bg-[#03070E] border border-emerald-500/20 p-6 rounded-3xl shadow-xl space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold text-white font-mono flex items-center space-x-2">
-                    <BarChart2 className="w-4 h-4 text-emerald-400" />
-                    <span>Member Growth Trend</span>
-                  </h3>
-                  <button
-                    onClick={() => handleNavigatePath("analytics")}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-xl transition-all font-mono"
-                  >
-                    <span>Full Recharts Analytics</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="h-64 w-full pt-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={memberGrowthData}>
-                      <defs>
-                        <linearGradient id="colorMembers" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="month" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                      <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area type="monotone" dataKey="members" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMembers)" name="Total Members" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div className="lg:col-span-4 bg-[#03070E] border border-emerald-500/20 p-6 rounded-3xl shadow-xl space-y-4">
-                <h3 className="text-sm font-bold text-white font-mono flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-emerald-400" />
-                  <span>Recent Registration Nodes</span>
-                </h3>
-                <div className="space-y-3">
-                  {members.slice(0, 4).map((m, idx) => (
-                    <div
-                      key={m.id || m._id || idx}
-                      className="flex items-center justify-between p-3 bg-[#020408] rounded-2xl border border-white/5"
-                    >
-                      <div>
-                        <h4 className="font-bold text-xs text-white">{m.name || m.displayName}</h4>
-                        <p className="text-[10px] text-slate-500 font-mono">{m.department || m.email || "CSE"}</p>
-                      </div>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50 animate-pulse"></span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <DashboardTab
+            totalMembers={totalMembers}
+            activeMembers={activeMembers}
+            pendingApprovals={pendingApprovals}
+            postsCount={posts.length}
+            eventsCount={events.length}
+            galleryCount={gallery.length}
+            announcementsCount={announcements.length}
+            members={members}
+            memberGrowthData={memberGrowthData}
+            eventMetricsData={eventMetricsData}
+            departmentData={departmentData}
+            colors={COLORS}
+            adminName={adminName}
+            adminEmail={adminEmail}
+            onGoMembers={() => navigateTab("members")}
+            onGoPosts={() => navigateTab("posts")}
+            onGoEvents={() => navigateTab("events")}
+            onGoAnnouncements={() => navigateTab("announcements")}
+            onGoAnalytics={() => navigateTab("analytics")}
+          />
         )}
 
-        {/* TAB 2: MEMBERS MANAGEMENT TABLE */}
         {activeTab === "members" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl overflow-hidden space-y-4 p-6">
-            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-              <h3 className="font-bold text-white text-base font-mono flex items-center space-x-2">
-                <Users className="w-5 h-5 text-emerald-400" />
-                <span>Club Members Database</span>
-              </h3>
-              <span className="text-xs font-mono text-emerald-400">Total Records: {members.length}</span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-[#020408] text-emerald-400 border-b border-emerald-500/20 uppercase text-[10px]">
-                  <tr>
-                    <th className="p-4">Member ID</th>
-                    <th className="p-4">Name & Email</th>
-                    <th className="p-4">Department</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {members
-                    .filter(
-                      (m) =>
-                        !searchTerm ||
-                        m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        m.email?.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((m) => {
-                      const recordKey = m._id || m.id || m.memberId || m.email;
-                      const isPending = m.status === "pending" || m.status === "Pending";
-                      const isAdminRole = (m.role || "").toLowerCase() === "admin";
-
-                      return (
-                        <tr key={recordKey} className="hover:bg-white/5 transition-colors">
-                          <td className="p-4 font-bold text-emerald-400">{m.memberId || m.id || "N/A"}</td>
-                          <td className="p-4">
-                            <div className="font-bold text-white font-sans">{m.name || m.displayName}</div>
-                            <div className="text-[10px] text-slate-500">{m.email}</div>
-                          </td>
-                          <td className="p-4 text-slate-300">{m.department || "N/A"}</td>
-                          <td className="p-4 uppercase text-[10px] font-bold">
-                            <span
-                              className={`px-2 py-0.5 rounded-md border ${
-                                isAdminRole
-                                  ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
-                                  : "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                              }`}
-                            >
-                              {m.role || "Member"}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase border ${
-                                !isPending
-                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                                  : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                              }`}
-                            >
-                              {m.status || "Pending"}
-                            </span>
-                          </td>
-                          <td className="p-4 text-right space-x-2">
-                            {isPending && (
-                              <button
-                                onClick={() => handleUpdateStatus(recordKey, "active")}
-                                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-[10px] transition-all shadow-md shadow-emerald-600/20"
-                              >
-                                Approve
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleToggleRole(m)}
-                              className={`px-3 py-1 font-bold rounded-xl text-[10px] transition-all border ${
-                                isAdminRole
-                                  ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/30"
-                                  : "bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border-purple-500/30"
-                              }`}
-                              title={isAdminRole ? "Demote to Member" : "Promote to Admin"}
-                            >
-                              {isAdminRole ? "Make Member" : "Make Admin"}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(recordKey)}
-                              className="px-3 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold rounded-xl text-[10px] transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <MembersTab
+            members={filteredMembers}
+            totalCount={members.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onApprove={(id) => handleUpdateStatus(id, "active")}
+            onToggleRole={handleToggleRole}
+            onDelete={(id) => handleDelete("member", id, props.onDeleteMember)}
+          />
         )}
 
-        {/* TAB 3: POSTS MANAGEMENT */}
         {activeTab === "posts" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 space-y-6">
-            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-              <h3 className="font-bold text-white text-base font-mono flex items-center space-x-2">
-                <FileText className="w-5 h-5 text-emerald-400" />
-                <span>Club Posts Management</span>
-              </h3>
-              <button
-                onClick={() => handleNavigatePath("create-post")}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 font-mono"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Post</span>
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {posts.map((p) => {
-                const pId = p._id || p.id;
-                return (
-                  <div
-                    key={pId}
-                    className="p-4 bg-[#020408] border border-white/10 rounded-2xl flex justify-between items-center"
-                  >
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-white text-sm font-sans">{p.title}</h4>
-                      <p className="text-[10px] text-slate-400 font-mono">
-                        Category: <span className="text-emerald-400">{p.category || "General"}</span> | Author: {p.author || "Admin"} | Date: {p.date || "Recent"}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-[10px] rounded-lg">
-                        Published
-                      </span>
-                      <button
-                        onClick={() => handleDeletePost(pId)}
-                        className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <PostsTab
+            posts={filteredPosts}
+            totalCount={posts.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCreate={() => setPostDialogOpen(true)}
+            onDelete={(id) => handleDelete("post", id, props.onDeletePost)}
+          />
         )}
 
-        {/* DEDICATED FORM PAGE: CREATE POST (React Hook Form) */}
-        {activeTab === "create-post" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 sm:p-8 space-y-6 max-w-3xl mx-auto animate-fade-in">
-            <button
-              onClick={() => handleNavigatePath("posts")}
-              className="flex items-center space-x-2 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Posts List</span>
-            </button>
-
-            <h3 className="font-extrabold text-white text-lg font-mono pb-2 border-b border-white/5">
-              Create New Article / Post
-            </h3>
-
-            <form onSubmit={handlePostSubmit(onPostSubmit)} className="space-y-5 font-mono text-xs">
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Post Title *</label>
-                <input
-                  type="text"
-                  {...regPost("title", { required: true })}
-                  placeholder="e.g. Getting Started with OSPF Protocol"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Category</label>
-                <input
-                  type="text"
-                  {...regPost("category")}
-                  placeholder="e.g. Tutorial, Routing, Security"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Post Content *</label>
-                <textarea
-                  rows={6}
-                  {...regPost("content", { required: true })}
-                  placeholder="Write the detailed content here..."
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 resize-y font-mono"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => handleNavigatePath("posts")}
-                  className="px-5 py-2.5 bg-slate-900 text-slate-400 font-bold rounded-xl hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Publish Article</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* TAB 4: EVENTS MANAGEMENT */}
         {activeTab === "events" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 space-y-6">
-            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-              <h3 className="font-bold text-white text-base font-mono flex items-center space-x-2">
-                <Calendar className="w-5 h-5 text-emerald-400" />
-                <span>Manage Club Events</span>
-              </h3>
-              <button
-                onClick={() => handleNavigatePath("create-event")}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 font-mono"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Event</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {events.map((ev) => {
-                const evId = ev._id || ev.id;
-                return (
-                  <div key={evId} className="p-5 bg-[#020408] border border-white/10 rounded-2xl space-y-3">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[9px] uppercase font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold rounded">
-                        {ev.type || "Workshop"}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteEvent(evId)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <h4 className="font-bold text-white text-sm">{ev.title}</h4>
-                    <p className="text-xs text-slate-400 font-mono">
-                      📅 {ev.date || "TBD"} {ev.time && `at ${ev.time}`} | 📍 {ev.location || "Campus Lab"}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <EventsTab
+            events={filteredEvents}
+            totalCount={events.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCreate={() => setEventDialogOpen(true)}
+            onDelete={(id) => handleDelete("event", id, props.onDeleteEvent)}
+          />
         )}
 
-        {/* DEDICATED FORM PAGE: CREATE EVENT (React Hook Form + ImgBB Upload + Calendar + Map Picker) */}
-        {activeTab === "create-event" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 sm:p-8 space-y-6 max-w-3xl mx-auto animate-fade-in">
-            <button
-              onClick={() => handleNavigatePath("events")}
-              className="flex items-center space-x-2 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Events List</span>
-            </button>
-
-            <h3 className="font-extrabold text-white text-lg font-mono pb-2 border-b border-white/5">
-              Schedule New Club Event
-            </h3>
-
-            <form onSubmit={handleEventSubmit(onEventSubmit)} className="space-y-5 font-mono text-xs">
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Event Title *</label>
-                <input
-                  type="text"
-                  {...regEvent("title", { required: true })}
-                  placeholder="e.g. MikroTik Router Configuration Hands-on"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1.5 uppercase">Event Type</label>
-                  <select
-                    {...regEvent("type")}
-                    className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono cursor-pointer"
-                  >
-                    <option value="Workshop">Workshop</option>
-                    <option value="Webinar">Webinar</option>
-                    <option value="Seminar">Seminar</option>
-                    <option value="Bootcamp">Bootcamp</option>
-                  </select>
-                </div>
-
-                {/* Calendar & Time Picker */}
-                <div>
-                  <label className="block text-slate-400 font-bold mb-1.5 uppercase flex items-center space-x-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Select Date & Time (Calendar Picker) *</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    {...regEvent("eventDateTime", { required: true })}
-                    className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              {/* ImgBB File Upload Selector */}
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase flex items-center space-x-1.5">
-                  <Upload className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Event Cover Image (Upload to ImgBB from PC)</span>
-                </label>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <label className="w-full sm:w-auto px-4 py-3 bg-[#020408] border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 font-bold rounded-xl cursor-pointer flex items-center justify-center space-x-2 transition-all">
-                    {uploadingImage ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-                    ) : (
-                      <Upload className="w-4 h-4" />
-                    )}
-                    <span>{uploadingImage ? "Uploading to ImgBB..." : "Choose Image File"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImgBBUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  {uploadedImageUrl && (
-                    <div className="flex items-center space-x-2 text-emerald-400 text-xs truncate max-w-xs bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
-                      <ImageIcon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{uploadedImageUrl}</span>
-                    </div>
-                  )}
-                </div>
-                {/* Auto Generated ImgBB Preview */}
-                {uploadedImageUrl && (
-                  <div className="mt-2 h-32 w-full max-w-sm rounded-xl overflow-hidden border border-emerald-500/30 bg-slate-950">
-                    <img src={uploadedImageUrl} alt="Uploaded Event Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-
-              {/* Interactive Location / Map Selector */}
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Location / Venue (Map Picker)</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsMapPreviewOpen(!isMapPreviewOpen)}
-                    className="text-[10px] text-emerald-400 underline flex items-center space-x-1"
-                  >
-                    <Compass className="w-3.5 h-3.5" />
-                    <span>{isMapPreviewOpen ? "Hide Campus Map" : "Open Campus Map"}</span>
-                  </button>
-                </label>
-
-                <div className="space-y-2">
-                  <select
-                    value={selectedMapLocation}
-                    onChange={(e) => {
-                      setSelectedLocation(e.target.value);
-                      setEventValue("location", e.target.value);
-                    }}
-                    className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono cursor-pointer"
-                  >
-                    <option value="CSE Lab 1, JSTU Campus">CSE Lab 1, JSTU Campus</option>
-                    <option value="CSE Lab 2, JSTU Campus">CSE Lab 2, JSTU Campus</option>
-                    <option value="Central Auditorium, JSTU">Central Auditorium, JSTU</option>
-                    <option value="Seminar Hall, Academic Building">Seminar Hall, Academic Building</option>
-                    <option value="Online (Google Meet / Zoom)">Online (Google Meet / Zoom)</option>
-                  </select>
-
-                  <input
-                    type="text"
-                    {...regEvent("location")}
-                    defaultValue={selectedMapLocation}
-                    placeholder="Custom Location / Online Link"
-                    className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                  />
-                </div>
-
-                {/* OpenStreetMap Interactive JSTU Campus Map Preview */}
-                {isMapPreviewOpen && (
-                  <div className="mt-3 rounded-2xl overflow-hidden border border-emerald-500/30 h-56 bg-slate-950">
-                    <iframe
-                      title="JSTU Campus Map"
-                      width="100%"
-                      height="100%"
-                      frameBorder="0"
-                      scrolling="no"
-                      marginHeight={0}
-                      marginWidth={0}
-                      src="https://www.openstreetmap.org/export/embed.html?bbox=89.1200%2C23.2300%2C89.1300%2C23.2400&amp;layer=mapnik&amp;marker=23.2333%2C89.1234"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => handleNavigatePath("events")}
-                  className="px-5 py-2.5 bg-slate-900 text-slate-400 font-bold rounded-xl hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploadingImage}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Create Event</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* TAB 5: ANNOUNCEMENTS */}
         {activeTab === "announcements" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 space-y-6">
-            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-              <h3 className="font-bold text-white text-base font-mono flex items-center space-x-2">
-                <Bell className="w-5 h-5 text-emerald-400" />
-                <span>Official Announcements</span>
-              </h3>
-              <button
-                onClick={() => handleNavigatePath("create-announcement")}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 font-mono"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Announcement</span>
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {announcements.map((a) => {
-                const aId = a._id || a.id;
-                return (
-                  <div key={aId} className="p-4 bg-[#020408] border border-white/10 rounded-2xl flex justify-between items-center">
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold uppercase font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded">
-                        {a.category || "Notice"}
-                      </span>
-                      <h4 className="font-bold text-white text-sm font-sans">{a.title}</h4>
-                      <p className="text-xs text-slate-400">{a.content || a.description || "No detail provided."}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteAnnouncement(aId)}
-                      className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <AnnouncementsTab
+            announcements={filteredAnnouncements}
+            totalCount={announcements.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCreate={() => setAnnDialogOpen(true)}
+            onDelete={(id) =>
+              handleDelete(
+                "announcement",
+                id,
+                props.onDeleteAnnouncement || props.onDeleteNotice
+              )
+            }
+          />
         )}
 
-        {/* DEDICATED FORM PAGE: CREATE ANNOUNCEMENT (React Hook Form) */}
-        {activeTab === "create-announcement" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 sm:p-8 space-y-6 max-w-3xl mx-auto animate-fade-in">
-            <button
-              onClick={() => handleNavigatePath("announcements")}
-              className="flex items-center space-x-2 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Announcements List</span>
-            </button>
-
-            <h3 className="font-extrabold text-white text-lg font-mono pb-2 border-b border-white/5">
-              Post Official Notice / Announcement
-            </h3>
-
-            <form onSubmit={handleAnnSubmit(onAnnouncementSubmit)} className="space-y-5 font-mono text-xs">
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Title *</label>
-                <input
-                  type="text"
-                  {...regAnn("title", { required: true })}
-                  placeholder="e.g. Annual Picnic Registration Open"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Category</label>
-                <input
-                  type="text"
-                  {...regAnn("category")}
-                  placeholder="e.g. Notice, Urgent, General"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Announcement Details *</label>
-                <textarea
-                  rows={5}
-                  {...regAnn("content", { required: true })}
-                  placeholder="Enter notice details..."
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 resize-y font-mono"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => handleNavigatePath("announcements")}
-                  className="px-5 py-2.5 bg-slate-900 text-slate-400 font-bold rounded-xl hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Post Notice</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* TAB 6: GALLERY */}
         {activeTab === "gallery" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 space-y-6">
-            <div className="flex justify-between items-center pb-2 border-b border-white/5">
-              <h3 className="font-bold text-white text-base font-mono flex items-center space-x-2">
-                <ImageIcon className="w-5 h-5 text-emerald-400" />
-                <span>Club Gallery Control</span>
-              </h3>
-              <button
-                onClick={() => handleNavigatePath("create-gallery")}
-                className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 font-mono"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Upload Media</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {gallery.length > 0 ? (
-                gallery.map((g, idx) => (
-                  <div key={g._id || g.id || idx} className="bg-[#020408] border border-white/10 rounded-2xl overflow-hidden p-3 space-y-2">
-                    <div className="h-36 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-white/5">
-                      {g.imageUrl || g.url ? (
-                        <img src={g.imageUrl || g.url} alt={g.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <ImageIcon className="w-8 h-8 text-slate-600" />
-                      )}
-                    </div>
-                    <div className="flex justify-between items-center pt-1">
-                      <span className="text-xs font-bold text-white truncate">{g.title || "Club Media"}</span>
-                      <button
-                        onClick={() => handleDeleteGallery(g._id || g.id)}
-                        className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full p-8 text-center text-xs font-mono text-slate-500 bg-[#020408] rounded-2xl border border-white/5">
-                  No gallery images uploaded yet.
-                </div>
-              )}
-            </div>
-          </div>
+          <GalleryTab
+            items={filteredGallery}
+            totalCount={gallery.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onCreate={() => setGalleryDialogOpen(true)}
+            onDelete={(id) => handleDelete("gallery", id, props.onDeleteGallery)}
+          />
         )}
 
-        {/* DEDICATED FORM PAGE: UPLOAD GALLERY MEDIA (React Hook Form + ImgBB) */}
-        {activeTab === "create-gallery" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 sm:p-8 space-y-6 max-w-3xl mx-auto animate-fade-in">
-            <button
-              onClick={() => handleNavigatePath("gallery")}
-              className="flex items-center space-x-2 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Gallery</span>
-            </button>
-
-            <h3 className="font-extrabold text-white text-lg font-mono pb-2 border-b border-white/5">
-              Upload Gallery Media
-            </h3>
-
-            <form onSubmit={handleGalSubmit(onGallerySubmit)} className="space-y-5 font-mono text-xs">
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Media Title *</label>
-                <input
-                  type="text"
-                  {...regGal("title", { required: true })}
-                  placeholder="e.g. CCNA Hands-on Workshop 2026"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase flex items-center space-x-1.5">
-                  <Upload className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Upload Image File to ImgBB (Auto Generates URL)</span>
-                </label>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <label className="w-full sm:w-auto px-4 py-3 bg-[#020408] border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 font-bold rounded-xl cursor-pointer flex items-center justify-center space-x-2 transition-all">
-                    {uploadingImage ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-                    ) : (
-                      <Upload className="w-4 h-4" />
-                    )}
-                    <span>{uploadingImage ? "Uploading to ImgBB..." : "Select File From PC"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImgBBUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <input
-                    type="url"
-                    {...regGal("imageUrl")}
-                    value={uploadedImageUrl}
-                    onChange={(e) => setUploadedImageUrl(e.target.value)}
-                    placeholder="Auto-generated URL or enter custom https://..."
-                    className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                  />
-                </div>
-                {/* ImgBB Preview */}
-                {uploadedImageUrl && (
-                  <div className="mt-2 h-36 w-full max-w-sm rounded-xl overflow-hidden border border-emerald-500/30 bg-slate-950">
-                    <img src={uploadedImageUrl} alt="ImgBB Media Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-bold mb-1.5 uppercase">Category</label>
-                <input
-                  type="text"
-                  {...regGal("category")}
-                  placeholder="e.g. Workshop, Seminar, Lab Session"
-                  className="w-full bg-[#020408] border border-emerald-500/30 text-white p-3 rounded-xl outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => handleNavigatePath("gallery")}
-                  className="px-5 py-2.5 bg-slate-900 text-slate-400 font-bold rounded-xl hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploadingImage}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Upload Media</span>
-                </button>
-              </div>
-            </form>
-          </div>
+        {activeTab === "payments" && (
+          <PaymentsTab
+            payments={filteredPayments}
+            totalCount={payments.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCreate={() => undefined}
+            onApprove={(id) =>
+              props.onApprovePayment
+                ? props.onApprovePayment(id)
+                : axiosSecure
+                    .patch(`/api/payments/${id}`, { status: "approved" })
+                    .then(() => fetchAdminData())
+                    .then(() => toastSuccess("Payment approved"))
+                    .catch((err) => swalError(err.message))
+            }
+            onReject={(id) =>
+              props.onRejectPayment
+                ? props.onRejectPayment(id)
+                : axiosSecure
+                    .patch(`/api/payments/${id}`, { status: "rejected" })
+                    .then(() => fetchAdminData())
+                    .then(() => toastSuccess("Payment rejected"))
+                    .catch((err) => swalError(err.message))
+            }
+            onDelete={(id) => handleDelete("payment", id, props.onDeletePayment)}
+          />
         )}
 
-        {/* TAB 7: ANALYTICS */}
+        {activeTab === "attendance" && (
+          <AttendanceTab
+            attendance={filteredAttendance}
+            totalCount={attendance.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCreate={() => undefined}
+            onEdit={(rec) => {
+              if (props.onEditAttendance) {
+                props.onEditAttendance(rec._id || rec.id, rec.status);
+              } else {
+                const newStatus = rec.status === "Present" ? "Absent" : "Present";
+                axiosSecure
+                  .patch(`/api/attendance/${rec._id || rec.id}`, { status: newStatus })
+                  .then(() => fetchAdminData())
+                  .then(() => toastSuccess(`Status: ${newStatus}`))
+                  .catch((err) => swalError(err.message));
+              }
+            }}
+            onDelete={(id) => handleDelete("attendance", id, props.onDeleteAttendance)}
+          />
+        )}
+
+        {activeTab === "registrations" && (
+          <EventRegistrationsTab
+            eventRegistrations={filteredEventRegistrations}
+            totalCount={eventRegistrations.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCancel={(id) => {
+              if (props.onCancelRegistration) {
+                props.onCancelRegistration(id);
+              } else {
+                axiosSecure
+                  .patch(`/api/event-registrations/${id}`, { status: "cancelled" })
+                  .then(() => fetchAdminData())
+                  .then(() => toastSuccess("Registration cancelled"))
+                  .catch((err) => swalError(err.message));
+              }
+            }}
+            onDelete={(id) =>
+              handleDelete("registration", id, props.onDeleteRegistration)
+            }
+          />
+        )}
+
         {activeTab === "analytics" && (
-          <div className="space-y-8 animate-fade-in">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-2xl shadow-xl space-y-2">
-                <div className="text-xs font-bold text-slate-400 uppercase font-mono">Engagement Index</div>
-                <div className="text-3xl font-display font-extrabold text-emerald-400">84.2%</div>
-                <p className="text-[10px] text-emerald-500 font-mono">High member retention</p>
-              </div>
-              <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-2xl shadow-xl space-y-2">
-                <div className="text-xs font-bold text-slate-400 uppercase font-mono">Event Attendance Rate</div>
-                <div className="text-3xl font-display font-extrabold text-blue-400">92.0%</div>
-                <p className="text-[10px] text-blue-400/80 font-mono">Workshop & Webinar participation</p>
-              </div>
-              <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-2xl shadow-xl space-y-2">
-                <div className="text-xs font-bold text-slate-400 uppercase font-mono">System Active Nodes</div>
-                <div className="text-3xl font-display font-extrabold text-purple-400">{members.length}</div>
-                <p className="text-[10px] text-purple-400/80 font-mono">Verified club members</p>
-              </div>
-            </div>
-
-            {/* Recharts Grid 1: AreaChart & BarChart */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Member Growth AreaChart */}
-              <div className="lg:col-span-7 bg-[#03070E] border border-emerald-500/20 p-6 rounded-3xl shadow-xl space-y-4">
-                <h3 className="text-sm font-bold text-white font-mono flex items-center space-x-2">
-                  <BarChart2 className="w-4 h-4 text-emerald-400" />
-                  <span>Member Growth & Active Nodes (Recharts)</span>
-                </h3>
-                <div className="h-72 w-full pt-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={memberGrowthData}>
-                      <defs>
-                        <linearGradient id="colorAreaMembers" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                        </linearGradient>
-                        <linearGradient id="colorAreaActive" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="month" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                      <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'monospace' }} />
-                      <Area type="monotone" dataKey="members" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorAreaMembers)" name="Total Members" />
-                      <Area type="monotone" dataKey="active" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorAreaActive)" name="Active Nodes" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Event Attendance BarChart */}
-              <div className="lg:col-span-5 bg-[#03070E] border border-emerald-500/20 p-6 rounded-3xl shadow-xl space-y-4">
-                <h3 className="text-sm font-bold text-white font-mono flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-emerald-400" />
-                  <span>Event Registrations vs Attendance</span>
-                </h3>
-                <div className="h-72 w-full pt-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={eventMetricsData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                      <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'monospace' }} />
-                      <Bar dataKey="registrations" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Registrations" />
-                      <Bar dataKey="attendees" fill="#10b981" radius={[4, 4, 0, 0]} name="Attendees" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Recharts Grid 2: Department Breakdown Donut PieChart */}
-            <div className="bg-[#03070E] border border-emerald-500/20 p-6 rounded-3xl shadow-xl space-y-4">
-              <h3 className="text-sm font-bold text-white font-mono flex items-center space-x-2">
-                <Users className="w-4 h-4 text-emerald-400" />
-                <span>Department Breakdown Analytics</span>
-              </h3>
-              <div className="h-72 w-full flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={departmentData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {departmentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'monospace' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
+          <AnalyticsTab
+            totalMembers={totalMembers}
+            activeMembers={activeMembers}
+            memberGrowthData={memberGrowthData}
+            eventMetricsData={eventMetricsData}
+            departmentData={departmentData}
+            colors={COLORS}
+          />
         )}
 
-        {/* TAB 8: SETTINGS */}
         {activeTab === "settings" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 sm:p-8 space-y-8 max-w-3xl font-mono text-xs">
-            <div className="flex justify-between items-center pb-4 border-b border-white/5">
-              <div>
-                <h3 className="font-extrabold text-white text-base flex items-center space-x-2">
-                  <Sliders className="w-5 h-5 text-emerald-400" />
-                  <span>{isBn ? "পোর্টাল সিস্টেম কনফিগারেশন" : "System & Portal Configuration"}</span>
-                </h3>
-                <p className="text-[10px] text-slate-500 mt-1">
-                  {isBn ? "গ্লোবাল এক্সেস, নোটিফিকেশন এবং ইন্টারফেস ভাষা সেটিংস" : "Manage global access, language, and system preferences."}
-                </p>
-              </div>
-              <button
-                onClick={handleSaveSettings}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isBn ? "সেভ করুন" : "Save Changes"}</span>
-              </button>
-            </div>
-
-            {/* Language & Regional Settings */}
-            <div className="space-y-4">
-              <h4 className="font-bold text-emerald-400 text-xs flex items-center space-x-2 uppercase tracking-wider">
-                <Globe className="w-4 h-4" />
-                <span>{isBn ? "ভাষা নির্বাচন (Language & Locale)" : "Localization & Language"}</span>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div
-                  onClick={() => setAppSettings({ ...appSettings, language: "en" })}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                    appSettings.language === "en"
-                      ? "bg-emerald-500/10 border-emerald-500 text-white shadow-md shadow-emerald-500/10"
-                      : "bg-[#020408] border-white/10 text-slate-400 hover:border-white/20"
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="font-bold text-sm">English</span>
-                    <span className="text-[10px] text-slate-500">(US Standard)</span>
-                  </div>
-                  {appSettings.language === "en" && <CheckCircle className="w-4 h-4 text-emerald-400" />}
-                </div>
-
-                <div
-                  onClick={() => setAppSettings({ ...appSettings, language: "bn" })}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                    appSettings.language === "bn"
-                      ? "bg-emerald-500/10 border-emerald-500 text-white shadow-md shadow-emerald-500/10"
-                      : "bg-[#020408] border-white/10 text-slate-400 hover:border-white/20"
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="font-bold text-sm font-sans">বাংলা</span>
-                    <span className="text-[10px] text-slate-500">(Bangla Native)</span>
-                  </div>
-                  {appSettings.language === "bn" && <CheckCircle className="w-4 h-4 text-emerald-400" />}
-                </div>
-              </div>
-            </div>
-
-            {/* Access Controls */}
-            <div className="space-y-4 pt-2">
-              <h4 className="font-bold text-emerald-400 text-xs flex items-center space-x-2 uppercase tracking-wider">
-                <Lock className="w-4 h-4" />
-                <span>{isBn ? "এক্সেস এবং সিকিউরিটি" : "Access & Security Control"}</span>
-              </h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-[#020408] rounded-2xl border border-white/10">
-                  <div>
-                    <div className="font-bold text-white">{isBn ? "পাবলিক রেজিস্ট্রেশন অনুমোদন" : "Allow Public Registration"}</div>
-                    <div className="text-[10px] text-slate-500">{isBn ? "নতুন শিক্ষার্থীদের পোর্টাল রেজিস্ট্রেশনের অনুমতি দিন" : "Enable or disable new user signups"}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={appSettings.allowRegistration}
-                    onChange={(e) => setAppSettings({ ...appSettings, allowRegistration: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-[#020408] rounded-2xl border border-white/10">
-                  <div>
-                    <div className="font-bold text-white">{isBn ? "ইমেইল নোটিফিকেশন সার্ভিস" : "System Email Notifications"}</div>
-                    <div className="text-[10px] text-slate-500">{isBn ? "নতুন অ্যাক্টিভিটির ইমেইল অ্যালার্ট পাঠাবে" : "Send system updates and alerts"}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={appSettings.emailNotifications}
-                    onChange={(e) => setAppSettings({ ...appSettings, emailNotifications: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-[#020408] rounded-2xl border border-white/10">
-                  <div>
-                    <div className="font-bold text-white">{isBn ? "পোর্টাল মেইনটেন্যান্স মোড" : "Maintenance Mode"}</div>
-                    <div className="text-[10px] text-slate-500">{isBn ? "জরুরি আপগ্রেডের জন্য সাধারণ ব্যবহারকারীদের লক রাখুন" : "Lock non-admin access during updates"}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={appSettings.maintenanceMode}
-                    onChange={(e) => setAppSettings({ ...appSettings, maintenanceMode: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* System Backup */}
-            <div className="space-y-4 pt-2">
-              <h4 className="font-bold text-emerald-400 text-xs flex items-center space-x-2 uppercase tracking-wider">
-                <Database className="w-4 h-4" />
-                <span>{isBn ? "ডাটাবেজ এবং ব্যাকআপ" : "Database & Backups"}</span>
-              </h4>
-              <div className="flex items-center justify-between p-4 bg-[#020408] rounded-2xl border border-white/10">
-                <div>
-                  <div className="font-bold text-white">{isBn ? "অটোমেটিক দৈনিক ব্যাকআপ" : "Automatic Scheduled Backups"}</div>
-                  <div className="text-[10px] text-slate-500">{isBn ? "প্রতিদিন রাত ১২টায় ডাটাবেজের ব্যাকআপ সংরক্ষণ করবে" : "Automatically backup MongoDB every 24 hours"}</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={appSettings.autoBackup}
-                  onChange={(e) => setAppSettings({ ...appSettings, autoBackup: e.target.checked })}
-                  className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-white/5 flex justify-end">
-              <button
-                onClick={handleSaveSettings}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isBn ? "কনফিগারেশন সেভ করুন" : "Save System Config"}</span>
-              </button>
-            </div>
-          </div>
+          <SettingsTab
+            settings={appSettings}
+            onChange={setAppSettings}
+            onSave={handleSaveSettings}
+          />
         )}
 
-        {/* TAB 9: PROFILE */}
         {activeTab === "profile" && (
-          <div className="bg-[#03070E] border border-emerald-500/20 rounded-3xl shadow-xl p-6 space-y-6 max-w-2xl">
-            <h3 className="font-bold text-white text-base font-mono pb-2 border-b border-white/5">
-              Admin Profile Node
-            </h3>
-            <div className="space-y-4 text-xs">
-              <div>
-                <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase mb-1">Full Name</label>
-                <input
-                  type="text"
-                  defaultValue={adminName}
-                  className="w-full bg-[#020408] border border-emerald-500/20 p-3 rounded-xl font-bold text-white outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase mb-1">Email Address</label>
-                <input
-                  type="email"
-                  disabled
-                  defaultValue={adminEmail}
-                  className="w-full bg-slate-950 border border-white/5 p-3 rounded-xl text-slate-500 cursor-not-allowed font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase mb-1">Assigned Role</label>
-                <span className="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold font-mono rounded-lg uppercase text-[10px]">
-                  {props.matchedUser?.role || "Admin"}
-                </span>
-              </div>
-            </div>
-          </div>
+          <ProfileTab
+            adminName={adminName}
+            adminEmail={adminEmail}
+            role={props.matchedUser?.role}
+          />
         )}
       </div>
+
+      <ConfirmActionDialog
+        open={confirm.open}
+        onOpenChange={(open) => setConfirm((c) => ({ ...c, open }))}
+        title={confirm.title}
+        description={confirm.description}
+        confirmLabel={confirm.confirmLabel}
+        variant={confirm.variant}
+        onConfirm={confirm.onConfirm}
+      />
+
+      {/* Create dialogs */}
+      <EntityFormDialog
+        open={postDialogOpen}
+        onOpenChange={setPostDialogOpen}
+        title="Create new article"
+        description="Publish a story, tutorial, or club update."
+        size="lg"
+        loading={formSubmitting}
+        submitLabel="Publish article"
+        onSubmit={submitPost}
+      >
+        <TextField
+          label="Post title"
+          required
+          value={postForm.title}
+          onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
+          placeholder="e.g. Getting started with OSPF"
+        />
+        <SelectField
+          label="Category"
+          value={postForm.category}
+          onValueChange={(v) => setPostForm({ ...postForm, category: v })}
+          options={[
+            { value: "General", label: "General" },
+            { value: "Networking", label: "Networking" },
+            { value: "Security", label: "Security" },
+            { value: "Workshop", label: "Workshop" },
+            { value: "Career", label: "Career" },
+          ]}
+        />
+        <TextAreaField
+          label="Content"
+          required
+          value={postForm.content}
+          onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
+          placeholder="Write your post body (Markdown supported)..."
+          rows={6}
+        />
+      </EntityFormDialog>
+
+      <EntityFormDialog
+        open={eventDialogOpen}
+        onOpenChange={setEventDialogOpen}
+        title="Create new event"
+        description="Schedule a workshop, seminar, or meetup."
+        size="lg"
+        loading={formSubmitting}
+        submitLabel="Publish event"
+        onSubmit={submitEvent}
+      >
+        <TextField
+          label="Event title"
+          required
+          value={eventForm.title}
+          onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+          placeholder="e.g. MikroTik RouterOS Lab"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <SelectField
+            label="Event type"
+            value={eventForm.type}
+            onValueChange={(v) => setEventForm({ ...eventForm, type: v })}
+            options={[
+              { value: "Workshop", label: "Workshop" },
+              { value: "Seminar", label: "Seminar" },
+              { value: "Hackathon", label: "Hackathon" },
+              { value: "Meetup", label: "Meetup" },
+              { value: "Competition", label: "Competition" },
+            ]}
+          />
+          <TextField
+            label="Date & time"
+            required
+            type="datetime-local"
+            value={eventForm.eventDateTime}
+            onChange={(e) =>
+              setEventForm({ ...eventForm, eventDateTime: e.target.value })
+            }
+          />
+        </div>
+        <TextField
+          label="Location"
+          value={eventForm.location}
+          onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
+        />
+        <TextAreaField
+          label="Description"
+          value={eventForm.description}
+          onChange={(e) =>
+            setEventForm({ ...eventForm, description: e.target.value })
+          }
+          placeholder="What attendees will learn..."
+          rows={4}
+        />
+        <ImageDropzone
+          label="Cover image (optional)"
+          value={eventForm.image}
+          onChange={(url) => setEventForm({ ...eventForm, image: url })}
+        />
+      </EntityFormDialog>
+
+      <EntityFormDialog
+        open={annDialogOpen}
+        onOpenChange={setAnnDialogOpen}
+        title="Post announcement"
+        description="Broadcast an urgent notice to all members."
+        size="lg"
+        loading={formSubmitting}
+        submitLabel="Broadcast"
+        onSubmit={submitAnnouncement}
+      >
+        <TextField
+          label="Announcement title"
+          required
+          value={annForm.title}
+          onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })}
+          placeholder="e.g. Lab booking opens tomorrow"
+        />
+        <SelectField
+          label="Category"
+          value={annForm.category}
+          onValueChange={(v) => setAnnForm({ ...annForm, category: v })}
+          options={[
+            { value: "Notice", label: "Notice" },
+            { value: "Urgent", label: "Urgent" },
+            { value: "Event", label: "Event" },
+            { value: "Maintenance", label: "Maintenance" },
+            { value: "General", label: "General" },
+          ]}
+        />
+        <TextAreaField
+          label="Content"
+          required
+          value={annForm.content}
+          onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })}
+          placeholder="Write the announcement..."
+          rows={5}
+        />
+      </EntityFormDialog>
+
+      <EntityFormDialog
+        open={galleryDialogOpen}
+        onOpenChange={setGalleryDialogOpen}
+        title="Add to gallery"
+        description="Upload a photo from a workshop or event."
+        size="lg"
+        loading={formSubmitting}
+        submitLabel="Upload media"
+        onSubmit={submitGallery}
+      >
+        <TextField
+          label="Title"
+          required
+          value={galleryForm.title}
+          onChange={(e) =>
+            setGalleryForm({ ...galleryForm, title: e.target.value })
+          }
+          placeholder="e.g. IPv6 Seminar group photo"
+        />
+        <SelectField
+          label="Category"
+          value={galleryForm.category}
+          onValueChange={(v) => setGalleryForm({ ...galleryForm, category: v })}
+          options={[
+            { value: "Workshop", label: "Workshop" },
+            { value: "Seminar", label: "Seminar" },
+            { value: "Hackathon", label: "Hackathon" },
+            { value: "Meetup", label: "Meetup" },
+            { value: "Award", label: "Award" },
+          ]}
+        />
+        <ImageDropzone
+          label="Image"
+          required
+          value={galleryForm.imageUrl}
+          onChange={(url) => setGalleryForm({ ...galleryForm, imageUrl: url })}
+        />
+      </EntityFormDialog>
     </div>
   );
 }

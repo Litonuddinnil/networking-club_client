@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../provider/AuthProvider";
 import { ShieldAlert, UserPlus, Lock, Mail, User, BookOpen, CreditCard } from "lucide-react";
-import { useAxiosPublic } from "../hooks/useAxiosPublic";
 import Swal from "sweetalert2";
 
 type RegisterFormInputs = {
@@ -19,7 +18,6 @@ export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const axiosPublic = useAxiosPublic();
 
   const {
     register,
@@ -32,35 +30,18 @@ export default function Register() {
     setLocalError(null);
 
     try {
-      // 1. Firebase Register
-      await registerAuth(
+      // Single source of truth: AuthProvider.register creates the Firebase
+      // account AND inserts the MongoDB member document exactly once.
+      const created = await registerAuth(
         data.email,
         data.password,
         data.name,
-        data.department
-      ); 
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      const generatedMemberId = `JNC-${new Date().getFullYear()}-${randomNum}`;
-      const currentIsoTime = new Date().toISOString(); 
-       
-      const memberPayload = {
-        memberId: generatedMemberId,
-        studentId: data.studentId,
-        name: data.name,
-        email: data.email,
-        photoURL: "",
-        department: data.department,
-        role: "member",
-        status: "pending",
-        xp: 0,
-        joinedDate: currentIsoTime,
-        lastLogin: null,
-        createdAt: currentIsoTime,
-        updatedAt: currentIsoTime,
-      };
+        data.department,
+        data.studentId,
+      );
 
-      // 3. Save the complete member profile
-      await axiosPublic.post("/api/members", memberPayload);
+      const generatedMemberId =
+        created?.memberId ?? "JNC-pending";
 
       // Success Alert
       await Swal.fire({

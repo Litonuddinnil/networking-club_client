@@ -1,8 +1,9 @@
- import React from "react";
+ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Bell, Calendar, BookOpen, Trophy, 
-  FileText, Megaphone, Image, User, Settings, Award, CreditCard, Shield 
+import {
+  Bell, Calendar, BookOpen, Trophy,
+  FileText, Megaphone, Image, User, Settings, Award, CreditCard, Shield,
+  ClipboardCheck, Ticket
 } from "lucide-react";
 import DigitalIDCard from "../../components/DigitalIDCard";
 import DashboardStats from "../../components/DashboardStats";
@@ -27,6 +28,9 @@ interface MemberDashboardProps {
   courses?: any[];
   devices?: any[];
   sponsors?: any[];
+  payments?: any[];
+  attendance?: any[];
+  eventRegistrations?: any[];
   dataWarning?: React.ReactNode;
   onNavigate?: (tab: string) => void;
   onRefreshData?: () => void;
@@ -47,6 +51,9 @@ export default function MemberDashboard({
   courses = [],
   devices = [],
   sponsors = [],
+  payments = [],
+  attendance = [],
+  eventRegistrations = [],
   dataWarning,
   onNavigate,
 }: MemberDashboardProps) {
@@ -66,6 +73,49 @@ export default function MemberDashboard({
 
   const currentTab = activeTab || tab || "dashboard";
   const announcementsList = announcements.length > 0 ? announcements : notices;
+
+  // Filter user-scoped collections (admin sees all, user sees only their own)
+  const myStudentId = student?.id || student?.memberId || student?._id;
+  const myEmail = (student?.email || user?.email || "").toLowerCase();
+
+  const myPayments = useMemo(() => {
+    if (!payments?.length) return [];
+    if (!myStudentId && !myEmail) return [];
+    return payments.filter((p) => {
+      const pId = String(p.memberId || "").trim();
+      const pEmail = (p.memberEmail || p.email || "").toLowerCase();
+      return (
+        (myStudentId && pId && String(myStudentId) === pId) ||
+        (myEmail && pEmail && pEmail === myEmail)
+      );
+    });
+  }, [payments, myStudentId, myEmail]);
+
+  const myAttendance = useMemo(() => {
+    if (!attendance?.length) return [];
+    if (!myStudentId && !myEmail) return [];
+    return attendance.filter((a) => {
+      const aId = String(a.memberId || "").trim();
+      const aEmail = (a.memberEmail || a.email || "").toLowerCase();
+      return (
+        (myStudentId && aId && String(myStudentId) === aId) ||
+        (myEmail && aEmail && aEmail === myEmail)
+      );
+    });
+  }, [attendance, myStudentId, myEmail]);
+
+  const myRegistrations = useMemo(() => {
+    if (!eventRegistrations?.length) return [];
+    if (!myStudentId && !myEmail) return [];
+    return eventRegistrations.filter((r) => {
+      const rId = String(r.memberId || "").trim();
+      const rEmail = (r.memberEmail || r.email || "").toLowerCase();
+      return (
+        (myStudentId && rId && String(myStudentId) === rId) ||
+        (myEmail && rEmail && rEmail === myEmail)
+      );
+    });
+  }, [eventRegistrations, myStudentId, myEmail]);
 
   // AIAssistant hook call
   const { isAiLoading, handleSendAiMessage } = useAiDiagnostics({
@@ -214,6 +264,174 @@ export default function MemberDashboard({
             ) : (
               <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
                 No announcements posted yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 6a. MY PAYMENTS VIEW
+  if (currentTab === "my-payments" || currentTab === "payments") {
+    return (
+      <>{dataWarning}
+        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
+          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
+            <CreditCard className="w-5 h-5 text-orange-500" />
+            <span>My Payment History</span>
+          </h1>
+          <div className="space-y-3">
+            {myPayments.length > 0 ? (
+              myPayments.map((p, idx) => {
+                const status = (p.status || "pending").toLowerCase();
+                const statusColor =
+                  status === "approved" || status === "paid"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    : status === "rejected"
+                    ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    : "bg-amber-500/10 border-amber-500/30 text-amber-400";
+                return (
+                  <div
+                    key={p._id || p.id || idx}
+                    className="bg-[#03070E] border border-white/10 p-5 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3"
+                  >
+                    <div>
+                      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Period</p>
+                      <p className="text-sm font-bold text-white">{p.month || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Amount</p>
+                      <p className="text-sm font-bold text-emerald-400">
+                        ৳ {Number(p.amount || 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Status</p>
+                      <span className={`inline-block px-2 py-0.5 border rounded text-[10px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
+                        {p.status || "pending"}
+                      </span>
+                    </div>
+                    {p.transactionId && (
+                      <div className="sm:col-span-3">
+                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Transaction ID</p>
+                        <p className="text-[11px] font-mono text-slate-300">{p.transactionId}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
+                No payment records yet. Use the Payments tab to submit your monthly fees.
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 6b. MY ATTENDANCE VIEW
+  if (currentTab === "my-attendance" || currentTab === "attendance") {
+    return (
+      <>{dataWarning}
+        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
+          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
+            <ClipboardCheck className="w-5 h-5 text-orange-500" />
+            <span>My Attendance Log</span>
+          </h1>
+          <div className="space-y-3">
+            {myAttendance.length > 0 ? (
+              myAttendance.map((a, idx) => {
+                const status = a.status || "Present";
+                const statusColor =
+                  status === "Present"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    : status === "Absent"
+                    ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    : status === "Late"
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                    : "bg-blue-500/10 border-blue-500/30 text-blue-400";
+                return (
+                  <div
+                    key={a._id || a.id || idx}
+                    className="bg-[#03070E] border border-white/10 p-5 rounded-2xl flex items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-white">
+                        {a.topic || a.session || "General Session"}
+                      </p>
+                      <p className="text-[11px] font-mono text-slate-400">
+                        📅 {a.date || "Date TBD"}
+                      </p>
+                      {a.note && (
+                        <p className="text-[10px] text-slate-500 line-clamp-1">{a.note}</p>
+                      )}
+                    </div>
+                    <span className={`px-2 py-0.5 border rounded text-[10px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
+                      {status}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
+                No attendance entries yet. Attend the next club session to start building your record.
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 6c. MY REGISTERED EVENTS VIEW
+  if (currentTab === "my-events" || currentTab === "registrations") {
+    const myActiveRegs = myRegistrations.filter(
+      (r) => (r.status || "registered").toLowerCase() !== "cancelled"
+    );
+    return (
+      <>{dataWarning}
+        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
+          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
+            <Ticket className="w-5 h-5 text-orange-500" />
+            <span>My Registered Events</span>
+          </h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myActiveRegs.length > 0 ? (
+              myActiveRegs.map((r, idx) => {
+                const ev = events.find(
+                  (e) => String(e._id || e.id) === String(r.eventId)
+                );
+                const status = (r.status || "registered").toLowerCase();
+                const statusColor =
+                  status === "attended"
+                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                    : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400";
+                return (
+                  <div
+                    key={r._id || r.id || idx}
+                    className="bg-[#03070E] border border-white/10 p-5 rounded-2xl space-y-3"
+                  >
+                    <span className={`inline-block px-2 py-0.5 border rounded text-[10px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
+                      {status}
+                    </span>
+                    <h3 className="font-bold text-base text-white">
+                      {r.eventTitle || ev?.title || "Event"}
+                    </h3>
+                    <p className="text-xs text-slate-400 font-mono">
+                      📅 {ev?.date || ev?.eventDateTime || r.registeredAt || "TBD"}
+                    </p>
+                    {ev?.location && (
+                      <p className="text-[11px] text-slate-500">📍 {ev.location}</p>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-full p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
+                You have not registered for any upcoming events. Browse the Events tab to sign up.
               </div>
             )}
           </div>

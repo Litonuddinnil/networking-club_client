@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Trophy, MapPin, Clock, Sparkles, Radio } from "lucide-react";
+import { Trophy, MapPin, Clock, Sparkles, Radio, Check } from "lucide-react";
+import { useAuth } from "@/provider/AuthProvider";
+import { useAxiosPublic } from "@/hooks/useAxiosPublic";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventItem {
   _id?: string;
@@ -20,12 +23,21 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
   // MongoDB ডাটাবেজ থেকে প্রথম সক্রিয় ইভেন্টটি নেওয়া হচ্ছে
   const activeEvent = events.length > 0 ? events[0] : null;
 
+  const { user } = useAuth();
+  const axiosPublic = useAxiosPublic();
+  const { toast } = useToast();
+
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
+
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const activeEventId = activeEvent?._id || activeEvent?.id;
 
   // রিয়েল-টাইম কাউন্টডাউন টাইমার ক্যালকুলেশন
   useEffect(() => {
@@ -50,6 +62,93 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
 
     return () => clearInterval(timer);
   }, [activeEvent]);
+
+  // বর্তমান ইউজার ইতিমধ্যে রেজিস্টার্ড কি না — চেক করা হচ্ছে (duplicate prevention)
+  useEffect(() => {
+    let cancelled = false;
+    const checkDuplicate = async () => {
+      if (!user?.email || !activeEventId) {
+        if (!cancelled) setAlreadyRegistered(false);
+        return;
+      }
+      try {
+        const { data } = await axiosPublic.get("/api/event-registrations");
+        if (cancelled) return;
+        const exists = (Array.isArray(data) ? data : []).some(
+          (r: any) =>
+            String(r.eventId) === String(activeEventId) &&
+            (r.memberEmail || "").toLowerCase() === (user.email || "").toLowerCase() &&
+            (r.status || "registered").toLowerCase() !== "cancelled"
+        );
+        setAlreadyRegistered(exists);
+      } catch {
+        if (!cancelled) setAlreadyRegistered(false);
+      }
+    };
+    checkDuplicate();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, activeEventId, axiosPublic]);
+
+  const handleRegister = async () => {
+    if (!activeEvent) return;
+
+    if (!user?.email) {
+      toast({
+        title: "Login required",
+        description: "Please sign in to register for this event.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (alreadyRegistered || submitting) return;
+
+    const memberId =
+      (user as any)?.memberId ||
+      (user as any)?.uid ||
+      String(user.email || "").split("@")[0];
+    const memberName =
+      user.displayName || (user.email || "").split("@")[0] || "Member";
+
+    setSubmitting(true);
+    try {
+      await axiosPublic.post("/api/event-registrations", {
+        eventId: activeEventId,
+        eventTitle: activeEvent.title,
+        memberId,
+        memberName,
+        memberEmail: (user.email || "").toLowerCase(),
+        status: "registered",
+      });
+      setAlreadyRegistered(true);
+      toast({
+        title: "Registered!",
+        description: `You are now registered for "${activeEvent.title}".`,
+      });
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Could not register. Please try again.";
+      if (err?.response?.status === 409) {
+        setAlreadyRegistered(true);
+        toast({
+          title: "Already registered",
+          description: "You have already signed up for this event.",
+        });
+      } else {
+        toast({
+          title: "Registration failed",
+          description: msg,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (!activeEvent) {
     return (
@@ -162,8 +261,30 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
             <span>📅 {formattedDate}</span>
           </div>
 
-          <button className="w-full py-3 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 font-mono text-xs font-bold tracking-widest uppercase rounded-2xl transition-all shadow-lg shadow-emerald-500/10">
-            • {isLive ? "LIVE - JOIN THE LOBBY" : "REGISTER FOR EVENT"}
+          <button
+            type="button"
+            onClick={handleRegister}
+            disabled={alreadyRegistered || submitting || isLive}
+            className={`w-full py-3 font-mono text-xs font-bold tracking-widest uppercase rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${
+              alreadyRegistered
+                ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 cursor-default"
+                : isLive
+                ? "bg-rose-500/10 border border-rose-500/30 text-rose-300 cursor-not-allowed"
+                : "bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 shadow-emerald-500/10 disabled:opacity-60"
+            }`}
+          >
+            {alreadyRegistered ? (
+              <>
+                <Check className="w-4 h-4" />
+                Registered
+              </>
+            ) : submitting ? (
+              "Registering..."
+            ) : isLive ? (
+              "• LIVE — LOBBY OPEN"
+            ) : (
+              "• Register for Event"
+            )}
           </button>
         </div>
       </div>

@@ -863,3 +863,313 @@ html { scroll-behavior: smooth; }
   to   { transform: rotate(360deg); }
 }
 .animate-orb-rotate { animation: orb-rotate 30s linear infinite; }
+
+/* ============================================================
+   Admin CRUD redesign — premium entity card styles
+   ============================================================ */
+
+/* Glass card — primary surface for all entity cards */
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(13, 33, 24, 0.85) 0%,
+    rgba(7, 21, 15, 0.75) 100%
+  );
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(34, 197, 94, 0.10);
+  box-shadow:
+    0 10px 30px -10px rgba(0, 0, 0, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(34,197,94,0.30), rgba(45,212,191,0.20), rgba(163,230,53,0.20));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity 0.4s ease;
+}
+.glass-card:hover::after { opacity: 1; }
+
+html[data-theme="light"] .glass-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f9f3 100%);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+  box-shadow:
+    0 10px 30px -10px rgba(22, 163, 74, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Image-well — fixed aspect cover area for cards (image / gradient fallback) */
+.image-well {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(34,197,94,0.10), rgba(45,212,191,0.08), rgba(163,230,53,0.06));
+}
+.image-well::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 14px 14px;
+  opacity: 0.5;
+}
+.image-well img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.image-well:hover img { transform: scale(1.06); }
+
+/* Image-well shimmer while loading */
+.image-well-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.10) 50%, transparent 70%);
+  animation: sh-shimmer 1.4s linear infinite;
+}
+
+/* Hover overlay — slides up on card hover, reveals action row */
+.hover-actions {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  background: linear-gradient(0deg, rgba(2, 4, 8, 0.92) 0%, rgba(2, 4, 8, 0.60) 60%, transparent 100%);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.glass-card:hover .hover-actions,
+.entity-card:hover .hover-actions {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Toolbar pill — search + filter row above card grids */
+.toolbar-pill {
+  background: linear-gradient(180deg, rgba(13,33,24,0.65), rgba(7,21,15,0.55));
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(34, 197, 94, 0.12);
+  border-radius: 1.25rem;
+  padding: 0.75rem 1rem;
+}
+html[data-theme="light"] .toolbar-pill {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(22, 163, 74, 0.18);
+}
+
+/* Stat capsule — pill with icon + animated counter + delta */
+.stat-capsule {
+  position: relative;
+  background: linear-gradient(135deg, rgba(13,33,24,0.75), rgba(7,21,15,0.55));
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  border-radius: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  overflow: hidden;
+}
+.stat-capsule::before {
+  content: "";
+  position: absolute;
+  top: -50%; right: -30%;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 65%);
+  pointer-events: none;
+}
+html[data-theme="light"] .stat-capsule {
+  background: linear-gradient(135deg, #ffffff, #f1f9f3);
+  border-color: rgba(22, 163, 74, 0.18);
+}
+
+/* Gradient mesh — soft multi-blob backdrop used in admin hero */
+.admin-mesh {
+  background:
+    radial-gradient(40% 60% at 15% 30%, rgba(34, 197, 94, 0.20) 0%, transparent 60%),
+    radial-gradient(35% 55% at 85% 20%, rgba(45, 212, 191, 0.18) 0%, transparent 60%),
+    radial-gradient(30% 50% at 50% 95%, rgba(163, 230, 53, 0.16) 0%, transparent 60%);
+}
+html[data-theme="light"] .admin-mesh {
+  background:
+    radial-gradient(40% 60% at 15% 30%, rgba(34, 197, 94, 0.14) 0%, transparent 60%),
+    radial-gradient(35% 55% at 85% 20%, rgba(16, 185, 129, 0.10) 0%, transparent 60%),
+    radial-gradient(30% 50% at 50% 95%, rgba(132, 204, 22, 0.10) 0%, transparent 60%);
+}
+
+/* Entity card — base wrapper uses .glass-card; this class opts into hover lift */
+.entity-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 1.25rem;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.entity-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 50px -16px rgba(34, 197, 94, 0.30);
+}
+
+/* Dropzone — used in image upload */
+.dropzone {
+  position: relative;
+  border: 2px dashed rgba(34, 197, 94, 0.30);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: rgba(13, 33, 24, 0.45);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.dropzone:hover, .dropzone.is-dragover {
+  border-color: rgba(34, 197, 94, 0.65);
+  background: rgba(34, 197, 94, 0.08);
+}
+.dropzone-preview {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+html[data-theme="light"] .dropzone {
+  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(22, 163, 74, 0.30);
+}
+
+/* Empty state — centered illustration + cta */
+.empty-state {
+  border: 2px dashed rgba(34, 197, 94, 0.15);
+  border-radius: 1.5rem;
+  background: rgba(13, 33, 24, 0.30);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+html[data-theme="light"] .empty-state {
+  background: rgba(255,255,255,0.55);
+  border-color: rgba(22, 163, 74, 0.20);
+}
+
+/* Card badge cluster — top-left badge row on cards */
+.badge-cluster {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  z-index: 2;
+}
+
+/* Featured chip — small status pip inside a card corner */
+.featured-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(2, 4, 8, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d1d5db;
+}
+
+/* Meta strip — small monospace text rows used in card bodies */
+.meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #9ca3af;
+  letter-spacing: 0.04em;
+}
+.meta-strip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Section heading — used for tab titles inside admin dashboard */
+.section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+.section-heading h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.section-heading p {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #9ca3af;
+  letter-spacing: 0.04em;
+}
+html[data-theme="light"] .section-heading h2 { color: #0b0d14; }
+
+/* Responsive card grid helper */
+.crud-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+@media (min-width: 640px) {
+  .crud-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .crud-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .crud-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Hover-zoom icon button — used in card hover overlay */
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.65rem;
+  background: rgba(2, 4, 8, 0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #d1d5db;
+  transition: all 0.2s ease;
+}
+.icon-action:hover {
+  background: rgba(34, 197, 94, 0.20);
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #bbf7d0;
+  transform: translateY(-1px);
+}
+.icon-action.is-danger:hover {
+  background: rgba(239, 68, 68, 0.20);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #fecaca;
+}

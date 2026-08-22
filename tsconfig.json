@@ -18,9 +18,9 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    "baseUrl": "https://networking-club-server.onrender.com",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
 
     "types": ["vite/client"]

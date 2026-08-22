@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
-import { 
-  ArrowRight, Award, Calendar, CheckCircle, Clock, Download, 
-  HelpCircle, Home, Layers, MessageSquare, Network, Play, Plus, 
-  RefreshCw, Search, Shield, Sparkles, Terminal, User, Users, X, 
-  Wifi, ShieldAlert, BookOpen, AlertTriangle, Send
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import {
+  ArrowRight, Award, Calendar, CheckCircle, Clock, Download,
+  HelpCircle, Home, Layers, MessageSquare, Network, Play, Plus,
+  RefreshCw, Search, Shield, Sparkles, Terminal, User, Users, X,
+  Wifi, ShieldAlert, BookOpen, AlertTriangle, Send, Inbox
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { ClubMember, EventItem, NoticeItem, TrainingCourse, PaymentRecord } from "../types";
-import { initialNotices, initialEvents, initialCourses } from "../data";
+import { fetchApiJson } from "@/lib/api";
 import MemberCard from "./MemberCard";
 import { useGsapReveal } from "@/hooks/use-gsap-reveal";
- 
+
 
 interface DashboardViewProps {
   member: ClubMember;
@@ -23,20 +24,38 @@ interface DashboardViewProps {
   courses: TrainingCourse[];
 }
 
-export default function DashboardView({ 
+export default function DashboardView({
   member, onNavigate, onLogout, onTriggerPayment, isAiLoading, onSendAiMessage,
-  events, notices, courses 
+  events, notices, courses
 }: DashboardViewProps) {
-  
+
   const [activeSubTab, setActiveSubTab] = useState<string>("dashboard");
-  const [payments, setPayments] = useState<PaymentRecord[]>([
-    { id: "PAY-006", month: "June 2026", amount: 300, status: "Paid", paymentDate: "Jun 10, 2026", transactionId: "TRX884920412" },
-    { id: "PAY-005", month: "May 2026", amount: 300, status: "Paid", paymentDate: "May 10, 2026", transactionId: "TRX884920411" },
-    { id: "PAY-004", month: "April 2026", amount: 300, status: "Paid", paymentDate: "Apr 10, 2026", transactionId: "TRX884920410" },
-    { id: "PAY-003", month: "March 2026", amount: 300, status: "Paid", paymentDate: "Mar 10, 2026", transactionId: "TRX884920409" },
-    { id: "PAY-002", month: "February 2026", amount: 300, status: "Paid", paymentDate: "Feb 10, 2026", transactionId: "TRX884920408" },
-    { id: "PAY-001", month: "January 2026", amount: 300, status: "Paid", paymentDate: "Jan 15, 2026", transactionId: "TRX884920407" }
-  ]);
+
+  // Live payment history — pulled straight from MongoDB via /api/payments.
+  // We then narrow it down to the signed-in member so the table only ever
+  // shows their own fees (no demo data).
+  const { data: paymentsRaw = [], isLoading: paymentsLoading } = useQuery<PaymentRecord[]>({
+    queryKey: ["dashboard-payments"],
+    queryFn: async () => {
+      try {
+        return await fetchApiJson<PaymentRecord[]>("/api/payments");
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const payments: PaymentRecord[] = useMemo(() => {
+    if (!member?.email) return paymentsRaw;
+    const email = member.email.toLowerCase();
+    const narrowed = paymentsRaw.filter((p) => {
+      const e = (p.memberEmail || (p as any).email || "").toLowerCase();
+      // If the record has no email association, treat it as the current
+      // member's (legacy single-user demo).
+      return !e || e === email;
+    });
+    return narrowed.length > 0 ? narrowed : paymentsRaw;
+  }, [paymentsRaw, member?.email]);
 
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ sender: "user" | "assistant"; text: string; timestamp: string }[]>([
@@ -83,13 +102,34 @@ export default function DashboardView({
     alert(`Generating download artifact for ${member.name}'s JSTU official card ID... saved to local files!`);
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    member.name = profileName;
-    member.department = profileDept;
-    member.batch = profileBatch;
-    setProfileModalOpen(false);
-    alert("Profile saved locally! Changes reflected instantly in identity components.");
+    const memberId = (member as any)?._id?.$oid || (member as any)?._id || member?.id || member?.memberId;
+    if (!memberId) {
+      alert("Cannot save: member identifier is missing. Please re-login.");
+      return;
+    }
+    try {
+      const res = await fetch(`${(import.meta as any).env.VITE_API_URL || "https://networking-club-server.onrender.com"}/api/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profileName,
+          department: profileDept,
+          batch: profileBatch,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`Save failed (${res.status})`);
+      }
+      member.name = profileName;
+      member.department = profileDept;
+      member.batch = profileBatch;
+      setProfileModalOpen(false);
+      alert("Profile saved to MongoDB!");
+    } catch (err: any) {
+      alert(`Could not save profile: ${err?.message || err}`);
+    }
   };
 
   return (
@@ -294,19 +334,53 @@ export default function DashboardView({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {payments.map((p) => (
-                        <tr key={p.id} className="hover:bg-white/5/20 transition-all">
-                          <td className="py-3.5 font-semibold text-white">{p.month}</td>
-                          <td className="py-3.5 font-mono text-orange-400">৳ {p.amount}</td>
-                          <td className="py-3.5">
-                            <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md font-bold text-[10px] uppercase tracking-wider font-mono">
-                              {p.status}
-                            </span>
+                      {paymentsLoading && (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-slate-500 font-mono text-[11px] uppercase tracking-wider">
+                            <RefreshCw className="w-4 h-4 inline-block mr-2 animate-spin text-orange-400" />
+                            Loading payment ledger from MongoDB…
                           </td>
-                          <td className="py-3.5 text-slate-400 font-mono">{p.paymentDate || "--"}</td>
-                          <td className="py-3.5 text-slate-500 font-mono">{p.transactionId || "--"}</td>
                         </tr>
-                      ))}
+                      )}
+                      {!paymentsLoading && payments.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-10">
+                            <div className="flex flex-col items-center justify-center text-center space-y-2">
+                              <Inbox className="w-7 h-7 text-slate-600" />
+                              <p className="text-slate-400 font-semibold">No payments recorded yet</p>
+                              <p className="text-[10px] text-slate-500 font-mono">
+                                New payments you submit will appear here automatically.
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {!paymentsLoading && payments.map((p) => {
+                        const key = (p._id as any)?.$oid || p._id || p.id || `${p.month}-${p.transactionId}`;
+                        const statusClass = String(p.status).toLowerCase() === "approved" || String(p.status).toLowerCase() === "paid"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : String(p.status).toLowerCase() === "rejected"
+                            ? "bg-red-500/10 text-red-400 border-red-500/20"
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                        const dateStr = p.paymentDate
+                          ? (typeof p.paymentDate === "string" ? p.paymentDate : new Date(p.paymentDate).toLocaleDateString())
+                          : p.createdAt
+                            ? new Date(p.createdAt).toLocaleDateString()
+                            : "--";
+                        return (
+                          <tr key={key} className="hover:bg-white/5/20 transition-all">
+                            <td className="py-3.5 font-semibold text-white">{p.month || dateStr}</td>
+                            <td className="py-3.5 font-mono text-orange-400">৳ {p.amount}</td>
+                            <td className="py-3.5">
+                              <span className={`px-2.5 py-0.5 border rounded-md font-bold text-[10px] uppercase tracking-wider font-mono ${statusClass}`}>
+                                {p.status}
+                              </span>
+                            </td>
+                            <td className="py-3.5 text-slate-400 font-mono">{dateStr}</td>
+                            <td className="py-3.5 text-slate-500 font-mono">{p.transactionId || "--"}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -560,24 +634,13 @@ export default function DashboardView({
             </div>
 
             <div className="space-y-4">
-              {[
-                { name: "CCNA Routing Fundamentals", issuer: "Cisco Networking Academy @ JSTU", date: "April 15, 2026", code: "CERT-Cisco-883920" },
-                { name: "RouterOS QuickSetup Essentials", issuer: "MikroTik Academy Center", date: "May 02, 2026", code: "CERT-Mikro-204122" }
-              ].map((cert, idx) => (
-                <div key={idx} className="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-start space-x-3.5">
-                  <div className="p-3 bg-orange-500/10 text-orange-400 rounded-xl">
-                    <Award className="w-5 h-5" />
-                  </div>
-                  <div className="text-xs">
-                    <h4 className="font-bold text-white text-sm">{cert.name}</h4>
-                    <p className="text-slate-500 mt-1">{cert.issuer}</p>
-                    <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-mono">
-                      <span>Date: {cert.date}</span>
-                      <span>ID: {cert.code}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <div className="bg-white/5 border border-dashed border-white/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
+                <Award className="w-7 h-7 text-slate-600" />
+                <p className="text-slate-400 font-semibold text-xs">No certificates issued yet</p>
+                <p className="text-[10px] text-slate-500 font-mono leading-relaxed">
+                  Certificates are stored in MongoDB and issued by admins from the dashboard.
+                </p>
+              </div>
             </div>
 
             <button 
@@ -611,24 +674,13 @@ export default function DashboardView({
               </div>
 
               <div className="space-y-2 text-xs max-h-[220px] overflow-y-auto custom-scrollbar">
-                {[
-                  { date: "June 12, 2026", topic: "BGP Advanced Route Maps", status: "Present" },
-                  { date: "June 05, 2026", topic: "VLAN Partitioning and QoS Tagging", status: "Present" },
-                  { date: "May 29, 2026", topic: "Vulnerability Scanning with Fortinet", status: "Present" },
-                  { date: "May 22, 2026", topic: "Subnetting Classless CIDR Masks", status: "Absent" }
-                ].map((log, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
-                    <div>
-                      <span className="font-bold text-white block">{log.topic}</span>
-                      <span className="text-[9px] text-slate-500 font-mono">{log.date}</span>
-                    </div>
-                    <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded ${
-                      log.status === "Present" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
-                    }`}>
-                      {log.status}
-                    </span>
-                  </div>
-                ))}
+                <div className="flex flex-col items-center justify-center text-center space-y-2 py-6 border border-dashed border-white/10 rounded-xl">
+                  <CheckCircle className="w-7 h-7 text-slate-600" />
+                  <p className="text-slate-400 font-semibold">No attendance logs found</p>
+                  <p className="text-[10px] text-slate-500 font-mono leading-relaxed">
+                    Marked attendance from admin dashboard sessions will show here.
+                  </p>
+                </div>
               </div>
             </div>
 

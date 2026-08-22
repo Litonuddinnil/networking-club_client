@@ -1,6 +1,43 @@
 import React, { useState } from "react";
 import { Cpu, Server, Cable, Check, AlertCircle, Info, Settings, Zap } from "lucide-react";
-import { showCaseDevices } from "../data";
+
+interface ShowcaseDevice {
+  id: string;
+  name: string;
+  model?: string;
+  type: string;
+  image?: string;
+  specs?: Record<string, string>;
+  price?: string;
+}
+
+/**
+ * Inline showcase devices — these are *demo chassis* used purely to drive the
+ * interactive port auditor. They are NOT user data (no PII, no Mongo source).
+ * When real network devices become available from /api/network-devices with
+ * chassis metadata, swap this array for that response and the explorer keeps
+ * working.
+ */
+const SHOWCASE_DEVICES: ShowcaseDevice[] = [
+  {
+    id: "cisco-isr-1100",
+    name: "Cisco ISR 1100 Series",
+    model: "ISR-1100X",
+    type: "Cisco ISR Router",
+  },
+  {
+    id: "mikrotik-rb5009",
+    name: "MikroTik RB5009",
+    model: "RB5009UPr+S+IN",
+    type: "MikroTik Router",
+  },
+  {
+    id: "cisco-catalyst-2960",
+    name: "Cisco Catalyst 2960-X",
+    model: "WS-C2960X-24TS",
+    type: "Cisco Switch",
+  },
+];
 
 interface PortState {
   id: string;
@@ -16,7 +53,7 @@ export default function InteractiveDeviceExplorer() {
   const [selectedDeviceIdx, setSelectedDeviceIdx] = useState(0);
   const [activePortId, setActivePortId] = useState<string | null>("port-0");
 
-  const device = showCaseDevices[selectedDeviceIdx];
+  const device = SHOWCASE_DEVICES[selectedDeviceIdx];
 
   // Port templates for devices
   const devicePorts: Record<number, PortState[]> = {
@@ -61,7 +98,7 @@ export default function InteractiveDeviceExplorer() {
 
         {/* Device selector */}
         <div className="flex space-x-1.5 bg-[#020408] border border-white/5 p-1 rounded-xl">
-          {showCaseDevices.map((d, idx) => (
+          {SHOWCASE_DEVICES.map((d, idx) => (
             <button
               key={d.id}
               onClick={() => {

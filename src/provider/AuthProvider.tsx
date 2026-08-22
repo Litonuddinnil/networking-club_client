@@ -139,7 +139,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const register = async (email: string, pass: string, name: string, dept: string) => {
+  const register = async (
+    email: string,
+    pass: string,
+    name: string,
+    dept: string,
+    studentId?: string,
+  ) => {
     setLoading(true);
     setError(null);
     try {
@@ -149,20 +155,43 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         await updateProfile(userCredential.user, { displayName: name });
       }
 
-      const newMember: UserProfile = {
+      const currentIsoTime = new Date().toISOString();
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const generatedMemberId = `JNC-${new Date().getFullYear()}-${randomNum}`;
+
+      const memberPayload = {
+        uid: userCredential.user.uid,
+        memberId: generatedMemberId,
+        studentId: studentId || "",
+        name,
+        email,
+        displayName: name,
+        photoURL: "",
+        department: dept,
+        role: "member",
+        status: "pending",
+        xp: 0,
+        joinedDate: currentIsoTime,
+        lastLogin: null,
+        createdAt: currentIsoTime,
+        updatedAt: currentIsoTime,
+      };
+
+      await axiosPublic.post("/api/members", memberPayload);
+
+      const enriched = {
+        ...userCredential.user,
         uid: userCredential.user.uid,
         email,
         displayName: name,
         role: "member",
+        memberId: generatedMemberId,
         department: dept,
-        memberId: `JNC-${Date.now().toString().slice(-6)}`,
+        studentId: studentId || "",
         xp: 0,
-        joinedDate: new Date().toISOString(),
+        joinedDate: currentIsoTime,
       };
 
-      await axiosPublic.post("/api/members", newMember);
-
-      const enriched = { ...userCredential.user, ...newMember };
       setUser(enriched);
       return enriched;
     } catch (err: any) {

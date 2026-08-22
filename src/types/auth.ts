@@ -18,7 +18,13 @@ export interface AuthContextType {
   error: string | null;
   setLoading?: React.Dispatch<React.SetStateAction<boolean>>;
   login: (email: string, pass: string) => Promise<any>;
-  register: (email: string, pass: string, name: string, dept: string) => Promise<any>;
+  register: (
+    email: string,
+    pass: string,
+    name: string,
+    dept: string,
+    studentId?: string,
+  ) => Promise<any>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => void;
   createUser: (email: string, password: string) => Promise<any>;
