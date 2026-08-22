@@ -69,7 +69,10 @@ export async function uploadImageToImgbb(file: File): Promise<string> {
 
   // imgbb accepts either a base64 string or a file. We use a base64 data URL
   // so we can send it via fetch + FormData without juggling multipart parts.
-  const base64 = await fileToBase64(file);
+  // imgbb's free tier requires the RAW base64 payload — strip the
+  // "data:image/...;base64," prefix or it rejects with "Invalid base64 string".
+  const dataUrl = await fileToBase64(file);
+  const base64 = stripDataUrlPrefix(dataUrl);
 
   const form = new FormData();
   form.append("image", base64);
@@ -122,4 +125,15 @@ function fileToBase64(file: File): Promise<string> {
     };
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Strips the "data:<mime>;base64," prefix from a data URL so the payload is a
+ * raw base64 string — which is what imgbb's free tier actually accepts. Sending
+ * the prefixed form causes imgbb to reject with "Invalid base64 string".
+ */
+function stripDataUrlPrefix(dataUrl: string): string {
+  const commaIdx = dataUrl.indexOf(",");
+  if (commaIdx === -1) return dataUrl;
+  return dataUrl.slice(commaIdx + 1);
 }
