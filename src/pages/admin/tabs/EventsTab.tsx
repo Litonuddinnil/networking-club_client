@@ -14,6 +14,8 @@ interface EventsTabProps {
   onViewModeChange: (m: ViewMode) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
+  onEdit: (event: any) => void;
+  onView: (event: any) => void;
 }
 
 export default function EventsTab({
@@ -25,6 +27,8 @@ export default function EventsTab({
   onViewModeChange,
   onCreate,
   onDelete,
+  onEdit,
+  onView,
 }: EventsTabProps) {
   return (
     <div className="space-y-6">
@@ -57,6 +61,8 @@ export default function EventsTab({
             <EventCard
               key={e._id || e.id || idx}
               event={e}
+              onView={() => onView(e)}
+              onEdit={() => onEdit(e)}
               onDelete={() => onDelete(e._id || e.id)}
             />
           ))}

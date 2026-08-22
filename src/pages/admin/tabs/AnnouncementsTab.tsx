@@ -14,6 +14,8 @@ interface AnnouncementsTabProps {
   onViewModeChange: (m: ViewMode) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
+  onEdit: (announcement: any) => void;
+  onView: (announcement: any) => void;
 }
 
 export default function AnnouncementsTab({
@@ -25,6 +27,8 @@ export default function AnnouncementsTab({
   onViewModeChange,
   onCreate,
   onDelete,
+  onEdit,
+  onView,
 }: AnnouncementsTabProps) {
   return (
     <div className="space-y-6">
@@ -57,6 +61,8 @@ export default function AnnouncementsTab({
             <AnnouncementCard
               key={a._id || a.id || idx}
               announcement={a}
+              onView={() => onView(a)}
+              onEdit={() => onEdit(a)}
               onDelete={() => onDelete(a._id || a.id)}
             />
           ))}

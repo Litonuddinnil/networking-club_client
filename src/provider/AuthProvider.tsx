@@ -145,14 +145,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     name: string,
     dept: string,
     studentId?: string,
+    photoURL?: string,
   ) => {
     setLoading(true);
     setError(null);
     try {
       const userCredential = await createUser(email, pass);
 
+      const finalPhotoURL = photoURL || "";
+
       if (userCredential.user) {
-        await updateProfile(userCredential.user, { displayName: name });
+        await updateProfile(userCredential.user, {
+          displayName: name,
+          photoURL: finalPhotoURL,
+        });
       }
 
       const currentIsoTime = new Date().toISOString();
@@ -166,7 +172,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name,
         email,
         displayName: name,
-        photoURL: "",
+        photoURL: finalPhotoURL,
         department: dept,
         role: "member",
         status: "pending",
@@ -184,6 +190,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         uid: userCredential.user.uid,
         email,
         displayName: name,
+        photoURL: finalPhotoURL,
         role: "member",
         memberId: generatedMemberId,
         department: dept,

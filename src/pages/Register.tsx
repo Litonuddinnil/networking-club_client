@@ -1,9 +1,22 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../provider/AuthProvider";
-import { ShieldAlert, UserPlus, Lock, Mail, User, BookOpen, CreditCard } from "lucide-react";
+import {
+  ShieldAlert,
+  UserPlus,
+  Lock,
+  Mail,
+  User,
+  BookOpen,
+  CreditCard,
+  Camera,
+  ImagePlus,
+  X,
+  Loader2,
+} from "lucide-react";
 import Swal from "sweetalert2";
+import { uploadImageToImgbb, ImageUploadError } from "../lib/uploadImage";
 
 type RegisterFormInputs = {
   name: string;
@@ -19,11 +32,83 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
+  // Profile photo state — preview (local object URL) + uploaded URL (hosted)
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormInputs>();
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLocalError(null);
+
+    // Reset any previously-uploaded URL since the file changed
+    setPhotoUrl(null);
+
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoFile(file);
+    setPhotoPreview(previewUrl);
+
+    // Allow re-selecting the same file later
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleRemovePhoto = () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setPhotoUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleUploadPhoto = async () => {
+    if (!photoFile || isUploadingPhoto) return;
+    setIsUploadingPhoto(true);
+    setLocalError(null);
+    try {
+      const url = await uploadImageToImgbb(photoFile);
+      setPhotoUrl(url);
+      await Swal.fire({
+        icon: "success",
+        title: "Photo uploaded",
+        text: "Profile image is ready. Submit the form to complete registration.",
+        background: "#03070E",
+        color: "#ffffff",
+        confirmButtonColor: "#ea580c",
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    } catch (err: any) {
+      const msg =
+        err instanceof ImageUploadError
+          ? err.message
+          : err?.message || "Could not upload image. Try again.";
+      setLocalError(msg);
+      Swal.fire({
+        icon: "error",
+        title: "Image upload failed",
+        text: msg,
+        background: "#03070E",
+        color: "#ffffff",
+        confirmButtonColor: "#ea580c",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const onSubmit = async (data: RegisterFormInputs) => {
     setIsLoading(true);
@@ -32,12 +117,21 @@ export default function Register() {
     try {
       // Single source of truth: AuthProvider.register creates the Firebase
       // account AND inserts the MongoDB member document exactly once.
+      // If a photo was staged but never uploaded, do it now so the registry
+      // shard always carries the final hosted URL.
+      let finalPhotoUrl = photoUrl;
+      if (!finalPhotoUrl && photoFile) {
+        finalPhotoUrl = await uploadImageToImgbb(photoFile);
+        setPhotoUrl(finalPhotoUrl);
+      }
+
       const created = await registerAuth(
         data.email,
         data.password,
         data.name,
         data.department,
         data.studentId,
+        finalPhotoUrl || "",
       );
 
       const generatedMemberId =
@@ -90,7 +184,110 @@ export default function Register() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        
+
+        {/* Profile Photo Cover Upload (optional — imgbb) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
+              Profile Cover Photo <span className="text-slate-600">(optional)</span>
+            </label>
+            {photoPreview && (
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                className="text-[9px] font-mono text-rose-400 hover:text-rose-300 uppercase tracking-wider inline-flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Remove
+              </button>
+            )}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+            id="profile-photo-input"
+          />
+
+          <label
+            htmlFor="profile-photo-input"
+            className="group relative block w-full aspect-[16/9] sm:aspect-[5/2] rounded-2xl overflow-hidden border border-dashed border-white/15 hover:border-orange-500/50 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/10"
+          >
+            {photoPreview ? (
+              <>
+                <img
+                  src={photoPreview}
+                  alt="Profile cover preview"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#03070E] via-[#03070E]/30 to-transparent" />
+              </>
+            ) : (
+              <>
+                <div className="absolute inset-0 grid grid-cols-12 gap-px opacity-20 pointer-events-none">
+                  {Array.from({ length: 60 }).map((_, i) => (
+                    <div key={i} className="bg-white/[0.04]" />
+                  ))}
+                </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/30 grid place-items-center group-hover:bg-orange-500/20 transition-colors">
+                    <ImagePlus className="w-6 h-6 text-orange-400" />
+                  </div>
+                  <p className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
+                    Drop or click to upload cover
+                  </p>
+                  <p className="text-[10px] font-mono text-slate-500">
+                    JPG · PNG · WebP · max 5 MB
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* top-left status pill */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest bg-slate-900/70 border border-white/10 text-slate-300 backdrop-blur-md">
+                <Camera className="w-3 h-3" />
+                Cover
+              </span>
+              {photoUrl && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 backdrop-blur-md">
+                  ✓ Uploaded
+                </span>
+              )}
+            </div>
+
+            {/* bottom-right meta + change affordance */}
+            <div className="absolute bottom-3 right-3 max-w-[60%] flex items-center gap-2">
+              {photoFile && (
+                <span className="px-2 py-1 rounded-lg bg-slate-900/70 border border-white/10 text-[9px] font-mono text-slate-300 truncate backdrop-blur-md">
+                  {photoFile.name} · {(photoFile.size / 1024).toFixed(0)} KB
+                </span>
+              )}
+              <span className="inline-grid place-items-center w-8 h-8 rounded-xl bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/30 transition-colors">
+                <ImagePlus className="w-4 h-4" />
+              </span>
+            </div>
+          </label>
+
+          {photoFile && !photoUrl && (
+            <button
+              type="button"
+              onClick={handleUploadPhoto}
+              disabled={isUploadingPhoto || isLoading}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/40 rounded-xl text-[11px] font-mono font-bold text-orange-300 uppercase tracking-widest disabled:opacity-60 transition-colors"
+            >
+              {isUploadingPhoto ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Camera className="w-3.5 h-3.5" />
+              )}
+              {isUploadingPhoto ? "Uploading to imgbb…" : "Upload cover to imgbb"}
+            </button>
+          )}
+        </div>
+
         {/* Student Name */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">Student Name</label>

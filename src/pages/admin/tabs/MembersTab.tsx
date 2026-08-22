@@ -15,6 +15,7 @@ interface MembersTabProps {
   onApprove: (id: string) => void;
   onToggleRole: (member: any) => void;
   onDelete: (id: string) => void;
+  onView: (member: any) => void;
 }
 
 export default function MembersTab({
@@ -27,6 +28,7 @@ export default function MembersTab({
   onApprove,
   onToggleRole,
   onDelete,
+  onView,
 }: MembersTabProps) {
   return (
     <div className="space-y-6">
@@ -57,6 +59,7 @@ export default function MembersTab({
             <MemberCard
               key={m._id || m.id || m.memberId || m.email || idx}
               member={m}
+              onView={() => onView(m)}
               onApprove={() => onApprove(m._id || m.id || m.memberId || m.email)}
               onToggleRole={() => onToggleRole(m)}
               onDelete={() => onDelete(m._id || m.id || m.memberId || m.email)}

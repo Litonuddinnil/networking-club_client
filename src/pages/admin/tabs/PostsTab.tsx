@@ -14,6 +14,8 @@ interface PostsTabProps {
   onViewModeChange: (m: ViewMode) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
+  onEdit: (post: any) => void;
+  onView: (post: any) => void;
 }
 
 export default function PostsTab({
@@ -25,6 +27,8 @@ export default function PostsTab({
   onViewModeChange,
   onCreate,
   onDelete,
+  onEdit,
+  onView,
 }: PostsTabProps) {
   return (
     <div className="space-y-6">
@@ -57,6 +61,8 @@ export default function PostsTab({
             <PostCard
               key={p._id || p.id || idx}
               post={p}
+              onView={() => onView(p)}
+              onEdit={() => onEdit(p)}
               onDelete={() => onDelete(p._id || p.id)}
             />
           ))}

@@ -1,108 +1,144 @@
-import React from "react";
-import { Calendar, Clock, MapPin, Trash2 } from "lucide-react";
+﻿import React from "react";
+import { Calendar, Clock, Eye, MapPin, Pencil, Trash2, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 interface EventCardProps {
   event: {
     _id?: string;
     id?: string;
-    title: string;
-    type?: string;
-    date?: string;
-    time?: string;
-    location?: string;
-    image?: string;
+    title?: string;
+    name?: string;
     description?: string;
+    type?: string;
+    category?: string;
+    date?: string;
+    eventDate?: string;
+    time?: string;
+    venue?: string;
+    location?: string;
+    imageUrl?: string;
+    coverImage?: string;
+    status?: string;
+    registeredCount?: number;
+    capacity?: number;
+    createdByName?: string;
+    createdBy?: string;
   };
+  onView?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  Workshop: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400",
-  Webinar: "from-blue-500/20 to-cyan-500/10 border-blue-500/30 text-blue-400",
-  Seminar: "from-violet-500/20 to-fuchsia-500/10 border-violet-500/30 text-violet-400",
-  Bootcamp: "from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400",
+const TYPE_VARIANTS: Record<string, "default" | "secondary" | "accent" | "warning" | "destructive"> = {
+  Workshop: "accent",
+  Seminar: "secondary",
+  Contest: "warning",
+  "Networking": "default",
+  Hackathon: "destructive",
+  Meetup: "accent",
 };
 
-export default function EventCard({ event, onDelete }: EventCardProps) {
-  const typeClass = TYPE_COLORS[event.type || ""] || TYPE_COLORS.Workshop;
-  const hasImage = Boolean(event.image);
+const STATUS_VARIANTS: Record<string, "default" | "secondary" | "accent" | "warning" | "destructive"> = {
+  upcoming: "accent",
+  ongoing: "default",
+  completed: "secondary",
+  cancelled: "destructive",
+};
+
+function fmt(value?: string) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+}
+
+export default function EventCard({ event, onView, onEdit, onDelete }: EventCardProps) {
+  const cover = event.coverImage || event.imageUrl;
+  const type = event.type || event.category || "Event";
+  const name = event.title || event.name || "Untitled event";
+  const preview = (event.description || "").slice(0, 180);
 
   return (
-    <div className="glass-card entity-card">
-      {/* Cover */}
-      <div className="image-well">
-        {hasImage ? (
-          <img src={event.image} alt={event.title} loading="lazy" />
+    <div className="glass-card entity-card p-0 overflow-hidden group">
+      <div className="relative h-36 overflow-hidden">
+        {cover ? (
+          <img src={cover} alt={name} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
-          <div
-            className={cn(
-              "w-full h-full grid place-items-center bg-gradient-to-br",
-              typeClass
-            )}
-          >
-            <Calendar className="w-12 h-12 opacity-40" />
+          <div className="w-full h-full bg-gradient-to-br from-teal-500/15 via-emerald-500/10 to-transparent grid place-items-center text-teal-400/60">
+            <Calendar className="w-10 h-10" />
           </div>
         )}
-        <div className="badge-cluster">
-          <Badge
-            variant="outline"
-            className={cn(
-              "bg-card/70 backdrop-blur-sm border",
-              typeClass.split(" ").slice(-2).join(" ")
-            )}
-          >
-            {event.type || "Workshop"}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center gap-1.5">
+          <Badge variant={TYPE_VARIANTS[type] || "secondary"} className="bg-card/80 backdrop-blur-sm">
+            {type}
           </Badge>
+          {event.status && (
+            <Badge variant={STATUS_VARIANTS[String(event.status).toLowerCase()] || "secondary"} className="bg-card/80 backdrop-blur-sm uppercase">
+              {event.status}
+            </Badge>
+          )}
+        </div>
+        <div className="absolute bottom-3 left-3 right-3 text-white/90 font-mono text-[10px] flex items-center gap-1.5">
+          <Calendar className="w-3 h-3" />
+          <span>{fmt(event.eventDate || event.date) || "TBD"}</span>
+          {event.time && (
+            <>
+              <span className="opacity-60">·</span>
+              <Clock className="w-3 h-3" />
+              <span>{event.time}</span>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Body */}
-      <div className="p-5 flex flex-col gap-3 flex-1">
-        <h3 className="font-display font-bold text-base text-foreground leading-snug line-clamp-2">
-          {event.title}
+      <div className="p-5 space-y-3">
+        <h3 className="font-display font-bold text-lg text-foreground leading-snug line-clamp-2">
+          {name}
         </h3>
 
-        <div className="meta-strip">
-          <span>
-            <Calendar className="w-3 h-3 text-emerald-400" />
-            {event.date || "TBD"}
-          </span>
-          <span>
-            <Clock className="w-3 h-3 text-teal-400" />
-            {event.time || "10:00 AM"}
-          </span>
-        </div>
-        <div className="meta-strip">
-          <span>
-            <MapPin className="w-3 h-3 text-lime-400" />
-            <span className="truncate">{event.location || "Campus Lab"}</span>
-          </span>
-        </div>
-
-        {event.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {event.description}
-          </p>
+        {(event.venue || event.location) && (
+          <div className="meta-strip">
+            <span>
+              <MapPin className="w-3 h-3 text-teal-400" />
+              <span className="truncate">{event.venue || event.location}</span>
+            </span>
+          </div>
         )}
-      </div>
 
-      {onDelete && (
-        <div className="px-5 pb-4">
-          <div className="hover-actions relative static p-0 bg-none border-0 flex justify-end">
-            <button
-              type="button"
-              onClick={onDelete}
-              className="icon-action is-danger"
-              aria-label="Delete event"
-              title="Delete event"
-            >
+        {typeof event.registeredCount === "number" && (
+          <div className="meta-strip">
+            <span>
+              <Users className="w-3 h-3 text-emerald-400" />
+              <span>
+                {event.registeredCount} registered{event.capacity ? ` / ${event.capacity}` : ""}
+              </span>
+            </span>
+          </div>
+        )}
+
+        {preview && (
+          <p className="text-sm text-muted-foreground line-clamp-3">{preview}</p>
+        )}
+
+        <div className="hover-actions justify-end pt-3 mt-3 border-t border-white/5">
+          {onView && (
+            <button type="button" onClick={onView} className="icon-action text-sky-400 hover:bg-sky-500/15" title="View details" aria-label="View details">
+              <Eye className="w-4 h-4" />
+            </button>
+          )}
+          {onEdit && (
+            <button type="button" onClick={onEdit} className="icon-action text-amber-400 hover:bg-amber-500/15" title="Edit event" aria-label="Edit event">
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" onClick={onDelete} className="icon-action is-danger" title="Delete event" aria-label="Delete event">
               <Trash2 className="w-4 h-4" />
             </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

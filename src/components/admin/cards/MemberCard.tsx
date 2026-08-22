@@ -1,5 +1,5 @@
-import React from "react";
-import { Check, Mail, ShieldCheck, ShieldOff, Trash2, User } from "lucide-react";
+﻿import React from "react";
+import { Check, Eye, Mail, ShieldCheck, ShieldOff, Trash2, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,14 @@ interface MemberCardProps {
     role?: string;
     status?: string;
     photoURL?: string;
+    phone?: string;
+    studentId?: string;
+    batch?: string;
+    bio?: string;
+    joinedAt?: string;
+    createdAt?: string;
   };
+  onView?: () => void;
   onApprove?: () => void;
   onToggleRole?: () => void;
   onDelete?: () => void;
@@ -54,6 +61,7 @@ function initials(name?: string) {
  */
 export default function MemberCard({
   member,
+  onView,
   onApprove,
   onToggleRole,
   onDelete,
@@ -129,6 +137,17 @@ export default function MemberCard({
 
       {/* Hover action overlay */}
       <div className="hover-actions justify-end pt-4 mt-4 border-t border-white/5">
+        {onView && (
+          <button
+            type="button"
+            onClick={onView}
+            className="icon-action text-sky-400 hover:bg-sky-500/15"
+            title="View details"
+            aria-label="View details"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        )}
         {isPending && onApprove && (
           <button
             type="button"

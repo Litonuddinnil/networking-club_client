@@ -1,17 +1,24 @@
- import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Bell, Calendar, BookOpen, Trophy,
-  FileText, Megaphone, Image, User, Settings, Award, CreditCard, Shield,
-  ClipboardCheck, Ticket
-} from "lucide-react";
-import DigitalIDCard from "../../components/DigitalIDCard";
+import { Award, Trophy } from "lucide-react";
 import DashboardStats from "../../components/DashboardStats";
 import Leaderboard from "../../components/Leaderboard";
 import AIAssistant from "../../components/AIAssistant";
 import CertificatePDF from "../../components/CertificatePDF";
 import PaymentView from "../../components/PaymentView";
 import { useAiDiagnostics } from "../../hooks/useAiDiagnostics";
+
+// Extracted tab components (Phase 8 refactor)
+import MemberPostsView from "./tabs/MemberPostsView";
+import MemberEventsView from "./tabs/MemberEventsView";
+import MemberMyPaymentsView from "./tabs/MemberMyPaymentsView";
+import MemberMyAttendanceView from "./tabs/MemberMyAttendanceView";
+import MemberMyRegistrationsView from "./tabs/MemberMyRegistrationsView";
+import MemberAnnouncementsView from "./tabs/MemberAnnouncementsView";
+import MemberGalleryView from "./tabs/MemberGalleryView";
+import MemberProfileView from "./tabs/MemberProfileView";
+import MemberSettingsView from "./tabs/MemberSettingsView";
+import { createTabNavigator } from "./tabs/memberTabUtils";
 
 interface MemberDashboardProps {
   tab?: string;
@@ -68,7 +75,7 @@ export default function MemberDashboard({
     attendance: 80,
     xp: 120,
     joinedDate: "Jan 2025",
-    email: "member@jstu.edu.bd"
+    email: "member@jstu.edu.bd",
   };
 
   const currentTab = activeTab || tab || "dashboard";
@@ -119,7 +126,7 @@ export default function MemberDashboard({
 
   // AIAssistant hook call
   const { isAiLoading, handleSendAiMessage } = useAiDiagnostics({
-    context: { activeMember: student, noticesCount: announcementsList.length }
+    context: { activeMember: student, noticesCount: announcementsList.length },
   });
 
   const handleTabNavigate = (targetTab: string) => {
@@ -129,22 +136,23 @@ export default function MemberDashboard({
       navigate(targetTab === "dashboard" ? "/dashboard" : `/dashboard?tab=${targetTab}`);
     }
   };
+  const go = createTabNavigator(onNavigate, navigate);
 
-  // 1. PAYMENT VIEW
+  // 1. PAYMENT VIEW (existing dedicated component)
   if (currentTab === "payment") {
     return (
       <>{dataWarning}
-        <PaymentView 
-          memberName={student?.name || student?.displayName || "Member"} 
-          memberId={student?.id || student?.memberId || "JNC-MOCK"} 
-          onBack={() => handleTabNavigate("dashboard")} 
-          onSubmitPayment={() => {}} 
+        <PaymentView
+          memberName={student?.name || student?.displayName || "Member"}
+          memberId={student?.id || student?.memberId || "JNC-MOCK"}
+          onBack={() => handleTabNavigate("dashboard")}
+          onSubmitPayment={() => {}}
         />
       </>
     );
   }
 
-  // 2. CERTIFICATE VIEW
+  // 2. CERTIFICATE VIEW (existing dedicated component)
   if (currentTab === "cert") {
     return (
       <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6 text-white">
@@ -152,16 +160,16 @@ export default function MemberDashboard({
           <Award className="w-5 h-5 text-orange-500" />
           <span>Dynamic Course Credentials</span>
         </h1>
-        <CertificatePDF 
-          studentName={student?.name || student?.displayName || "Member"} 
-          courseName="CCNA & MikroTik Core Engineering Bootcamp" 
-          completionDate="May 24, 2026" 
+        <CertificatePDF
+          studentName={student?.name || student?.displayName || "Member"}
+          courseName="CCNA & MikroTik Core Engineering Bootcamp"
+          completionDate="May 24, 2026"
         />
       </div>
     );
   }
 
-  // 3. LEADERBOARD VIEW
+  // 3. LEADERBOARD VIEW (existing dedicated component)
   if (currentTab === "leaderboard") {
     return (
       <>{dataWarning}
@@ -175,402 +183,82 @@ export default function MemberDashboard({
     );
   }
 
-  // 4. POSTS VIEW
+  // 4. POSTS VIEW (extracted → MemberPostsView)
   if (currentTab === "posts") {
-    return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <FileText className="w-5 h-5 text-orange-500" />
-            <span>Club Community Posts</span>
-          </h1>
-          <div className="space-y-4">
-            {posts.length > 0 ? (
-              posts.map((post, idx) => (
-                <div key={post._id || post.id || idx} className="bg-[#03070E] border border-white/10 p-5 rounded-2xl space-y-2">
-                  <div className="flex justify-between items-center text-xs text-orange-400 font-mono">
-                    <span>{post.category || "General"}</span>
-                    <span>{post.date || "Recent"}</span>
-                  </div>
-                  <h3 className="font-bold text-lg text-white">{post.title}</h3>
-                  <p className="text-slate-400 text-xs line-clamp-2">{post.content || post.description || "No preview text available."}</p>
-                </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                No published posts found.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
-    );
+    return <MemberPostsView dataWarning={dataWarning} posts={posts} />;
   }
 
-  // 5. EVENTS VIEW
+  // 5. EVENTS VIEW (extracted → MemberEventsView)
   if (currentTab === "events") {
     return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-orange-500" />
-            <span>Upcoming Club Events & Workshops</span>
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {events.length > 0 ? (
-              events.map((ev, idx) => (
-                <div key={ev._id || ev.id || idx} className="bg-[#03070E] border border-white/10 p-5 rounded-2xl space-y-3">
-                  <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 border border-orange-500/20 text-[10px] font-mono rounded font-bold uppercase">
-                    {ev.type || "Workshop"}
-                  </span>
-                  <h3 className="font-bold text-base text-white">{ev.title}</h3>
-                  <p className="text-xs text-slate-400 font-mono">📅 {ev.date || "TBD"} | 📍 {ev.location || "Club Lab"}</p>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                No scheduled events at this time.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <MemberEventsView
+        dataWarning={dataWarning}
+        events={events}
+        myRegistrations={myRegistrations}
+        student={student}
+        onNavigate={onNavigate}
+      />
     );
   }
 
-  // 6. ANNOUNCEMENTS VIEW
+  // 6. ANNOUNCEMENTS VIEW (extracted → MemberAnnouncementsView)
   if (currentTab === "announcements" || currentTab === "notices") {
     return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <Megaphone className="w-5 h-5 text-orange-500" />
-            <span>Official Announcements & Notices</span>
-          </h1>
-          <div className="space-y-4">
-            {announcementsList.length > 0 ? (
-              announcementsList.map((ann, idx) => (
-                <div key={ann._id || ann.id || idx} className="bg-[#03070E] border border-white/10 p-5 rounded-2xl space-y-2">
-                  <div className="flex justify-between items-center text-xs text-slate-400 font-mono">
-                    <span className="px-2 py-0.5 bg-slate-900 border border-white/10 rounded text-orange-400">
-                      {ann.category || "Notice"}
-                    </span>
-                    <span>{ann.date || "Recent"}</span>
-                  </div>
-                  <h3 className="font-bold text-base text-white">{ann.title}</h3>
-                  <p className="text-xs text-slate-300">{ann.content || ann.description || "Official notice detail."}</p>
-                </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                No announcements posted yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <MemberAnnouncementsView
+        dataWarning={dataWarning}
+        items={announcementsList}
+      />
     );
   }
 
-  // 6a. MY PAYMENTS VIEW
+  // 6a. MY PAYMENTS VIEW (extracted → MemberMyPaymentsView)
   if (currentTab === "my-payments" || currentTab === "payments") {
     return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <CreditCard className="w-5 h-5 text-orange-500" />
-            <span>My Payment History</span>
-          </h1>
-          <div className="space-y-3">
-            {myPayments.length > 0 ? (
-              myPayments.map((p, idx) => {
-                const status = (p.status || "pending").toLowerCase();
-                const statusColor =
-                  status === "approved" || status === "paid"
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                    : status === "rejected"
-                    ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                    : "bg-amber-500/10 border-amber-500/30 text-amber-400";
-                return (
-                  <div
-                    key={p._id || p.id || idx}
-                    className="bg-[#03070E] border border-white/10 p-5 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3"
-                  >
-                    <div>
-                      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Period</p>
-                      <p className="text-sm font-bold text-white">{p.month || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Amount</p>
-                      <p className="text-sm font-bold text-emerald-400">
-                        ৳ {Number(p.amount || 0).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Status</p>
-                      <span className={`inline-block px-2 py-0.5 border rounded text-[10px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
-                        {p.status || "pending"}
-                      </span>
-                    </div>
-                    {p.transactionId && (
-                      <div className="sm:col-span-3">
-                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Transaction ID</p>
-                        <p className="text-[11px] font-mono text-slate-300">{p.transactionId}</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                No payment records yet. Use the Payments tab to submit your monthly fees.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <MemberMyPaymentsView dataWarning={dataWarning} myPayments={myPayments} />
     );
   }
 
-  // 6b. MY ATTENDANCE VIEW
+  // 6b. MY ATTENDANCE VIEW (extracted → MemberMyAttendanceView)
   if (currentTab === "my-attendance" || currentTab === "attendance") {
     return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <ClipboardCheck className="w-5 h-5 text-orange-500" />
-            <span>My Attendance Log</span>
-          </h1>
-          <div className="space-y-3">
-            {myAttendance.length > 0 ? (
-              myAttendance.map((a, idx) => {
-                const status = a.status || "Present";
-                const statusColor =
-                  status === "Present"
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                    : status === "Absent"
-                    ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                    : status === "Late"
-                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                    : "bg-blue-500/10 border-blue-500/30 text-blue-400";
-                return (
-                  <div
-                    key={a._id || a.id || idx}
-                    className="bg-[#03070E] border border-white/10 p-5 rounded-2xl flex items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-white">
-                        {a.topic || a.session || "General Session"}
-                      </p>
-                      <p className="text-[11px] font-mono text-slate-400">
-                        📅 {a.date || "Date TBD"}
-                      </p>
-                      {a.note && (
-                        <p className="text-[10px] text-slate-500 line-clamp-1">{a.note}</p>
-                      )}
-                    </div>
-                    <span className={`px-2 py-0.5 border rounded text-[10px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
-                      {status}
-                    </span>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                No attendance entries yet. Attend the next club session to start building your record.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <MemberMyAttendanceView
+        dataWarning={dataWarning}
+        myAttendance={myAttendance}
+      />
     );
   }
 
-  // 6c. MY REGISTERED EVENTS VIEW
+  // 6c. MY REGISTERED EVENTS VIEW (extracted → MemberMyRegistrationsView)
   if (currentTab === "my-events" || currentTab === "registrations") {
-    const myActiveRegs = myRegistrations.filter(
-      (r) => (r.status || "registered").toLowerCase() !== "cancelled"
-    );
     return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <Ticket className="w-5 h-5 text-orange-500" />
-            <span>My Registered Events</span>
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {myActiveRegs.length > 0 ? (
-              myActiveRegs.map((r, idx) => {
-                const ev = events.find(
-                  (e) => String(e._id || e.id) === String(r.eventId)
-                );
-                const status = (r.status || "registered").toLowerCase();
-                const statusColor =
-                  status === "attended"
-                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                    : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400";
-                return (
-                  <div
-                    key={r._id || r.id || idx}
-                    className="bg-[#03070E] border border-white/10 p-5 rounded-2xl space-y-3"
-                  >
-                    <span className={`inline-block px-2 py-0.5 border rounded text-[10px] font-mono font-bold uppercase tracking-wider ${statusColor}`}>
-                      {status}
-                    </span>
-                    <h3 className="font-bold text-base text-white">
-                      {r.eventTitle || ev?.title || "Event"}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-mono">
-                      📅 {ev?.date || ev?.eventDateTime || r.registeredAt || "TBD"}
-                    </p>
-                    {ev?.location && (
-                      <p className="text-[11px] text-slate-500">📍 {ev.location}</p>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="col-span-full p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                You have not registered for any upcoming events. Browse the Events tab to sign up.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
+      <MemberMyRegistrationsView
+        dataWarning={dataWarning}
+        events={events}
+        myRegistrations={myRegistrations}
+        student={student}
+      />
     );
   }
 
-  // 7. GALLERY VIEW
+  // 7. GALLERY VIEW (extracted → MemberGalleryView)
   if (currentTab === "gallery") {
-    return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <Image className="w-5 h-5 text-orange-500" />
-            <span>Club Photo & Event Gallery</span>
-          </h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {gallery.length > 0 ? (
-              gallery.map((g, idx) => (
-                <div key={g._id || g.id || idx} className="bg-[#03070E] border border-white/10 p-3 rounded-2xl space-y-2">
-                  <div className="h-40 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center border border-white/5">
-                    {g.imageUrl || g.url ? (
-                      <img src={g.imageUrl || g.url} alt={g.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Image className="w-8 h-8 text-slate-600" />
-                    )}
-                  </div>
-                  <p className="text-xs font-bold text-white truncate">{g.title || "Club Activity"}</p>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full p-8 text-center text-xs font-mono text-slate-500 bg-[#03070E] border border-white/5 rounded-2xl">
-                No gallery media available.
-              </div>
-            )}
-          </div>
-        </div>
-      </>
-    );
+    return <MemberGalleryView dataWarning={dataWarning} gallery={gallery} />;
   }
 
-  // 8. PROFILE VIEW ("My Profile")
+  // 8. PROFILE VIEW (extracted → MemberProfileView)
   if (currentTab === "profile" || currentTab === "my-profile") {
     return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-4xl mx-auto space-y-8 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <User className="w-5 h-5 text-orange-500" />
-            <span>My Portal Profile</span>
-          </h1>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-5 bg-[#03070E] border border-white/10 rounded-3xl p-6 text-center space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">Digital Member Pass</h3>
-              <DigitalIDCard
-                memberName={student?.name || student?.displayName || "Member"}
-                memberId={student?.id || student?.memberId || "JNC"}
-                role={student?.role || "member"}
-                department={student?.department || "CSE"}
-                xp={student?.xp || 0}
-                joinedDate={student?.joinedDate || ""}
-              />
-            </div>
-
-            <div className="md:col-span-7 bg-[#03070E] border border-white/10 rounded-3xl p-6 space-y-4 font-mono text-xs">
-              <h3 className="font-sans font-extrabold text-white text-sm pb-2 border-b border-white/5">Account Information</h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Full Name</span>
-                  <span className="text-white font-bold">{student?.name || student?.displayName || "N/A"}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Email Address</span>
-                  <span className="text-orange-400 font-bold">{student?.email || "N/A"}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Department</span>
-                  <span className="text-white font-bold">{student?.department || "CSE"}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Member Attendance</span>
-                  <span className="text-emerald-400 font-bold">{student?.attendance || 80}%</span>
-                </div>
-              </div>
-
-              <div className="pt-4 flex space-x-3">
-                <button
-                  onClick={() => handleTabNavigate("cert")}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-xs rounded-xl border border-white/10 flex items-center space-x-1.5"
-                >
-                  <Award className="w-3.5 h-3.5 text-orange-400" />
-                  <span>View Certificate</span>
-                </button>
-                <button
-                  onClick={() => handleTabNavigate("payment")}
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-xl flex items-center space-x-1.5"
-                >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  <span>Dues & Payments</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
+      <MemberProfileView
+        dataWarning={dataWarning}
+        student={student}
+        onNavigate={onNavigate}
+      />
     );
   }
 
-  // 9. SETTINGS VIEW
+  // 9. SETTINGS VIEW (extracted → MemberSettingsView)
   if (currentTab === "settings") {
-    return (
-      <>{dataWarning}
-        <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto space-y-6 text-white">
-          <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-            <Settings className="w-5 h-5 text-orange-500" />
-            <span>Member Portal Settings</span>
-          </h1>
-
-          <div className="bg-[#03070E] border border-white/10 rounded-3xl p-6 space-y-4 font-mono text-xs">
-            <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
-              <div>
-                <div className="font-bold text-white">Email Notifications</div>
-                <div className="text-[10px] text-slate-500">Receive club updates and event reminders</div>
-              </div>
-              <input type="checkbox" defaultChecked className="w-4 h-4 accent-orange-500 cursor-pointer" />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
-              <div>
-                <div className="font-bold text-white">Public Profile Visibility</div>
-                <div className="text-[10px] text-slate-500">Display stats on Merit Leaderboard</div>
-              </div>
-              <input type="checkbox" defaultChecked className="w-4 h-4 accent-orange-500 cursor-pointer" />
-            </div>
-          </div>
-        </div>
-      </>
-    );
+    return <MemberSettingsView dataWarning={dataWarning} />;
   }
 
   // Default Member Dashboard Home View
@@ -590,14 +278,14 @@ export default function MemberDashboard({
           <div className="flex space-x-2">
             {(student?.attendance || 80) >= 75 && (
               <button
-                onClick={() => handleTabNavigate("cert")}
+                onClick={() => go("cert")}
                 className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs rounded-xl border border-white/10"
               >
                 Get Certificate
               </button>
             )}
             <button
-              onClick={() => handleTabNavigate("payment")}
+              onClick={() => go("payment")}
               className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-orange-600/20"
             >
               Settle Subscription
@@ -612,18 +300,6 @@ export default function MemberDashboard({
           </div>
 
           <div className="lg:col-span-4 space-y-8">
-            <div className="bg-[#03070E] border border-white/10 rounded-3xl p-6 text-center space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">My Digital Wallet Card</h3>
-              <DigitalIDCard
-                memberName={student?.name || student?.displayName || "Member"}
-                memberId={student?.id || student?.memberId || "JNC"}
-                role={student?.role || "member"}
-                department={student?.department || "CSE"}
-                xp={student?.xp || 0}
-                joinedDate={student?.joinedDate || ""}
-              />
-            </div>
-
             {/* AIAssistant Diagnostic Module */}
             <AIAssistant
               isAiLoading={isAiLoading}

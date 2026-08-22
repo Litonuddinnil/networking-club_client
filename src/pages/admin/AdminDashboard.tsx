@@ -15,6 +15,11 @@ import {
   SelectField,
 } from "@/components/admin/Field";
 import ImageDropzone from "@/components/admin/ImageDropzone";
+import EntityViewDialog, {
+  EntityField,
+  formatDetailDate,
+  StatusBadge,
+} from "@/components/admin/EntityViewDialog";
 
 import DashboardTab from "./tabs/DashboardTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
@@ -112,6 +117,8 @@ export default function AdminDashboard(props: AdminDashboardProps) {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [annDialogOpen, setAnnDialogOpen] = useState(false);
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<{ kind: string; record: any } | null>(null);
+  const [viewing, setViewing] = useState<{ kind: string; record: any } | null>(null);
 
   const [postForm, setPostForm] = useState({ title: "", category: "General", content: "" });
   const [eventForm, setEventForm] = useState({
@@ -678,6 +685,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onApprove={(id) => handleUpdateStatus(id, "active")}
             onToggleRole={handleToggleRole}
             onDelete={(id) => handleDelete("member", id, props.onDeleteMember)}
+            onView={(m) => setViewing({ kind: "member", record: m })}
           />
         )}
 
@@ -691,6 +699,8 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onViewModeChange={setViewMode}
             onCreate={() => setPostDialogOpen(true)}
             onDelete={(id) => handleDelete("post", id, props.onDeletePost)}
+            onView={(p) => setViewing({ kind: "post", record: p })}
+            onEdit={(p) => openEdit("post", p)}
           />
         )}
 
@@ -704,6 +714,8 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onViewModeChange={setViewMode}
             onCreate={() => setEventDialogOpen(true)}
             onDelete={(id) => handleDelete("event", id, props.onDeleteEvent)}
+            onView={(e) => setViewing({ kind: "event", record: e })}
+            onEdit={(e) => openEdit("event", e)}
           />
         )}
 
@@ -723,6 +735,8 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                 props.onDeleteAnnouncement || props.onDeleteNotice
               )
             }
+            onView={(a) => setViewing({ kind: "announcement", record: a })}
+            onEdit={(a) => openEdit("announcement", a)}
           />
         )}
 

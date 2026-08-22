@@ -24,6 +24,7 @@ export interface AuthContextType {
     name: string,
     dept: string,
     studentId?: string,
+    photoURL?: string,
   ) => Promise<any>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => void;

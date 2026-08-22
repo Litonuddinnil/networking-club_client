@@ -12,6 +12,8 @@ interface GalleryTabProps {
   onSearchChange: (v: string) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
+  onEdit: (item: any) => void;
+  onView: (item: any) => void;
 }
 
 export default function GalleryTab({
@@ -21,6 +23,8 @@ export default function GalleryTab({
   onSearchChange,
   onCreate,
   onDelete,
+  onEdit,
+  onView,
 }: GalleryTabProps) {
   return (
     <div className="space-y-6">
@@ -52,6 +56,8 @@ export default function GalleryTab({
             <GalleryCard
               key={g._id || g.id || idx}
               item={g}
+              onView={() => onView(g)}
+              onEdit={() => onEdit(g)}
               onDelete={() => onDelete(g._id || g.id)}
             />
           ))}
