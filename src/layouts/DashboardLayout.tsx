@@ -123,9 +123,12 @@ export default function DashboardLayout() {
   const currentTab = new URLSearchParams(location.search).get("tab") || "dashboard";
 
   return (
-    <div className="min-h-screen bg-[#020408] text-slate-300 flex overflow-hidden font-sans">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-white/5 bg-[#03070E] flex-col shrink-0">
+    <div className="min-h-screen bg-[#020408] text-slate-300 flex font-sans">
+      {/* Desktop Sidebar — fixed height viewport so it never grows the
+          flex container. min-h-0 on the right column lets the
+          document scroll instead of the layout getting locked at
+          100vh. */}
+      <aside className="hidden lg:flex w-64 border-r border-white/5 bg-[#03070E] flex-col shrink-0 lg:h-screen lg:sticky lg:top-0">
         <div
           className="p-6 border-b border-white/5 flex items-center space-x-3 cursor-pointer"
           onClick={() => navigate("/")}
@@ -207,9 +210,13 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      {/* Mobile Top Navigation layout */}
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <header className="h-16 border-b border-white/5 bg-[#020408]/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 lg:hidden">
+      {/* Mobile Top Navigation layout. min-h-0 lets this flex child
+          shrink to its content instead of being locked at min-height:
+          auto — that's the line that actually allows the <main>
+          region below to grow taller than the viewport so the
+          document becomes scrollable. */}
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+        <header className="h-16 border-b border-white/5 bg-[#020408]/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 lg:hidden sticky top-0 z-30">
           <div className="flex items-center space-x-2.5">
             <div className="w-7 h-7 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
               <ClubLogo size={24} compact />
@@ -235,8 +242,9 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        {/* Primary Nested Routing Content */}
-        <main className="flex-1 min-w-0 overflow-y-auto overscroll-contain custom-scrollbar bg-[#020408]">
+        {/* Primary Nested Routing Content — flows with the document so the
+            window handles scroll. Sidebar uses lg:sticky to stay in view. */}
+        <main className="flex-1 min-w-0 bg-[#020408]">
           <div data-barba="page" data-barba-namespace="dashboard" className="barba-page">
             <Outlet />
           </div>

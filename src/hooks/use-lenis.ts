@@ -24,21 +24,31 @@ export function getLenis(): Lenis | null {
 function resolveScrollWrapper(): HTMLElement | Window {
   if (typeof window === "undefined") return window;
 
+  // Only consider nested scrollers that are *strictly* overflow-y-auto
+  // AND currently have actual vertical overflow that exceeds their
+  // visible viewport by a meaningful amount. This prevents Lenis from
+  // hijacking the window when the document itself is taller than the
+  // viewport (the normal case for tab pages with cards/grids).
+  const docScrollable =
+    document.documentElement.scrollHeight > window.innerHeight + 4;
+
   const candidates = Array.from(
-    document.querySelectorAll<HTMLElement>(
-      ".overflow-y-auto, .overflow-x-auto, [data-lenis-wrapper]"
-    )
+    document.querySelectorAll<HTMLElement>(".overflow-y-auto")
   );
 
-  // Prefer the element with the largest visible scrollHeight that is
-  // currently in viewport. Stable across re-renders.
   const visible = candidates
     .filter((el) => {
       const rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      // Only treat as a real wrapper if the element itself actually
+      // overflows vertically *and* the document isn't also scrollable
+      // (in which case window is the right target).
       return (
-        rect.height > 100 &&
-        rect.width > 100 &&
-        el.scrollHeight > el.clientHeight + 4
+        !docScrollable ||
+        (rect.height > 200 &&
+          rect.width > 200 &&
+          el.scrollHeight - el.clientHeight > 40 &&
+          (style.overflowY === "auto" || style.overflowY === "scroll"))
       );
     })
     .sort((a, b) => b.scrollHeight - a.scrollHeight);
