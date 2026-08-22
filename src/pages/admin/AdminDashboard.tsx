@@ -4,17 +4,11 @@ import {
   Search,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 import { useAxiosSecure } from "../../hooks/useAxiosSecure";
 import { ViewMode } from "@/components/admin/AdminCrudToolbar";
 import SectionHeading from "@/components/admin/SectionHeading";
 import ConfirmActionDialog from "@/components/admin/ConfirmActionDialog";
-import EntityFormDialog from "@/components/admin/EntityFormDialog";
-import {
-  TextField,
-  TextAreaField,
-  SelectField,
-} from "@/components/admin/Field";
-import ImageDropzone from "@/components/admin/ImageDropzone";
 import EntityViewDialog, {
   EntityField,
   formatDetailDate,
@@ -93,6 +87,7 @@ function swalError(text: string) {
 
 export default function AdminDashboard(props: AdminDashboardProps) {
   const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate();
   const [localTab, setLocalTab] = useState<string>("dashboard");
   const activeTab = props.activeTab || localTab;
 
@@ -113,35 +108,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  const [postDialogOpen, setPostDialogOpen] = useState(false);
-  const [eventDialogOpen, setEventDialogOpen] = useState(false);
-  const [annDialogOpen, setAnnDialogOpen] = useState(false);
-  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<{ kind: string; record: any } | null>(null);
   const [viewing, setViewing] = useState<{ kind: string; record: any } | null>(null);
-
-  const [postForm, setPostForm] = useState({
-    title: "",
-    category: "General",
-    content: "",
-    coverImage: "",
-  });
-  const [eventForm, setEventForm] = useState({
-    title: "",
-    type: "Workshop",
-    eventDateTime: "",
-    location: "CSE Lab 1, JSTU Campus",
-    description: "",
-    image: "",
-  });
-  const [annForm, setAnnForm] = useState({
-    title: "",
-    category: "Notice",
-    content: "",
-    coverImage: "",
-  });
-  const [galleryForm, setGalleryForm] = useState({ title: "", category: "Workshop", imageUrl: "" });
-  const [formSubmitting, setFormSubmitting] = useState(false);
 
   const [confirm, setConfirm] = useState<{
     open: boolean;
@@ -513,125 +480,21 @@ export default function AdminDashboard(props: AdminDashboardProps) {
 
   const isBn = appSettings.language === "bn";
 
-  // form submitters ---------------------------------------------------
-  const submitPost = async () => {
-    if (!postForm.title || !postForm.content) {
-      swalError("Please fill in title and content.");
-      return;
-    }
-    setFormSubmitting(true);
-    try {
-      await axiosSecure.post("/api/posts", {
-        title: postForm.title,
-        category: postForm.category || "General",
-        content: postForm.content,
-        author: adminName,
-        date: new Date().toLocaleDateString(),
-        coverImage: postForm.coverImage || "",
-      });
-      setPostForm({ title: "", category: "General", content: "", coverImage: "" });
-      setPostDialogOpen(false);
-      fetchAdminData();
-      toastSuccess("Post published");
-    } catch (err: any) {
-      swalError(err.message || "Failed to create post.");
-    } finally {
-      setFormSubmitting(false);
-    }
+  // form navigation: route to dedicated full-page form routes instead of opening modals
+  const goToCreate = (kind: "post" | "event" | "announcement" | "gallery") => {
+    navigate(`/dashboard/${kind === "announcement" ? "announcements" : kind === "post" ? "posts" : kind}s/new`);
   };
-
-  const submitEvent = async () => {
-    if (!eventForm.title || !eventForm.eventDateTime) {
-      swalError("Please fill in title and date/time.");
-      return;
-    }
-    setFormSubmitting(true);
-    try {
-      const dt = new Date(eventForm.eventDateTime);
-      const formattedDate = dt.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-      const formattedTime = dt.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      await axiosSecure.post("/api/events", {
-        title: eventForm.title,
-        type: eventForm.type || "Workshop",
-        date: formattedDate,
-        time: formattedTime,
-        location: eventForm.location,
-        image:
-          eventForm.image ||
-          "https://images.unsplash.com/photo-1597733336794-12d05021d510?auto=format&fit=crop&w=600&q=80",
-        description: eventForm.description || "",
-      });
-      setEventForm({
-        title: "",
-        type: "Workshop",
-        eventDateTime: "",
-        location: "CSE Lab 1, JSTU Campus",
-        description: "",
-        image: "",
-      });
-      setEventDialogOpen(false);
-      fetchAdminData();
-      toastSuccess("Event created");
-    } catch (err: any) {
-      swalError(err.message || "Failed to create event.");
-    } finally {
-      setFormSubmitting(false);
-    }
+  const openEdit = (kind: "post" | "event" | "announcement" | "gallery", record: any) => {
+    const id = record?._id || record?.id;
+    if (!id) return;
+    const prefix = kind === "announcement" ? "announcements" : kind === "post" ? "posts" : `${kind}s`;
+    navigate(`/dashboard/${prefix}/${id}/edit`);
   };
-
-  const submitAnnouncement = async () => {
-    if (!annForm.title || !annForm.content) {
-      swalError("Please fill in title and content.");
-      return;
-    }
-    setFormSubmitting(true);
-    try {
-      await axiosSecure.post("/api/announcements", {
-        title: annForm.title,
-        category: annForm.category || "Notice",
-        content: annForm.content,
-        date: new Date().toLocaleDateString(),
-        coverImage: annForm.coverImage || "",
-      });
-      setAnnForm({ title: "", category: "Notice", content: "", coverImage: "" });
-      setAnnDialogOpen(false);
+  const refreshAdminData = () => {
+    if (props.onRefreshData) {
+      props.onRefreshData();
+    } else {
       fetchAdminData();
-      toastSuccess("Announcement posted");
-    } catch (err: any) {
-      swalError(err.message || "Failed to post announcement.");
-    } finally {
-      setFormSubmitting(false);
-    }
-  };
-
-  const submitGallery = async () => {
-    if (!galleryForm.title || !galleryForm.imageUrl) {
-      swalError("Please add a title and upload an image.");
-      return;
-    }
-    setFormSubmitting(true);
-    try {
-      await axiosSecure.post("/api/gallery", {
-        title: galleryForm.title,
-        imageUrl: galleryForm.imageUrl,
-        category: galleryForm.category || "Workshop",
-        date: new Date().toLocaleDateString(),
-      });
-      setGalleryForm({ title: "", category: "Workshop", imageUrl: "" });
-      setGalleryDialogOpen(false);
-      fetchAdminData();
-      toastSuccess("Uploaded to gallery");
-    } catch (err: any) {
-      swalError(err.message || "Failed to upload media.");
-    } finally {
-      setFormSubmitting(false);
     }
   };
 
@@ -709,7 +572,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onSearchChange={setSearchTerm}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onCreate={() => setPostDialogOpen(true)}
+            onCreate={() => goToCreate("post")}
             onDelete={(id) => handleDelete("post", id, props.onDeletePost)}
             onView={(p) => setViewing({ kind: "post", record: p })}
             onEdit={(p) => openEdit("post", p)}
@@ -724,7 +587,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onSearchChange={setSearchTerm}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onCreate={() => setEventDialogOpen(true)}
+            onCreate={() => goToCreate("event")}
             onDelete={(id) => handleDelete("event", id, props.onDeleteEvent)}
             onView={(e) => setViewing({ kind: "event", record: e })}
             onEdit={(e) => openEdit("event", e)}
@@ -739,7 +602,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onSearchChange={setSearchTerm}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onCreate={() => setAnnDialogOpen(true)}
+            onCreate={() => goToCreate("announcement")}
             onDelete={(id) =>
               handleDelete(
                 "announcement",
@@ -758,7 +621,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             totalCount={gallery.length}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            onCreate={() => setGalleryDialogOpen(true)}
+            onCreate={() => goToCreate("gallery")}
+            onEdit={(item) => openEdit("gallery", item)}
+            onView={(item) => setViewing({ kind: "gallery", record: item })}
             onDelete={(id) => handleDelete("gallery", id, props.onDeleteGallery)}
           />
         )}
@@ -882,194 +747,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
         onConfirm={confirm.onConfirm}
       />
 
-      {/* Create dialogs */}
-      <EntityFormDialog
-        open={postDialogOpen}
-        onOpenChange={setPostDialogOpen}
-        title="Create new article"
-        description="Publish a story, tutorial, or club update."
-        size="lg"
-        loading={formSubmitting}
-        submitLabel="Publish article"
-        onSubmit={submitPost}
-      >
-        <TextField
-          label="Post title"
-          required
-          value={postForm.title}
-          onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
-          placeholder="e.g. Getting started with OSPF"
-        />
-        <SelectField
-          label="Category"
-          value={postForm.category}
-          onValueChange={(v) => setPostForm({ ...postForm, category: v })}
-          options={[
-            { value: "General", label: "General" },
-            { value: "Networking", label: "Networking" },
-            { value: "Security", label: "Security" },
-            { value: "Workshop", label: "Workshop" },
-            { value: "Career", label: "Career" },
-          ]}
-        />
-        <TextAreaField
-          label="Content"
-          required
-          value={postForm.content}
-          onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
-          placeholder="Write your post body (Markdown supported)..."
-          rows={6}
-        />
-        <ImageDropzone
-          label="Cover image (optional)"
-          value={postForm.coverImage}
-          onChange={(url) => setPostForm({ ...postForm, coverImage: url })}
-        />
-      </EntityFormDialog>
-
-      <EntityFormDialog
-        open={eventDialogOpen}
-        onOpenChange={setEventDialogOpen}
-        title="Create new event"
-        description="Schedule a workshop, seminar, or meetup."
-        size="lg"
-        loading={formSubmitting}
-        submitLabel="Publish event"
-        onSubmit={submitEvent}
-      >
-        <TextField
-          label="Event title"
-          required
-          value={eventForm.title}
-          onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-          placeholder="e.g. MikroTik RouterOS Lab"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <SelectField
-            label="Event type"
-            value={eventForm.type}
-            onValueChange={(v) => setEventForm({ ...eventForm, type: v })}
-            options={[
-              { value: "Workshop", label: "Workshop" },
-              { value: "Seminar", label: "Seminar" },
-              { value: "Hackathon", label: "Hackathon" },
-              { value: "Meetup", label: "Meetup" },
-              { value: "Competition", label: "Competition" },
-            ]}
-          />
-          <TextField
-            label="Date & time"
-            required
-            type="datetime-local"
-            value={eventForm.eventDateTime}
-            onChange={(e) =>
-              setEventForm({ ...eventForm, eventDateTime: e.target.value })
-            }
-          />
-        </div>
-        <TextField
-          label="Location"
-          value={eventForm.location}
-          onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
-        />
-        <TextAreaField
-          label="Description"
-          value={eventForm.description}
-          onChange={(e) =>
-            setEventForm({ ...eventForm, description: e.target.value })
-          }
-          placeholder="What attendees will learn..."
-          rows={4}
-        />
-        <ImageDropzone
-          label="Cover image (optional)"
-          value={eventForm.image}
-          onChange={(url) => setEventForm({ ...eventForm, image: url })}
-        />
-      </EntityFormDialog>
-
-      <EntityFormDialog
-        open={annDialogOpen}
-        onOpenChange={setAnnDialogOpen}
-        title="Post announcement"
-        description="Broadcast an urgent notice to all members."
-        size="lg"
-        loading={formSubmitting}
-        submitLabel="Broadcast"
-        onSubmit={submitAnnouncement}
-      >
-        <TextField
-          label="Announcement title"
-          required
-          value={annForm.title}
-          onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })}
-          placeholder="e.g. Lab booking opens tomorrow"
-        />
-        <SelectField
-          label="Category"
-          value={annForm.category}
-          onValueChange={(v) => setAnnForm({ ...annForm, category: v })}
-          options={[
-            { value: "Notice", label: "Notice" },
-            { value: "Urgent", label: "Urgent" },
-            { value: "Event", label: "Event" },
-            { value: "Maintenance", label: "Maintenance" },
-            { value: "General", label: "General" },
-          ]}
-        />
-        <TextAreaField
-          label="Content"
-          required
-          value={annForm.content}
-          onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })}
-          placeholder="Write the announcement..."
-          rows={5}
-        />
-        <ImageDropzone
-          label="Cover image (optional)"
-          value={annForm.coverImage}
-          onChange={(url) => setAnnForm({ ...annForm, coverImage: url })}
-        />
-      </EntityFormDialog>
-
-      <EntityFormDialog
-        open={galleryDialogOpen}
-        onOpenChange={setGalleryDialogOpen}
-        title="Add to gallery"
-        description="Upload a photo from a workshop or event."
-        size="lg"
-        loading={formSubmitting}
-        submitLabel="Upload media"
-        onSubmit={submitGallery}
-      >
-        <TextField
-          label="Title"
-          required
-          value={galleryForm.title}
-          onChange={(e) =>
-            setGalleryForm({ ...galleryForm, title: e.target.value })
-          }
-          placeholder="e.g. IPv6 Seminar group photo"
-        />
-        <SelectField
-          label="Category"
-          value={galleryForm.category}
-          onValueChange={(v) => setGalleryForm({ ...galleryForm, category: v })}
-          options={[
-            { value: "Workshop", label: "Workshop" },
-            { value: "Seminar", label: "Seminar" },
-            { value: "Hackathon", label: "Hackathon" },
-            { value: "Meetup", label: "Meetup" },
-            { value: "Award", label: "Award" },
-          ]}
-        />
-        <ImageDropzone
-          label="Image"
-          required
-          value={galleryForm.imageUrl}
-          onChange={(url) => setGalleryForm({ ...galleryForm, imageUrl: url })}
-        />
-      </EntityFormDialog>
+      {/* Create / edit flows route to dedicated full-page forms */}
     </div>
   );
 }

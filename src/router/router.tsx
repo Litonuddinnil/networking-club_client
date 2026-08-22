@@ -16,6 +16,12 @@ import FacebookRedirect from "../pages/FacebookRedirect";
 import Contact from "../pages/Contact";
 import NetworkLab from "../pages/NetworkLab";
 
+// Admin full-page form routes
+import PostFormPage from "../pages/admin/forms/PostFormPage";
+import EventFormPage from "../pages/admin/forms/EventFormPage";
+import AnnouncementFormPage from "../pages/admin/forms/AnnouncementFormPage";
+import GalleryFormPage from "../pages/admin/forms/GalleryFormPage";
+
 export const router = createBrowserRouter([
   // 1. PUBLIC FACING SEGMENT (wrapped in MainLayout)
   {
@@ -57,6 +63,23 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Dashboard /> },
       { path: ":tab", element: <Dashboard /> },
+
+      // Full-page admin forms (replacing modals) --------------
+      // Posts
+      { path: "posts/new", element: <PostFormPage /> },
+      { path: "posts/:id/edit", element: <PostFormPage /> },
+
+      // Events
+      { path: "events/new", element: <EventFormPage /> },
+      { path: "events/:id/edit", element: <EventFormPage /> },
+
+      // Announcements
+      { path: "announcements/new", element: <AnnouncementFormPage /> },
+      { path: "announcements/:id/edit", element: <AnnouncementFormPage /> },
+
+      // Gallery
+      { path: "gallery/new", element: <GalleryFormPage /> },
+      { path: "gallery/:id/edit", element: <GalleryFormPage /> },
     ],
   },
 
