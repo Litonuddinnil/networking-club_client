@@ -70,7 +70,7 @@ export default function MemberSettingsView({
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <Settings className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
@@ -101,7 +101,7 @@ export default function MemberSettingsView({
         {/* Section 1: Notifications */}
         <section className="bg-[#03070E] border border-white/10 rounded-3xl p-5 sm:p-7 space-y-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-bold text-white border-b border-white/5 pb-3">
-            <Bell className="w-4 h-4 text-orange-400" />
+            <Bell className="w-4 h-4 text-emerald-400" />
             <span>Communication &amp; Notifications</span>
           </div>
 
@@ -172,7 +172,7 @@ export default function MemberSettingsView({
               className="p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/5 border border-white/10 text-slate-300 hover:text-white flex items-center justify-between transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <RotateCcw className="w-4 h-4 text-orange-400" />
+                <RotateCcw className="w-4 h-4 text-emerald-400" />
                 <span className="font-bold">Reset All Defaults</span>
               </div>
               <span className="text-[10px] text-slate-500">Restore</span>
@@ -229,7 +229,7 @@ function SettingToggle({
         aria-checked={enabled}
         onClick={onToggle}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-          enabled ? "bg-orange-500" : "bg-slate-800"
+          enabled ? "bg-emerald-500" : "bg-slate-800"
         }`}
       >
         <span

@@ -140,7 +140,7 @@ export default function DashboardView({
         
         {/* Brand header */}
         <div className="p-6 border-b border-white/5 flex items-center space-x-3 cursor-pointer" onClick={() => onNavigate("home")}>
-          <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
             <Network className="w-4 h-4 text-white animate-pulse" />
           </div>
           <div>
@@ -160,7 +160,7 @@ export default function DashboardView({
             { id: "trainings", label: "Trainings Progress", icon: <BookOpen className="w-4.5 h-4.5" /> },
             { id: "certificates", label: "Certificates", icon: <Award className="w-4.5 h-4.5" />, action: () => setCertModalOpen(true) },
             { id: "notices", label: "Notice Board", icon: <HelpCircle className="w-4.5 h-4.5" /> },
-            { id: "ai", label: "AI Diagnostics", icon: <Sparkles className="w-4.5 h-4.5 text-orange-400" />, action: () => setAiChatOpen(true) }
+            { id: "ai", label: "AI Diagnostics", icon: <Sparkles className="w-4.5 h-4.5 text-emerald-400" />, action: () => setAiChatOpen(true) }
           ].map((item) => (
             <button
               key={item.id}
@@ -170,7 +170,7 @@ export default function DashboardView({
               }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeSubTab === item.id 
-                  ? "bg-orange-600/10 text-orange-400 border border-orange-500/20" 
+                  ? "bg-emerald-600/10 text-emerald-400 border border-emerald-500/20" 
                   : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -190,7 +190,7 @@ export default function DashboardView({
         {/* Left Side: AD banner card */}
         <div className="p-4 border-t border-white/5">
           <div className="bg-gradient-to-tr from-slate-900 to-[#0e172a] border border-white/10 rounded-2xl p-4 space-y-3 relative overflow-hidden">
-            <div className="absolute -right-2 -bottom-2 text-orange-500/5">
+            <div className="absolute -right-2 -bottom-2 text-emerald-500/5">
               <Network className="w-20 h-20" />
             </div>
             <h4 className="text-xs font-bold text-white">Upgrade Your Skills</h4>
@@ -199,7 +199,7 @@ export default function DashboardView({
             </p>
             <button 
               onClick={() => setAiChatOpen(true)}
-              className="w-full py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold text-[10px] rounded-lg transition-all"
+              className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition-all"
             >
               Explore Now →
             </button>
@@ -209,7 +209,7 @@ export default function DashboardView({
         {/* Logout container footer */}
         <div className="p-4 border-t border-white/5 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-full bg-slate-800 border border-orange-500/30 overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-slate-800 border border-emerald-500/30 overflow-hidden">
               <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${member.avatar}`} alt="avatar" className="w-full h-full object-cover bg-slate-900" />
             </div>
             <div className="min-w-0">
@@ -244,8 +244,8 @@ export default function DashboardView({
               onClick={() => setAiChatOpen(true)}
               className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-colors relative"
             >
-              <Sparkles className="w-5 h-5 text-orange-400" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full animate-ping"></span>
+              <Sparkles className="w-5 h-5 text-emerald-400" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
             </button>
             <div className="h-4 w-[1px] bg-white/5" />
             <button 
@@ -277,7 +277,7 @@ export default function DashboardView({
 
             <div className="flex items-center space-x-3 font-mono text-xs text-slate-400 bg-white/5 px-4 py-2 border border-white/5 rounded-2xl">
               <span className="text-slate-500">MEMBER ID:</span>
-              <span className="text-orange-400 font-bold">{member.id}</span>
+              <span className="text-emerald-400 font-bold">{member.id}</span>
             </div>
           </div>
 
@@ -286,7 +286,7 @@ export default function DashboardView({
             {[
               { label: "Active Membership", val: "Active", desc: "Status checked", color: "text-emerald-400 bg-emerald-500/10" },
               { label: "Attendance Status", val: `${member.attendance}%`, desc: "In physical labs", color: "text-blue-400 bg-blue-500/10" },
-              { label: "Total Paid", val: `৳ ${member.totalPaid}`, desc: "Tracked collections", color: "text-orange-400 bg-orange-500/10" },
+              { label: "Total Paid", val: `৳ ${member.totalPaid}`, desc: "Tracked collections", color: "text-emerald-400 bg-emerald-500/10" },
               { label: "Skill Rewards", val: `${member.xp} XP`, desc: "Gamified learning", color: "text-purple-400 bg-purple-500/10" }
             ].map((stat, idx) => (
               <div key={idx} className="bg-[#03070E] border border-white/5 p-5 rounded-2xl flex flex-col justify-between">
@@ -315,7 +315,7 @@ export default function DashboardView({
                   </div>
                   <button 
                     onClick={() => onNavigate("payment")}
-                    className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-orange-600/15 transition-all flex items-center space-x-1"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/15 transition-all flex items-center space-x-1"
                   >
                     <span>Pay Next Month</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -337,7 +337,7 @@ export default function DashboardView({
                       {paymentsLoading && (
                         <tr>
                           <td colSpan={5} className="py-8 text-center text-slate-500 font-mono text-[11px] uppercase tracking-wider">
-                            <RefreshCw className="w-4 h-4 inline-block mr-2 animate-spin text-orange-400" />
+                            <RefreshCw className="w-4 h-4 inline-block mr-2 animate-spin text-emerald-400" />
                             Loading payment ledger from MongoDB…
                           </td>
                         </tr>
@@ -370,7 +370,7 @@ export default function DashboardView({
                         return (
                           <tr key={key} className="hover:bg-white/5/20 transition-all">
                             <td className="py-3.5 font-semibold text-white">{p.month || dateStr}</td>
-                            <td className="py-3.5 font-mono text-orange-400">৳ {p.amount}</td>
+                            <td className="py-3.5 font-mono text-emerald-400">৳ {p.amount}</td>
                             <td className="py-3.5">
                               <span className={`px-2.5 py-0.5 border rounded-md font-bold text-[10px] uppercase tracking-wider font-mono ${statusClass}`}>
                                 {p.status}
@@ -393,7 +393,7 @@ export default function DashboardView({
                 <div className="bg-[#03070E] border border-white/5 rounded-3xl p-6 space-y-6">
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-bold text-white">Active Training Course progress</h3>
-                    <span className="text-[10px] font-mono text-orange-400">CCNA Core</span>
+                    <span className="text-[10px] font-mono text-emerald-400">CCNA Core</span>
                   </div>
 
                   <div className="space-y-4">
@@ -401,7 +401,7 @@ export default function DashboardView({
                       <div key={course.id} className="space-y-2">
                         <div className="flex justify-between text-xs">
                           <span className="font-semibold text-slate-300">{course.name} ({course.provider})</span>
-                          <span className="font-mono text-orange-400 font-bold">{course.progress}%</span>
+                          <span className="font-mono text-emerald-400 font-bold">{course.progress}%</span>
                         </div>
                         <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
                           <div 

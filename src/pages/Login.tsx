@@ -29,7 +29,7 @@ export default function Login() {
 
   return (
     <div className="bg-[#03070E]/90 border border-white/10 rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
-      <div className="absolute inset-0 bg-linear-to-b from-orange-500/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-b from-emerald-500/5 to-transparent pointer-events-none" />
 
       <div className="space-y-1.5 text-center">
         <h2 className="text-xl font-display font-extrabold text-white tracking-wide">Enter Cyber Portal</h2>
@@ -77,7 +77,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-orange-600/20"
+          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
         >
           <LogIn className="w-4 h-4" />
           <span>{isLoading ? "Authenticating node..." : "Establish handshakes"}</span>
@@ -86,7 +86,7 @@ export default function Login() {
 
       <div className="text-center text-xs">
         <span className="text-slate-500">Need a portal node? </span>
-        <Link to="/register" className="text-orange-500 hover:text-orange-400 font-bold">Register Registry</Link>
+        <Link to="/register" className="text-emerald-400 hover:text-emerald-300 font-bold">Register Registry</Link>
       </div>
     </div>
   );

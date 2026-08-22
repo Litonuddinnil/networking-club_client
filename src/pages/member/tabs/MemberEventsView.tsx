@@ -75,12 +75,12 @@ export default function MemberEventsView({
         <header className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-orange-400 uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-emerald-400 uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Event Stream · {currentYear}
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-extrabold text-white tracking-tight leading-tight flex items-center gap-3">
-                <span className="inline-grid place-items-center w-11 h-11 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-orange-400 shrink-0">
+                <span className="inline-grid place-items-center w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
                   <Calendar className="w-5 h-5" aria-hidden="true" />
                 </span>
                 Upcoming Club Events &amp; Workshops
@@ -94,7 +94,7 @@ export default function MemberEventsView({
           {/* Stats Bar */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
-              icon={<Sparkles className="absolute -top-2 -right-2 w-12 h-12 text-orange-500/10 pointer-events-none" />}
+              icon={<Sparkles className="absolute -top-2 -right-2 w-12 h-12 text-emerald-500/10 pointer-events-none" />}
               label="Scheduled"
               value={eventsCount}
               hint="total events"
@@ -140,7 +140,7 @@ export default function MemberEventsView({
               return (
                 <article
                   key={eventId}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-orange-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-0.5"
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-emerald-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-0.5"
                 >
                   {/* Event Media */}
                   <div className="relative h-48 sm:h-52 overflow-hidden">
@@ -238,7 +238,7 @@ export default function MemberEventsView({
                       className={`w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-mono font-bold uppercase tracking-widest transition-all ${
                         isRegistered
                           ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
-                          : "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-orange-500/30 hover:text-orange-300"
+                          : "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 hover:text-emerald-300"
                       }`}
                     >
                       <span className="flex items-center gap-2">

@@ -229,11 +229,11 @@ export default function MainLayout() {
         initial={false}
         animate={{
           backgroundColor: scrolled ? "rgba(8,8,14,0.78)" : "rgba(8,8,14,0.45)",
-          borderColor: scrolled ? "rgba(255,107,0,0.22)" : "rgba(255,107,0,0.10)",
+          borderColor: scrolled ? "rgba(34,197,94,0.22)" : "rgba(34,197,94,0.10)",
         }}
         transition={{ duration: 0.3, ease: EASE_OUT }}
         className={`sticky top-0 z-40 backdrop-blur-xl border-b ${
-          scrolled ? "shadow-[0_8px_30px_-12px_rgba(255,107,0,0.25)]" : ""
+          scrolled ? "shadow-[0_8px_30px_-12px_rgba(34,197,94,0.25)]" : ""
         }`}
       >
         <div className="sh-container h-16 flex items-center justify-between gap-4">

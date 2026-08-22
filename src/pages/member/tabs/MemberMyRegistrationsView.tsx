@@ -133,12 +133,12 @@ export default function MemberMyRegistrationsView({
         <header className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-orange-400 uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-emerald-400 uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Passes &amp; Bookings
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-extrabold text-white tracking-tight leading-tight flex items-center gap-3">
-                <span className="inline-grid place-items-center w-11 h-11 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-orange-400 shrink-0">
+                <span className="inline-grid place-items-center w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
                   <Ticket className="w-5 h-5" aria-hidden="true" />
                 </span>
                 My Registered Events
@@ -155,7 +155,7 @@ export default function MemberMyRegistrationsView({
               label="Active Passes"
               value={stats.total}
               hint="total event bookings"
-              icon={<BookmarkCheck className="w-4 h-4 text-orange-400" />}
+              icon={<BookmarkCheck className="w-4 h-4 text-emerald-400" />}
               color="text-white"
             />
             <StatCard
@@ -188,7 +188,7 @@ export default function MemberMyRegistrationsView({
                 onClick={() => setActiveFilter(f)}
                 className={`px-3 py-1 rounded-xl uppercase tracking-wider font-semibold border transition-all ${
                   activeFilter === f
-                    ? "bg-orange-500/20 border-orange-500/40 text-orange-300 shadow-sm"
+                    ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-sm"
                     : "bg-[#03070E] border-white/5 text-slate-400 hover:text-white hover:border-white/20"
                 }`}
               >
@@ -216,7 +216,7 @@ export default function MemberMyRegistrationsView({
               return (
                 <article
                   key={uniqueKey}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-orange-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/5 hover:-translate-y-0.5"
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5"
                 >
                   {/* Card Header Media or Theme Strip */}
                   <div className="relative h-36 overflow-hidden bg-slate-950">
@@ -247,7 +247,7 @@ export default function MemberMyRegistrationsView({
 
                     {/* Event Category Chip */}
                     <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-black/60 border border-white/10 text-orange-400 backdrop-blur-md">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-black/60 border border-white/10 text-emerald-400 backdrop-blur-md">
                         <Sparkles className="w-3 h-3" />
                         {ev?.type || "Event"}
                       </span>
@@ -285,7 +285,7 @@ export default function MemberMyRegistrationsView({
                     <button
                       type="button"
                       onClick={() => go("events")}
-                      className="w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-mono font-bold uppercase tracking-widest bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-orange-500/30 hover:text-orange-300 transition-all"
+                      className="w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-mono font-bold uppercase tracking-widest bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 hover:text-emerald-300 transition-all"
                     >
                       <span>View Event Briefing</span>
                       <ArrowUpRight className="w-3.5 h-3.5 opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -312,7 +312,7 @@ export default function MemberMyRegistrationsView({
                 <button
                   type="button"
                   onClick={() => go("events")}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-all"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition-all"
                 >
                   Explore Events
                   <ArrowUpRight className="w-3.5 h-3.5" />

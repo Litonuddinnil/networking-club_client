@@ -18,7 +18,7 @@ export default function MemberGalleryView({
       >
         {/* Header */}
         <header className="flex items-center gap-2.5 pb-2 border-b border-white/5">
-          <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <ImageIcon className="w-5 h-5" aria-hidden="true" />
           </div>
           <div>
@@ -43,7 +43,7 @@ export default function MemberGalleryView({
                 <article
                   key={uniqueKey}
                   onClick={() => imageSrc && setSelectedImage(item)}
-                  className={`group relative bg-[#03070E] border border-white/10 hover:border-orange-500/30 p-3 rounded-2xl space-y-2.5 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/5 ${
+                  className={`group relative bg-[#03070E] border border-white/10 hover:border-emerald-500/30 p-3 rounded-2xl space-y-2.5 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/5 ${
                     imageSrc ? "cursor-pointer" : ""
                   }`}
                 >
@@ -72,7 +72,7 @@ export default function MemberGalleryView({
 
                     {item.category && (
                       <div className="absolute top-2 left-2">
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider bg-black/60 border border-white/10 text-orange-400 backdrop-blur-md">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider bg-black/60 border border-white/10 text-emerald-400 backdrop-blur-md">
                           {item.category}
                         </span>
                       </div>
@@ -81,7 +81,7 @@ export default function MemberGalleryView({
 
                   {/* Caption & Metadata */}
                   <div className="space-y-0.5 px-1">
-                    <h2 className="text-xs font-bold text-white truncate group-hover:text-orange-300 transition-colors">
+                    <h2 className="text-xs font-bold text-white truncate group-hover:text-emerald-300 transition-colors">
                       {title}
                     </h2>
                     {item.caption && (

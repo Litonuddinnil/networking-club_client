@@ -16,7 +16,7 @@ export default function MemberAnnouncementsView({
       >
         {/* Header */}
         <header className="flex items-center gap-2.5 pb-2 border-b border-white/5">
-          <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <Megaphone className="w-5 h-5" aria-hidden="true" />
           </div>
           <h1 className="text-xl font-display font-extrabold tracking-tight text-white">
@@ -37,7 +37,7 @@ export default function MemberAnnouncementsView({
                 >
                   {/* Metadata Header */}
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 font-medium">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
                       <Tag className="w-3 h-3" />
                       {ann.category || "Notice"}
                     </span>

@@ -218,8 +218,8 @@ export default function AIAssistant({ isAiLoading, onSendAiMessage }: AIAssistan
             <div
               className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
                 msg.sender === "user"
-                  ? "bg-orange-600 text-white"
-                  : "bg-slate-900 border border-white/10 text-cyan-400"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-slate-900 border border-white/10 text-teal-400"
               }`}
             >
               {msg.sender === "user" ? (
@@ -231,7 +231,7 @@ export default function AIAssistant({ isAiLoading, onSendAiMessage }: AIAssistan
             <div
               className={`p-3 rounded-2xl max-w-[80%] text-[11px] leading-relaxed whitespace-pre-wrap ${
                 msg.sender === "user"
-                  ? "bg-orange-600/10 border border-orange-500/20 text-orange-200 rounded-tr-none"
+                  ? "bg-emerald-600/10 border border-emerald-500/20 text-emerald-200 rounded-tr-none"
                   : "bg-slate-900/80 border border-white/5 text-slate-300 rounded-tl-none"
               }`}
             >

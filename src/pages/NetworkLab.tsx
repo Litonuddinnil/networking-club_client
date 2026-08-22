@@ -927,7 +927,7 @@ export default function NetworkLab() {
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-xs font-mono transition",
                   lessonId === l.id
-                    ? "bg-gradient-to-r from-purple-500/40 to-cyan-500/30 border border-cyan-400/50 text-foreground font-bold shadow-md"
+                    ? "bg-gradient-to-r from-emerald-500/40 to-teal-500/30 border border-emerald-400/50 text-foreground font-bold shadow-md"
                     : "border border-transparent text-muted-foreground hover:bg-white/5 hover:text-foreground"
                 )}
               >
@@ -1006,7 +1006,7 @@ export default function NetworkLab() {
           >
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="grid place-items-center w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-white/10">
+                <div className="grid place-items-center w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-white/10">
                   <RouterIcon className="w-5 h-5 text-purple-300" />
                 </div>
                 <div>
@@ -1068,7 +1068,7 @@ export default function NetworkLab() {
                 <form onSubmit={(e) => { e.preventDefault(); fireCommand(commandInput); }} className="flex items-center gap-2 px-3 py-2 border-t border-white/10 bg-black/40">
                   <span className="text-fuchsia-400 font-mono text-sm">{">"}</span>
                   <Input value={commandInput} onChange={(e) => setCommandInput(e.target.value)} placeholder={lesson.hint} className="flex-1 bg-transparent border-none shadow-none outline-none text-foreground text-xs font-mono" />
-                  <Button type="submit" size="sm" className="rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 text-white border-0 h-7 w-7 p-0 grid place-items-center">
+                  <Button type="submit" size="sm" className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 h-7 w-7 p-0 grid place-items-center">
                     <Play className="w-3 h-3" />
                   </Button>
                 </form>

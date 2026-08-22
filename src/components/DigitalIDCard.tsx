@@ -46,13 +46,13 @@ export default function DigitalIDCard({
           transform: `perspective(1000px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
           transition: "transform 0.1s ease-out",
         }}
-        className="w-full max-w-sm bg-linear-to-b from-slate-900 via-[#03070E] to-black border border-white/15 rounded-3xl p-6 text-left space-y-6 relative overflow-hidden shadow-2xl shadow-orange-600/10 cursor-pointer select-none group"
+        className="w-full max-w-sm bg-linear-to-b from-slate-900 via-[#03070E] to-black border border-white/15 rounded-3xl p-6 text-left space-y-6 relative overflow-hidden shadow-2xl shadow-emerald-600/10 cursor-pointer select-none group"
       >
-        <div className="absolute inset-0 bg-linear-to-tr from-orange-500/10 via-transparent to-blue-500/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-tr from-emerald-500/10 via-transparent to-blue-500/10 pointer-events-none" />
 
         <div className="flex justify-between items-start relative z-10">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-orange-600 flex items-center justify-center shadow-lg shadow-orange-600/30">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-600/30">
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>

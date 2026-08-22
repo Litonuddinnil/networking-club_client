@@ -87,7 +87,7 @@ export default function Register() {
         text: "Profile image is ready. Submit the form to complete registration.",
         background: "#03070E",
         color: "#ffffff",
-        confirmButtonColor: "#ea580c",
+        confirmButtonColor: "#22c55e",
         timer: 1600,
         showConfirmButton: false,
       });
@@ -103,7 +103,7 @@ export default function Register() {
         text: msg,
         background: "#03070E",
         color: "#ffffff",
-        confirmButtonColor: "#ea580c",
+        confirmButtonColor: "#22c55e",
       });
     } finally {
       setIsUploadingPhoto(false);
@@ -144,7 +144,7 @@ export default function Register() {
         text: `Your Member ID is ${generatedMemberId}. Waiting for admin approval.`,
         background: "#03070E",
         color: "#ffffff",
-        confirmButtonColor: "#ea580c",
+        confirmButtonColor: "#22c55e",
       });
 
       navigate("/dashboard");
@@ -160,7 +160,7 @@ export default function Register() {
         text: err.message || "Something went wrong!",
         background: "#03070E",
         color: "#ffffff",
-        confirmButtonColor: "#ea580c",
+        confirmButtonColor: "#22c55e",
       });
     } finally {
       setIsLoading(false);
@@ -169,7 +169,7 @@ export default function Register() {
 
   return (
     <div className="bg-[#03070E]/90 border border-white/10 rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
-      <div className="absolute inset-0 bg-linear-to-b from-orange-500/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-b from-emerald-500/5 to-transparent pointer-events-none" />
 
       <div className="space-y-1.5 text-center">
         <h2 className="text-xl font-display font-extrabold text-white tracking-wide">Register Node Registry</h2>
@@ -213,7 +213,7 @@ export default function Register() {
 
           <label
             htmlFor="profile-photo-input"
-            className="group relative block w-full aspect-[16/9] sm:aspect-[5/2] rounded-2xl overflow-hidden border border-dashed border-white/15 hover:border-orange-500/50 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/10"
+            className="group relative block w-full aspect-[16/9] sm:aspect-[5/2] rounded-2xl overflow-hidden border border-dashed border-white/15 hover:border-emerald-500/50 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10"
           >
             {photoPreview ? (
               <>
@@ -232,8 +232,8 @@ export default function Register() {
                   ))}
                 </div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/30 grid place-items-center group-hover:bg-orange-500/20 transition-colors">
-                    <ImagePlus className="w-6 h-6 text-orange-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 grid place-items-center group-hover:bg-emerald-500/20 transition-colors">
+                    <ImagePlus className="w-6 h-6 text-emerald-400" />
                   </div>
                   <p className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
                     Drop or click to upload cover
@@ -265,7 +265,7 @@ export default function Register() {
                   {photoFile.name} · {(photoFile.size / 1024).toFixed(0)} KB
                 </span>
               )}
-              <span className="inline-grid place-items-center w-8 h-8 rounded-xl bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/30 transition-colors">
+              <span className="inline-grid place-items-center w-8 h-8 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition-colors">
                 <ImagePlus className="w-4 h-4" />
               </span>
             </div>
@@ -276,7 +276,7 @@ export default function Register() {
               type="button"
               onClick={handleUploadPhoto}
               disabled={isUploadingPhoto || isLoading}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/40 rounded-xl text-[11px] font-mono font-bold text-orange-300 uppercase tracking-widest disabled:opacity-60 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/40 rounded-xl text-[11px] font-mono font-bold text-emerald-300 uppercase tracking-widest disabled:opacity-60 transition-colors"
             >
               {isUploadingPhoto ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -375,7 +375,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-orange-600/20"
+          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
         >
           <UserPlus className="w-4 h-4" />
           <span>{isLoading ? "Writing registry shard..." : "Enroll Node Shard"}</span>
@@ -384,7 +384,7 @@ export default function Register() {
 
       <div className="text-center text-xs">
         <span className="text-slate-500">Already registered? </span>
-        <Link to="/login" className="text-orange-500 hover:text-orange-400 font-bold">Portal Ingress</Link>
+        <Link to="/login" className="text-emerald-400 hover:text-emerald-300 font-bold">Portal Ingress</Link>
       </div>
     </div>
   );

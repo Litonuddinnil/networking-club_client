@@ -55,7 +55,7 @@ export default function ErrorPage() {
           </p>
           <p className="text-xs text-slate-400 mt-2 leading-relaxed">{errorMessage}</p>
           <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 font-mono mt-2">
-            <Compass className="w-3 h-3 text-orange-500" />
+            <Compass className="w-3 h-3 text-emerald-500" />
             <span className="truncate max-w-[16rem]" title={`${location.pathname}${location.search}`}>
               {location.pathname}
               {location.search}
@@ -65,7 +65,7 @@ export default function ErrorPage() {
 
         <button
           onClick={() => navigate("/")}
-          className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg"
+          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Hop back to Gateway</span>

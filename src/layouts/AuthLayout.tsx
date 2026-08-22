@@ -15,7 +15,7 @@ export default function AuthLayout() {
       {/* Floating Logo header */}
       <header className="w-full max-w-7xl flex justify-between items-center relative z-10">
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
             <ClubLogo size={28} compact />
           </div>
           <div>
@@ -35,8 +35,8 @@ export default function AuthLayout() {
 
       {/* Central form card layout */}
       <div className="w-full max-w-md my-auto relative z-10 py-12">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 blur-3xl rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-sky-500/5 blur-3xl rounded-full pointer-events-none" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 blur-3xl rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-500/5 blur-3xl rounded-full pointer-events-none" />
         <Outlet />
       </div>
 

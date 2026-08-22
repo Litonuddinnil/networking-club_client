@@ -71,8 +71,8 @@ export default function DashboardLayout() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-[#020408] flex items-center justify-center font-mono text-xs text-orange-500 space-x-2">
-        <span className="w-2 h-2 bg-orange-500 rounded-full animate-ping"></span>
+      <div className="min-h-screen bg-[#020408] flex items-center justify-center font-mono text-xs text-emerald-500 space-x-2">
+        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
         <span>VERIFYING PORTAL SESSION KEYS...</span>
       </div>
     );
@@ -130,12 +130,12 @@ export default function DashboardLayout() {
           className="p-6 border-b border-white/5 flex items-center space-x-3 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
             <ClubLogo size={28} compact />
           </div>
           <div>
             <div className="font-display font-bold text-white text-sm">JSTU Portal</div>
-            <div className="text-[8px] text-orange-500 font-mono tracking-widest uppercase">
+            <div className="text-[8px] text-emerald-500 font-mono tracking-widest uppercase">
               Networking Club
             </div>
           </div>
@@ -144,10 +144,10 @@ export default function DashboardLayout() {
         <div className="p-4">
           <button
             onClick={() => setShowPalette(true)}
-            className="w-full flex items-center justify-between bg-[#020408] border border-white/10 hover:border-orange-500/20 px-3 py-2 rounded-xl text-[10px] text-slate-400 hover:text-white transition-all font-mono"
+            className="w-full flex items-center justify-between bg-[#020408] border border-white/10 hover:border-emerald-500/20 px-3 py-2 rounded-xl text-[10px] text-slate-400 hover:text-white transition-all font-mono"
           >
             <div className="flex items-center space-x-1.5">
-              <Command className="w-3.5 h-3.5 text-orange-500" />
+              <Command className="w-3.5 h-3.5 text-emerald-500" />
               <span>Search Commands</span>
             </div>
             <span className="bg-slate-900 px-1 py-0.5 border border-white/5 rounded text-[8px] text-slate-500">
@@ -171,7 +171,7 @@ export default function DashboardLayout() {
                 }}
                 className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
                   isActive
-                    ? "bg-orange-600/10 text-orange-400 border-orange-500/25"
+                    ? "bg-emerald-600/10 text-emerald-400 border-emerald-500/25"
                     : "text-slate-400 hover:text-white hover:bg-white/5 border-transparent"
                 }`}
               >
@@ -186,7 +186,7 @@ export default function DashboardLayout() {
         <div className="p-4 border-t border-white/5">
           <div className="bg-slate-950/50 border border-white/5 p-3 rounded-2xl flex items-center justify-between">
             <div className="flex items-center space-x-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-slate-900 border border-orange-500/20 flex items-center justify-center font-mono font-bold text-orange-500 text-xs shrink-0">
+              <div className="w-8 h-8 rounded-full bg-slate-900 border border-emerald-500/20 flex items-center justify-center font-mono font-bold text-emerald-500 text-xs shrink-0">
                 {(user?.displayName || "NA").slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -211,7 +211,7 @@ export default function DashboardLayout() {
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <header className="h-16 border-b border-white/5 bg-[#020408]/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 lg:hidden">
           <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
               <ClubLogo size={24} compact />
             </div>
             <span className="font-display font-extrabold text-white text-xs tracking-wider font-mono">
@@ -249,7 +249,7 @@ export default function DashboardLayout() {
           <div className="space-y-8">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-slate-950 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+                <div className="w-8 h-8 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
                   <ClubLogo size={28} compact />
                 </div>
                 <span className="font-display font-extrabold text-white text-sm font-mono">
@@ -278,7 +278,7 @@ export default function DashboardLayout() {
                     }}
                     className={`w-full flex items-center space-x-4 px-4 py-3 rounded-2xl text-xs font-bold border transition-all ${
                       isActive
-                        ? "bg-orange-600/10 text-orange-400 border-orange-500/20"
+                        ? "bg-emerald-600/10 text-emerald-400 border-emerald-500/20"
                         : "text-slate-400 hover:text-white hover:bg-white/5 border-transparent"
                     }`}
                   >
@@ -292,7 +292,7 @@ export default function DashboardLayout() {
 
           <div className="border-t border-white/5 pt-6 mt-6 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-full bg-slate-900 border border-orange-500/20 flex items-center justify-center font-mono font-bold text-orange-500 text-xs">
+              <div className="w-9 h-9 rounded-full bg-slate-900 border border-emerald-500/20 flex items-center justify-center font-mono font-bold text-emerald-500 text-xs">
                 {(user?.displayName || "NA").slice(0, 2).toUpperCase()}
               </div>
               <div>

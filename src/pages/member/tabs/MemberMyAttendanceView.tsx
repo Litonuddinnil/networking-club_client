@@ -80,7 +80,7 @@ export default function MemberMyAttendanceView({
         {/* Header */}
         <header className="space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-white/5">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <ClipboardCheck className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
@@ -116,7 +116,7 @@ export default function MemberMyAttendanceView({
             <StatCard
               label="Attendance Rate"
               value={`${stats.rate}%`}
-              icon={<Percent className="w-4 h-4 text-orange-400" />}
+              icon={<Percent className="w-4 h-4 text-emerald-400" />}
               color={
                 stats.rate >= 75
                   ? "text-emerald-400"
@@ -141,7 +141,7 @@ export default function MemberMyAttendanceView({
                 onClick={() => setActiveFilter(f)}
                 className={`px-3 py-1 rounded-xl uppercase tracking-wider font-semibold border transition-all ${
                   activeFilter === f
-                    ? "bg-orange-500/20 border-orange-500/40 text-orange-300 shadow-sm"
+                    ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-sm"
                     : "bg-[#03070E] border-white/5 text-slate-400 hover:text-white hover:border-white/20"
                 }`}
               >

@@ -519,7 +519,7 @@ function TeamSlider({ team }: { team: TeamMember[] }) {
                   onClick={() => setIdx(i)}
                   aria-label={`Show member ${i + 1}`}
                   className={`h-1.5 rounded-full transition-all ${
-                    i === idx ? "w-8 bg-primary shadow-[0_0_10px_rgba(255,107,0,0.8)]" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                    i === idx ? "w-8 bg-primary shadow-[0_0_10px_rgba(34,197,94,0.8)]" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
                   }`}
                 />
               ))}
@@ -553,7 +553,7 @@ function TeamSlider({ team }: { team: TeamMember[] }) {
               onClick={() => setIdx(i)}
               className={`group relative shrink-0 snap-center w-[160px] sm:w-[180px] h-[110px] rounded-2xl overflow-hidden border transition-all ${
                 isActive
-                  ? "border-primary shadow-[0_0_20px_rgba(255,107,0,0.4)] scale-105"
+                  ? "border-primary shadow-[0_0_20px_rgba(34,197,94,0.4)] scale-105"
                   : "border-white/10 hover:border-primary/50 opacity-60 hover:opacity-100"
               }`}
             >
@@ -1121,7 +1121,7 @@ export default function HomeView() {
                 {filteredDevices.map((d, i) => (
                   <div key={d._id || i} className="p-4 rounded-2xl bg-muted/30 border border-white/10 hover:border-accent/40 transition">
                     <div className="font-bold text-sm text-foreground truncate">{d.name}</div>
-                    <div className="text-[10px] text-cyan-400 font-mono uppercase tracking-wider mt-1">{d.category || "Router Node"}</div>
+                    <div className="text-[10px] text-teal-400 font-mono uppercase tracking-wider mt-1">{d.category || "Router Node"}</div>
                   </div>
                 ))}
               </CardContent>

@@ -63,7 +63,7 @@ export default function CertificatePDF({ studentName, courseName, completionDate
           onClick={handlePrint}
           className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-white/10 flex items-center justify-center space-x-2 transition-all shadow-lg"
         >
-          <Printer className="w-4 h-4 text-orange-400" />
+          <Printer className="w-4 h-4 text-emerald-400" />
           <span>Print / Save as PDF</span>
         </button>
       </div>

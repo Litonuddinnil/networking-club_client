@@ -96,7 +96,7 @@ export default function MemberCard({
       <div className={cn(
         "h-20 w-full relative overflow-hidden bg-gradient-to-r",
         isAdmin 
-          ? "from-amber-500/25 via-primary/20 to-orange-500/25" 
+          ? "from-emerald-500/30 via-primary/20 to-teal-500/25" 
           : "from-teal-500/20 via-emerald-500/15 to-sky-500/20"
       )}>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 to-transparent opacity-60" />

@@ -65,7 +65,7 @@ export default function MemberProfileView({
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <User className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
@@ -92,8 +92,8 @@ export default function MemberProfileView({
             label="Rank / Level"
             value={`Lvl ${currentLevel}`}
             hint={`${xpInCurrentLevel}/100 XP to next`}
-            icon={<Flame className="w-4 h-4 text-orange-400" />}
-            color="text-orange-400"
+            icon={<Flame className="w-4 h-4 text-emerald-400" />}
+            color="text-emerald-400"
           />
           <ProfileStatCard
             label="Total XP"
@@ -132,7 +132,7 @@ export default function MemberProfileView({
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                 Digital Pass Card
               </span>
-              <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                 Official
               </span>
             </div>
@@ -152,13 +152,13 @@ export default function MemberProfileView({
             <div className="space-y-1.5 text-left pt-2 border-t border-white/5">
               <div className="flex justify-between text-[11px] font-mono text-slate-400">
                 <span>XP Level Progression</span>
-                <span className="text-orange-400 font-bold">
+                <span className="text-emerald-400 font-bold">
                   {xpInCurrentLevel} / 100 XP
                 </span>
               </div>
               <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-white/10">
                 <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 rounded-full"
                   style={{ width: `${xpProgressPercent}%` }}
                 />
               </div>
@@ -196,7 +196,7 @@ export default function MemberProfileView({
                   <button
                     type="button"
                     onClick={() => handleCopy(String(memberId), "id")}
-                    className="text-slate-400 hover:text-orange-400 transition-colors"
+                    className="text-slate-400 hover:text-emerald-400 transition-colors"
                     title="Copy ID"
                   >
                     {copiedKey === "id" ? (
@@ -206,7 +206,7 @@ export default function MemberProfileView({
                     )}
                   </button>
                 </div>
-                <p className="text-orange-400 font-bold truncate">
+                <p className="text-emerald-400 font-bold truncate">
                   {String(memberId)}
                 </p>
               </div>
@@ -220,7 +220,7 @@ export default function MemberProfileView({
                   <button
                     type="button"
                     onClick={() => handleCopy(memberEmail, "email")}
-                    className="text-slate-400 hover:text-orange-400 transition-colors"
+                    className="text-slate-400 hover:text-emerald-400 transition-colors"
                     title="Copy Email"
                   >
                     {copiedKey === "email" ? (
@@ -277,7 +277,7 @@ export default function MemberProfileView({
                 onClick={() => go("cert")}
                 className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-200 font-bold text-xs rounded-2xl border border-white/10 flex items-center gap-2 transition-colors"
               >
-                <Award className="w-4 h-4 text-orange-400" />
+                <Award className="w-4 h-4 text-emerald-400" />
                 <span>My Certificates</span>
               </button>
 
@@ -293,7 +293,7 @@ export default function MemberProfileView({
               <button
                 type="button"
                 onClick={() => go("payment")}
-                className="px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs rounded-2xl flex items-center gap-2 transition-colors shadow-lg shadow-orange-600/20"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl flex items-center gap-2 transition-colors shadow-lg shadow-emerald-600/20"
               >
                 <CreditCard className="w-4 h-4" />
                 <span>Dues &amp; Payments</span>

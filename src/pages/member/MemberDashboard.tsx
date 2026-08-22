@@ -185,7 +185,7 @@ export default function MemberDashboard({
         <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 text-white">
           <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <h1 className="text-xl font-display font-extrabold text-white flex items-center space-x-2">
-              <Award className="w-5 h-5 text-orange-500" />
+              <Award className="w-5 h-5 text-emerald-500" />
               <span>Dynamic Course Credentials</span>
             </h1>
             <button
@@ -312,14 +312,14 @@ export default function MemberDashboard({
       <div className="p-4 sm:p-6 lg:p-10 space-y-8 max-w-7xl mx-auto text-white animate-fade-in">
         {/* VIP Hero Welcome Banner */}
         <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-[#03070E] via-[#081026] to-[#03070E] p-6 sm:p-8 shadow-2xl">
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3">
               {/* Badges strip */}
               <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 font-semibold">
-                  <Flame className="w-3.5 h-3.5 text-orange-400" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-semibold">
+                  <Flame className="w-3.5 h-3.5 text-emerald-400" />
                   Level {memberLevel} Explorer
                 </span>
 
@@ -364,7 +364,7 @@ export default function MemberDashboard({
                   onClick={() => go("cert")}
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-xs font-mono uppercase tracking-wider rounded-2xl border border-white/10 shadow-md transition-all hover:-translate-y-0.5"
                 >
-                  <Award className="w-4 h-4 text-orange-400" />
+                  <Award className="w-4 h-4 text-emerald-400" />
                   Certificate
                 </button>
               )}
@@ -372,7 +372,7 @@ export default function MemberDashboard({
               <button
                 type="button"
                 onClick={() => go("payment")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs font-mono uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-600/25 transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs font-mono uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/25 transition-all hover:-translate-y-0.5"
               >
                 <CreditCard className="w-4 h-4" />
                 Pay Dues
@@ -384,7 +384,7 @@ export default function MemberDashboard({
           {latestNotice && (
             <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="p-1 rounded-md bg-orange-500/20 text-orange-400 shrink-0">
+                <span className="p-1 rounded-md bg-emerald-500/20 text-emerald-400 shrink-0">
                   <Megaphone className="w-3.5 h-3.5" />
                 </span>
                 <span className="text-slate-400 font-mono text-[11px] shrink-0 uppercase tracking-wide">
@@ -398,7 +398,7 @@ export default function MemberDashboard({
               <button
                 type="button"
                 onClick={() => go("announcements")}
-                className="text-orange-400 hover:text-orange-300 font-mono text-[11px] flex items-center gap-1 shrink-0 font-bold"
+                className="text-emerald-400 hover:text-emerald-300 font-mono text-[11px] flex items-center gap-1 shrink-0 font-bold"
               >
                 Read Notice <ArrowRight className="w-3 h-3" />
               </button>
@@ -411,7 +411,7 @@ export default function MemberDashboard({
           <QuickActionCard
             title="Events & Sessions"
             subtitle="Browse upcoming club labs"
-            icon={<Calendar className="w-5 h-5 text-orange-400" />}
+            icon={<Calendar className="w-5 h-5 text-emerald-400" />}
             onClick={() => go("events")}
           />
           <QuickActionCard
@@ -468,16 +468,16 @@ function QuickActionCard({
     <button
       type="button"
       onClick={onClick}
-      className="group p-4 bg-[#03070E] border border-white/10 hover:border-orange-500/40 rounded-2xl text-left space-y-2 transition-all duration-200 hover:shadow-lg hover:shadow-orange-500/5 hover:-translate-y-0.5"
+      className="group p-4 bg-[#03070E] border border-white/10 hover:border-emerald-500/40 rounded-2xl text-left space-y-2 transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-0.5"
     >
       <div className="flex items-center justify-between">
         <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 group-hover:scale-105 transition-transform">
           {icon}
         </div>
-        <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all" />
+        <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
       </div>
       <div>
-        <div className="text-xs sm:text-sm font-bold font-sans text-white group-hover:text-orange-300 transition-colors">
+        <div className="text-xs sm:text-sm font-bold font-sans text-white group-hover:text-emerald-300 transition-colors">
           {title}
         </div>
         <div className="text-[10px] text-slate-500 truncate font-mono mt-0.5">

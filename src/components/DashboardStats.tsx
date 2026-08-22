@@ -6,7 +6,7 @@ export default function DashboardStats() {
     { label: "Simulator Rank", value: "#4", change: "Top 5%", icon: <Zap className="w-4 h-4 text-amber-400" />, color: "from-amber-500/10" },
     { label: "Lab Attendance", value: "92%", change: "+4.2%", icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, color: "from-emerald-500/10" },
     { label: "CCNA Modules", value: "14/18", change: "78% Done", icon: <Activity className="w-4 h-4 text-blue-400" />, color: "from-blue-500/10" },
-    { label: "Certifications", value: "2 Earned", change: "Verified", icon: <Award className="w-4 h-4 text-orange-400" />, color: "from-orange-500/10" },
+    { label: "Certifications", value: "2 Earned", change: "Verified", icon: <Award className="w-4 h-4 text-emerald-400" />, color: "from-emerald-500/10" },
   ];
 
   return (
@@ -14,7 +14,7 @@ export default function DashboardStats() {
       {stats.map((stat, idx) => (
         <div 
           key={idx} 
-          className={`bg-[#03070E] border border-white/10 rounded-3xl p-5 space-y-3 relative overflow-hidden shadow-lg backdrop-blur-md group hover:border-orange-500/30 transition-all`}
+          className={`bg-[#03070E] border border-white/10 rounded-3xl p-5 space-y-3 relative overflow-hidden shadow-lg backdrop-blur-md group hover:border-emerald-500/30 transition-all`}
         >
           <div className={`absolute inset-0 bg-linear-to-tr ${stat.color} to-transparent pointer-events-none opacity-50`} />
 
