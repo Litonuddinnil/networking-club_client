@@ -1,42 +1,17 @@
-import { useEffect, useRef } from "react";
+ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useReducedMotion, useIsMounted } from "@/hooks/use-reduced-motion";
-
-/**
- * NetworkDevicesField3D — fullscreen three.js backdrop with vector
- * networking devices drifting in a bounded sphere.
- *
- * What you get:
- *  - Routers, switches, PCs, servers, firewalls, APs floating in 3D space
- *  - Each device has a chassis mesh + emissive LED dots that pulse
- *  - Distance-based neon connection lines between near devices
- *  - Mouse parallax (smooth lerp) + auto-rotate
- *  - Packets that travel along selected wires with cyan/magenta pulses
- *  - prefers-reduced-motion → static single frame
- *  - IntersectionObserver pauses when off-screen
- *  - ResizeObserver aware
- *
- * Performance notes:
- *  - One THREE.Points group for the LED halos
- *  - One THREE.LineSegments group for the connection lattice (additive)
- *  - 12 device meshes max — instanced materials only where possible
- *  - No raycasting, no post-processing, no shadow map
- */
 
 type DeviceKind = "router" | "switch" | "pc" | "server" | "firewall" | "ap";
 
 interface DeviceMesh {
   group: THREE.Group;
-  leds: THREE.Mesh[];
+  leds: { mesh: THREE.Mesh; baseSpeed: number; phase: number }[];
   position: THREE.Vector3;
   velocity: THREE.Vector3;
   rotationSpeed: THREE.Vector3;
   kind: DeviceKind;
-}
-
-interface ConnectionSegment {
-  line: THREE.Line;
-  pair: [DeviceMesh, DeviceMesh];
+  pulseMesh?: THREE.Mesh;
 }
 
 interface PacketDot {
@@ -48,13 +23,13 @@ interface PacketDot {
   color: THREE.Color;
 }
 
-const DEVICE_PALETTE: Record<DeviceKind, { stroke: number; led: number; label: string }> = {
-  router:   { stroke: 0x7c3aed, led: 0xa78bfa, label: "Router" },
-  switch:   { stroke: 0x06b6d4, led: 0x67e8f9, label: "Switch" },
-  pc:       { stroke: 0x3b82f6, led: 0x93c5fd, label: "PC" },
-  server:   { stroke: 0xec4899, led: 0xf9a8d4, label: "Server" },
-  firewall: { stroke: 0xf59e0b, led: 0xfcd34d, label: "Firewall" },
-  ap:       { stroke: 0x10b981, led: 0x6ee7b7, label: "AP" },
+const DEVICE_PALETTE: Record<DeviceKind, { stroke: number; led: number; glow: number; label: string }> = {
+  router:   { stroke: 0x8b5cf6, led: 0xc4b5fd, glow: 0x7c3aed, label: "Router" },
+  switch:   { stroke: 0x06b6d4, led: 0xa5f3fc, glow: 0x0891b2, label: "Switch" },
+  pc:       { stroke: 0x3b82f6, led: 0xbfdbfe, glow: 0x2563eb, label: "PC" },
+  server:   { stroke: 0xec4899, led: 0xfbcfe8, glow: 0xdb2777, label: "Server" },
+  firewall: { stroke: 0xf59e0b, led: 0xfef08a, glow: 0xd97706, label: "Firewall" },
+  ap:       { stroke: 0x10b981, led: 0xa7f3d0, glow: 0x059669, label: "AP" },
 };
 
 export default function NetworkDevicesField3D() {
@@ -67,18 +42,15 @@ export default function NetworkDevicesField3D() {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // ---------- scene + camera ----------
+    // ---------- 1. Scene & Camera Setup ----------
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0d1117, 10, 28);
+    scene.fog = new THREE.FogExp2(0x070b12, 0.035);
 
-    // Guard against 0x0 mount (hidden / StrictMode-unmount state). WebGL
-    // throws "Illegal invocation" when setSize is called with a 0 dimension
-    // and the resulting camera aspect is NaN.
     const width = Math.max(1, mount.clientWidth || window.innerWidth);
     const height = Math.max(1, mount.clientHeight || window.innerHeight);
 
-    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 100);
-    camera.position.set(0, 0, 14);
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
+    camera.position.set(0, 0, 15);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -91,104 +63,130 @@ export default function NetworkDevicesField3D() {
     mount.appendChild(renderer.domElement);
     renderer.domElement.classList.add("three-canvas");
 
-    // ---------- lights ----------
-    scene.add(new THREE.AmbientLight(0x6c5ce7, 0.55));
-    const key = new THREE.PointLight(0x7c3aed, 1.4, 60, 1.2);
-    key.position.set(8, 8, 8);
-    scene.add(key);
-    const fill = new THREE.PointLight(0x06b6d4, 1.1, 60, 1.2);
-    fill.position.set(-10, -6, 6);
-    scene.add(fill);
-    const rim = new THREE.PointLight(0xec4899, 0.7, 60, 1.2);
-    rim.position.set(0, 6, -8);
-    scene.add(rim);
+    // ---------- 2. Cyber Lights ----------
+    scene.add(new THREE.AmbientLight(0x4f46e5, 0.65));
+    
+    const keyLight = new THREE.PointLight(0x8b5cf6, 1.8, 45, 1.2);
+    keyLight.position.set(9, 9, 7);
+    scene.add(keyLight);
 
-    // ---------- device factory ----------
+    const fillLight = new THREE.PointLight(0x06b6d4, 1.4, 45, 1.2);
+    fillLight.position.set(-10, -7, 6);
+    scene.add(fillLight);
+
+    const backGlow = new THREE.PointLight(0xec4899, 1.0, 40, 1.5);
+    backGlow.position.set(0, 6, -9);
+    scene.add(backGlow);
+
+    // ---------- 3. Background Data-Dust Particle Field ----------
+    const dustCount = 160;
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount * 3; i += 3) {
+      dustPositions[i] = (Math.random() - 0.5) * 26;
+      dustPositions[i + 1] = (Math.random() - 0.5) * 18;
+      dustPositions[i + 2] = (Math.random() - 0.5) * 16;
+    }
+    const dustGeom = new THREE.BufferGeometry();
+    dustGeom.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({
+      size: 0.07,
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending,
+    });
+    const dustParticles = new THREE.Points(dustGeom, dustMat);
+    scene.add(dustParticles);
+
+    // ---------- 4. Device Factory (Detailed Procedural Models) ----------
     function buildDevice(kind: DeviceKind): DeviceMesh {
       const group = new THREE.Group();
       const palette = DEVICE_PALETTE[kind];
+
       const baseMat = new THREE.MeshStandardMaterial({
-        color: 0x11161d,
-        metalness: 0.55,
-        roughness: 0.35,
-        emissive: palette.stroke,
-        emissiveIntensity: 0.18,
+        color: 0x0c111a,
+        metalness: 0.8,
+        roughness: 0.25,
+        emissive: palette.glow,
+        emissiveIntensity: 0.15,
       });
+
       const accentMat = new THREE.MeshStandardMaterial({
         color: palette.stroke,
-        metalness: 0.6,
-        roughness: 0.25,
+        metalness: 0.5,
+        roughness: 0.2,
         emissive: palette.stroke,
-        emissiveIntensity: 0.6,
+        emissiveIntensity: 0.7,
       });
 
-      let leds: THREE.Mesh[] = [];
+      const leds: { mesh: THREE.Mesh; baseSpeed: number; phase: number }[] = [];
+      let pulseMesh: THREE.Mesh | undefined;
 
       if (kind === "router") {
-        // Horizontal chassis + 2 antennas
-        const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.45, 0.9), baseMat);
+        // Router Chassis + Dual Antennas + Front Glow Grid
+        const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.4, 1.0), baseMat);
         group.add(chassis);
-        const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.07, 0.92), accentMat);
-        stripe.position.y = 0.2;
-        group.add(stripe);
+        const topStripe = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.05, 0.92), accentMat);
+        topStripe.position.y = 0.2;
+        group.add(topStripe);
+
         for (let i = 0; i < 2; i++) {
-          const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 6), accentMat);
-          ant.position.set(i === 0 ? -0.7 : 0.7, 0.7, 0);
+          const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.85, 8), accentMat);
+          ant.position.set(i === 0 ? -0.75 : 0.75, 0.55, -0.3);
+          ant.rotation.z = i === 0 ? 0.15 : -0.15;
           group.add(ant);
         }
-        leds = addLedRow(group, [-0.7, 0.7], 0.05, 0.46, accentMat, 4);
-      } else if (kind === "switch") {
-        // Wider, flatter chassis with port grid
-        const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.35, 0.7), baseMat);
-        group.add(chassis);
-        const face = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.1, 0.72), accentMat);
-        face.position.y = 0.18;
-        group.add(face);
-        leds = addLedRow(group, [-0.9, 0.9], 0.0, 0.46, accentMat, 8);
-      } else if (kind === "pc") {
-        // Monitor + base
-        const monitor = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 0.08), baseMat);
-        group.add(monitor);
-        const screen = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.95, 0.65),
-          new THREE.MeshBasicMaterial({ color: palette.stroke })
-        );
-        screen.position.z = 0.045;
-        group.add(screen);
-        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.15, 0.08), baseMat);
-        stand.position.set(0, -0.47, 0);
-        group.add(stand);
-        const base = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 0.35), baseMat);
-        base.position.set(0, -0.58, 0);
-        group.add(base);
-        const led = new THREE.Mesh(
-          new THREE.SphereGeometry(0.05, 12, 12),
-          new THREE.MeshBasicMaterial({ color: palette.led })
-        );
-        led.position.set(0.45, -0.4, 0.06);
-        group.add(led);
-        leds.push(led);
-      } else if (kind === "server") {
-        // Tall rack with horizontal slots
-        const rack = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.6, 0.6), baseMat);
-        group.add(rack);
+
         for (let i = 0; i < 5; i++) {
-          const slot = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.62), accentMat);
-          slot.position.y = -0.55 + i * 0.27;
-          group.add(slot);
-          const led = new THREE.Mesh(
-            new THREE.SphereGeometry(0.04, 10, 10),
-            new THREE.MeshBasicMaterial({ color: palette.led })
+          const ledMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.045, 8, 8),
+            new THREE.MeshBasicMaterial({ color: palette.led, transparent: true })
           );
-          led.position.set(0.28, -0.55 + i * 0.27, 0.32);
-          group.add(led);
-          leds.push(led);
+          ledMesh.position.set(-0.6 + i * 0.3, 0.02, 0.52);
+          group.add(ledMesh);
+          leds.push({ mesh: ledMesh, baseSpeed: 2 + i * 1.5, phase: i * 0.8 });
+        }
+      } else if (kind === "switch") {
+        // Wide enterprise switch with 2 rows of port LEDs
+        const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.42, 0.85), baseMat);
+        group.add(chassis);
+        const portPlate = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 0.87), accentMat);
+        group.add(portPlate);
+
+        for (let row = 0; row < 2; row++) {
+          for (let col = 0; col < 6; col++) {
+            const ledMesh = new THREE.Mesh(
+              new THREE.SphereGeometry(0.035, 8, 8),
+              new THREE.MeshBasicMaterial({ color: palette.led, transparent: true })
+            );
+            ledMesh.position.set(-0.8 + col * 0.32, -0.06 + row * 0.12, 0.45);
+            group.add(ledMesh);
+            leds.push({ mesh: ledMesh, baseSpeed: 3 + col * 2 + row, phase: col + row * 0.5 });
+          }
+        }
+      } else if (kind === "server") {
+        // Multi-blade rack server
+        const rack = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.8, 0.8), baseMat);
+        group.add(rack);
+
+        for (let i = 0; i < 5; i++) {
+          const slot = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.12, 0.82), accentMat);
+          slot.position.y = -0.6 + i * 0.3;
+          group.add(slot);
+
+          const ledMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.04, 8, 8),
+            new THREE.MeshBasicMaterial({ color: palette.led, transparent: true })
+          );
+          ledMesh.position.set(0.32, -0.6 + i * 0.3, 0.42);
+          group.add(ledMesh);
+          leds.push({ mesh: ledMesh, baseSpeed: 4 + i * 2, phase: i * 1.2 });
         }
       } else if (kind === "firewall") {
-        // Brick-wall shield with central vent
+        // Shield polygon with inner glow core
         const shieldShape = new THREE.Shape();
-        const w = 1.0;
-        const h = 1.0;
+        const w = 1.1;
+        const h = 1.2;
         shieldShape.moveTo(0, -h / 2);
         shieldShape.lineTo(w / 2, -h / 4);
         shieldShape.lineTo(w / 2, h / 4);
@@ -196,81 +194,108 @@ export default function NetworkDevicesField3D() {
         shieldShape.lineTo(-w / 2, h / 4);
         shieldShape.lineTo(-w / 2, -h / 4);
         shieldShape.closePath();
+
         const shield = new THREE.Mesh(
-          new THREE.ExtrudeGeometry(shieldShape, { depth: 0.25, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04 }),
+          new THREE.ExtrudeGeometry(shieldShape, { depth: 0.22, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04 }),
           baseMat
         );
-        shield.position.z = -0.125;
+        shield.position.z = -0.11;
         group.add(shield);
-        const vent = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 8, 24), accentMat);
-        vent.position.z = 0.13;
-        group.add(vent);
-        const led = new THREE.Mesh(
-          new THREE.SphereGeometry(0.06, 12, 12),
-          new THREE.MeshBasicMaterial({ color: palette.led })
+
+        const core = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.06, 12, 24), accentMat);
+        core.position.z = 0.14;
+        group.add(core);
+
+        const ledMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.07, 10, 10),
+          new THREE.MeshBasicMaterial({ color: palette.led, transparent: true })
         );
-        led.position.set(0.3, 0.3, 0.18);
-        group.add(led);
-        leds.push(led);
-      } else {
-        // AP — disc with concentric rings
-        const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 32), baseMat);
+        ledMesh.position.set(0, 0, 0.16);
+        group.add(ledMesh);
+        leds.push({ mesh: ledMesh, baseSpeed: 3, phase: 0 });
+      } else if (kind === "ap") {
+        // Access Point with expanding Wi-Fi radar ring
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.12, 32), baseMat);
         group.add(disc);
-        for (let i = 0; i < 3; i++) {
-          const ring = new THREE.Mesh(
-            new THREE.TorusGeometry(0.3 + i * 0.15, 0.015, 8, 32),
-            accentMat
-          );
-          ring.rotation.x = Math.PI / 2;
-          ring.position.y = 0.07;
-          group.add(ring);
-        }
-        const led = new THREE.Mesh(
-          new THREE.SphereGeometry(0.05, 12, 12),
-          new THREE.MeshBasicMaterial({ color: palette.led })
+
+        const innerRing = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 8, 32), accentMat);
+        innerRing.rotation.x = Math.PI / 2;
+        innerRing.position.y = 0.07;
+        group.add(innerRing);
+
+        const ledMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.06, 12, 12),
+          new THREE.MeshBasicMaterial({ color: palette.led, transparent: true })
         );
-        led.position.set(0, 0.08, 0);
-        group.add(led);
-        leds.push(led);
+        ledMesh.position.set(0, 0.08, 0);
+        group.add(ledMesh);
+        leds.push({ mesh: ledMesh, baseSpeed: 2.5, phase: 0 });
+
+        // Concentric Radar Wave
+        const pulseGeom = new THREE.RingGeometry(0.6, 0.65, 32);
+        const pulseMat = new THREE.MeshBasicMaterial({
+          color: palette.stroke,
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+        });
+        pulseMesh = new THREE.Mesh(pulseGeom, pulseMat);
+        pulseMesh.rotation.x = Math.PI / 2;
+        pulseMesh.position.y = 0.08;
+        group.add(pulseMesh);
+      } else {
+        // PC / Workstation
+        const monitor = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.85, 0.08), baseMat);
+        group.add(monitor);
+        const screen = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.05, 0.72),
+          new THREE.MeshBasicMaterial({ color: palette.stroke, opacity: 0.9 })
+        );
+        screen.position.z = 0.046;
+        group.add(screen);
+
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 0.08), baseMat);
+        stand.position.set(0, -0.48, 0);
+        group.add(stand);
+
+        const basePlate = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.05, 0.35), baseMat);
+        basePlate.position.set(0, -0.59, 0);
+        group.add(basePlate);
+
+        const ledMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.05, 8, 8),
+          new THREE.MeshBasicMaterial({ color: palette.led, transparent: true })
+        );
+        ledMesh.position.set(0.48, -0.42, 0.06);
+        group.add(ledMesh);
+        leds.push({ mesh: ledMesh, baseSpeed: 2, phase: 1 });
       }
 
-      return { group, leds, position: new THREE.Vector3(), velocity: new THREE.Vector3(), rotationSpeed: new THREE.Vector3(), kind };
+      return {
+        group,
+        leds,
+        position: new THREE.Vector3(),
+        velocity: new THREE.Vector3(),
+        rotationSpeed: new THREE.Vector3(),
+        kind,
+        pulseMesh,
+      };
     }
 
-    function addLedRow(
-      group: THREE.Group,
-      [x0, x1]: [number, number],
-      y: number,
-      z: number,
-      mat: THREE.Material,
-      count: number
-    ): THREE.Mesh[] {
-      const leds: THREE.Mesh[] = [];
-      for (let i = 0; i < count; i++) {
-        const led = new THREE.Mesh(
-          new THREE.SphereGeometry(0.04, 10, 10),
-          new THREE.MeshBasicMaterial({ color: DEVICE_PALETTE[group.userData.kind as DeviceKind]?.led ?? 0xa78bfa })
-        );
-        led.position.set(x0 + (i / (count - 1)) * (x1 - x0), y + 0.02, z);
-        group.add(led);
-        leds.push(led);
-      }
-      return leds;
-    }
-
-    // ---------- populate ----------
-    const kinds: DeviceKind[] = ["router", "switch", "pc", "server", "firewall", "ap"];
-    const TARGET = 12;
+    // ---------- 5. Populate Devices ----------
+    const kinds: DeviceKind[] = ["router", "switch", "server", "firewall", "ap", "pc"];
+    const TARGET_COUNT = 12;
     const devices: DeviceMesh[] = [];
-    const BOUND = 6.5;
+    const BOUND = 7.0;
 
-    for (let i = 0; i < TARGET; i++) {
+    for (let i = 0; i < TARGET_COUNT; i++) {
       const kind = kinds[i % kinds.length];
       const d = buildDevice(kind);
       d.group.userData.kind = kind;
+
       d.position.set(
-        (Math.random() - 0.5) * BOUND * 2,
-        (Math.random() - 0.5) * BOUND * 1.4,
+        (Math.random() - 0.5) * BOUND * 2.2,
+        (Math.random() - 0.5) * BOUND * 1.5,
         (Math.random() - 0.5) * BOUND * 1.2
       );
       d.velocity.set(
@@ -279,62 +304,91 @@ export default function NetworkDevicesField3D() {
         (Math.random() - 0.5) * 0.0035
       );
       d.rotationSpeed.set(
-        (Math.random() - 0.5) * 0.0025,
-        (Math.random() - 0.5) * 0.004,
+        (Math.random() - 0.5) * 0.002,
+        (Math.random() - 0.5) * 0.0035,
         (Math.random() - 0.5) * 0.002
       );
+
       d.group.position.copy(d.position);
-      // initial random orientation
       d.group.rotation.set(
         Math.random() * Math.PI,
         Math.random() * Math.PI,
         Math.random() * Math.PI
       );
-      // build LED row needs kind set on the group BEFORE construction;
-      // we approximate led colors via per-mesh material in factory.
+
       scene.add(d.group);
       devices.push(d);
     }
 
-    // ---------- connection lattice ----------
-    const connections: ConnectionSegment[] = [];
-    const MAX_DIST = 4.8;
-    const lineGeomCache = new THREE.BufferGeometry();
-    // We'll build lines dynamically each frame because pairs change.
+    // ---------- 6. High-Performance Real-Time Connection Lattice ----------
+    const MAX_CONNECTIONS = 35;
+    const MAX_DIST = 5.2;
+    const linePosArray = new Float32Array(MAX_CONNECTIONS * 2 * 3);
+    const lineColArray = new Float32Array(MAX_CONNECTIONS * 2 * 3);
 
-    // ---------- packet dots ----------
+    const latticeGeom = new THREE.BufferGeometry();
+    latticeGeom.setAttribute("position", new THREE.BufferAttribute(linePosArray, 3));
+    latticeGeom.setAttribute("color", new THREE.BufferAttribute(lineColArray, 3));
+
+    const latticeMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const latticeMesh = new THREE.LineSegments(latticeGeom, latticeMat);
+    scene.add(latticeMesh);
+
+    const activePairs: [DeviceMesh, DeviceMesh][] = [];
+
+    // ---------- 7. High-Energy Data Packets ----------
     const packets: PacketDot[] = [];
-    const PACKET_PALETTE = [
+    const PACKET_COLORS = [
       new THREE.Color(0x06b6d4),
       new THREE.Color(0xec4899),
-      new THREE.Color(0x7c3aed),
-      new THREE.Color(0x3b82f6),
+      new THREE.Color(0xa78bfa),
+      new THREE.Color(0x10b981),
+      new THREE.Color(0x38bdf8),
     ];
-    const packetGeom = new THREE.SphereGeometry(0.08, 10, 10);
+    const packetGeom = new THREE.SphereGeometry(0.09, 10, 10);
 
-    function spawnPacket(a: DeviceMesh, b: DeviceMesh) {
+    function spawnPacket() {
+      if (activePairs.length === 0) return;
+      const pair = activePairs[Math.floor(Math.random() * activePairs.length)];
+      const color = PACKET_COLORS[Math.floor(Math.random() * PACKET_COLORS.length)];
+
       const mat = new THREE.MeshBasicMaterial({
-        color: PACKET_PALETTE[Math.floor(Math.random() * PACKET_PALETTE.length)],
+        color,
         transparent: true,
         opacity: 1,
       });
       const mesh = new THREE.Mesh(packetGeom, mat);
       scene.add(mesh);
-      packets.push({ mesh, from: a, to: b, t: 0, speed: 0.005 + Math.random() * 0.006, color: mat.color });
+      packets.push({
+        mesh,
+        from: pair[0],
+        to: pair[1],
+        t: 0,
+        speed: 0.007 + Math.random() * 0.008,
+        color,
+      });
     }
 
-    // ---------- mouse parallax ----------
-    const target = new THREE.Vector2();
-    const current = new THREE.Vector2();
+    const packetInterval = window.setInterval(spawnPacket, 650);
+
+    // ---------- 8. Mouse Parallax ----------
+    const mouseTarget = new THREE.Vector2();
+    const mouseCurrent = new THREE.Vector2();
+
     const onMouseMove = (e: MouseEvent) => {
       const rect = mount.getBoundingClientRect();
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-      target.set(nx, ny);
+      mouseTarget.set(nx, ny);
     };
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
 
-    // ---------- resize ----------
+    // ---------- 9. Resize & Observer ----------
     const onResize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
@@ -345,7 +399,6 @@ export default function NetworkDevicesField3D() {
     const ro = new ResizeObserver(onResize);
     ro.observe(mount);
 
-    // ---------- off-screen pause ----------
     let visible = true;
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => (visible = e.isIntersecting)),
@@ -353,61 +406,9 @@ export default function NetworkDevicesField3D() {
     );
     io.observe(mount);
 
-    // ---------- animation loop ----------
+    // ---------- 10. Animation Loop ----------
     let raf = 0;
     let prevT = performance.now();
-    const connectionPairs = new Set<string>();
-
-    function rebuildConnections() {
-      // dispose previous lines
-      for (const c of connections) {
-        scene.remove(c.line);
-        c.line.geometry.dispose();
-        (c.line.material as THREE.Material).dispose();
-      }
-      connections.length = 0;
-      connectionPairs.clear();
-
-      for (let i = 0; i < devices.length; i++) {
-        for (let j = i + 1; j < devices.length; j++) {
-          const a = devices[i];
-          const b = devices[j];
-          const d = a.position.distanceTo(b.position);
-          if (d > MAX_DIST) continue;
-          const key = `${i}-${j}`;
-          if (connectionPairs.has(key)) continue;
-          connectionPairs.add(key);
-
-          const paletteA = DEVICE_PALETTE[a.kind];
-          const paletteB = DEVICE_PALETTE[b.kind];
-          const colorHex = (paletteA.stroke + paletteB.stroke) >>> 0;
-          const mat = new THREE.LineBasicMaterial({
-            color: colorHex,
-            transparent: true,
-            opacity: Math.max(0.08, 0.55 - d / MAX_DIST),
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-          });
-          const geom = new THREE.BufferGeometry().setFromPoints([
-            a.position.clone(),
-            b.position.clone(),
-          ]);
-          const line = new THREE.Line(geom, mat);
-          scene.add(line);
-          connections.push({ line, pair: [a, b] });
-        }
-      }
-    }
-
-    // Pre-build connections; rebuild every ~2 seconds (cheap with 12 devices)
-    rebuildConnections();
-
-    const rebuildInterval = window.setInterval(rebuildConnections, 2000);
-    const packetSpawnInterval = window.setInterval(() => {
-      if (connections.length === 0) return;
-      const c = connections[Math.floor(Math.random() * connections.length)];
-      spawnPacket(c.pair[0], c.pair[1]);
-    }, 700);
 
     function tick(now: number) {
       raf = requestAnimationFrame(tick);
@@ -416,20 +417,24 @@ export default function NetworkDevicesField3D() {
       const dt = Math.min(64, now - prevT);
       prevT = now;
 
-      // mouse parallax (lerp)
-      current.lerp(target, 0.04);
-      camera.position.x = current.x * 1.8;
-      camera.position.y = -current.y * 1.2;
+      // Mouse Parallax Lerp
+      mouseCurrent.lerp(mouseTarget, 0.035);
+      camera.position.x = mouseCurrent.x * 2.2;
+      camera.position.y = -mouseCurrent.y * 1.5;
       camera.lookAt(0, 0, 0);
 
-      // animate devices
+      // Rotate Background Cyber Dust
+      dustParticles.rotation.y = now * 0.0001;
+      dustParticles.rotation.x = now * 0.00005;
+
+      // Animate Devices
       for (const d of devices) {
         d.position.addScaledVector(d.velocity, dt);
         d.group.rotation.x += d.rotationSpeed.x * dt;
         d.group.rotation.y += d.rotationSpeed.y * dt;
         d.group.rotation.z += d.rotationSpeed.z * dt;
 
-        // bounce inside bound
+        // Bounding Bounce
         for (const axis of ["x", "y", "z"] as const) {
           if (d.position[axis] > BOUND || d.position[axis] < -BOUND) {
             d.velocity[axis] *= -1;
@@ -437,54 +442,115 @@ export default function NetworkDevicesField3D() {
         }
         d.group.position.copy(d.position);
 
-        // LED pulse
-        const t = now * 0.003;
-        for (let i = 0; i < d.leds.length; i++) {
-          const led = d.leds[i];
-          const phase = Math.sin(t + i * 0.7);
-          const mat = led.material as THREE.MeshBasicMaterial;
-          mat.opacity = 0.55 + phase * 0.45;
+        // LED Blinking
+        const sec = now * 0.004;
+        for (const led of d.leds) {
+          const intensity = 0.3 + 0.7 * Math.abs(Math.sin(sec * led.baseSpeed + led.phase));
+          (led.mesh.material as THREE.MeshBasicMaterial).opacity = intensity;
+        }
+
+        // AP Pulse Wave Expansion
+        if (d.pulseMesh) {
+          const pulseT = (now * 0.0015) % 1;
+          const scale = 1 + pulseT * 2.8;
+          d.pulseMesh.scale.set(scale, scale, scale);
+          (d.pulseMesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0, (1 - pulseT) * 0.45);
         }
       }
 
-      // animate packets
+      // Update Real-Time Dynamic Connection Lattice
+      activePairs.length = 0;
+      let lineIndex = 0;
+      const posAttr = latticeGeom.attributes.position as THREE.BufferAttribute;
+      const colAttr = latticeGeom.attributes.color as THREE.BufferAttribute;
+
+      for (let i = 0; i < devices.length && lineIndex < MAX_CONNECTIONS; i++) {
+        for (let j = i + 1; j < devices.length && lineIndex < MAX_CONNECTIONS; j++) {
+          const a = devices[i];
+          const b = devices[j];
+          const dist = a.position.distanceTo(b.position);
+
+          if (dist <= MAX_DIST) {
+            activePairs.push([a, b]);
+
+            const idx = lineIndex * 6;
+            // Point A
+            posAttr.array[idx]     = a.position.x;
+            posAttr.array[idx + 1] = a.position.y;
+            posAttr.array[idx + 2] = a.position.z;
+            // Point B
+            posAttr.array[idx + 3] = b.position.x;
+            posAttr.array[idx + 4] = b.position.y;
+            posAttr.array[idx + 5] = b.position.z;
+
+            // Color gradient with distance fade
+            const alpha = Math.max(0.05, 1 - dist / MAX_DIST);
+            const colorA = new THREE.Color(DEVICE_PALETTE[a.kind].stroke).multiplyScalar(alpha);
+            const colorB = new THREE.Color(DEVICE_PALETTE[b.kind].stroke).multiplyScalar(alpha);
+
+            colAttr.array[idx]     = colorA.r;
+            colAttr.array[idx + 1] = colorA.g;
+            colAttr.array[idx + 2] = colorA.b;
+            colAttr.array[idx + 3] = colorB.r;
+            colAttr.array[idx + 4] = colorB.g;
+            colAttr.array[idx + 5] = colorB.b;
+
+            lineIndex++;
+          }
+        }
+      }
+
+      // Zero-out unused connections in buffer
+      for (let i = lineIndex * 6; i < MAX_CONNECTIONS * 6; i++) {
+        posAttr.array[i] = 0;
+        colAttr.array[i] = 0;
+      }
+      posAttr.needsUpdate = true;
+      colAttr.needsUpdate = true;
+
+      // Animate Packets
       for (let i = packets.length - 1; i >= 0; i--) {
         const p = packets[i];
         p.t += p.speed * (dt / 16.67);
+
         if (p.t >= 1) {
           scene.remove(p.mesh);
           (p.mesh.material as THREE.Material).dispose();
           packets.splice(i, 1);
           continue;
         }
+
         const pos = p.from.position.clone().lerp(p.to.position, p.t);
         p.mesh.position.copy(pos);
-        const mat = p.mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = 1 - Math.abs(p.t - 0.5) * 1.6; // fade in/out at ends
+
+        // Fade in & out smoothly
+        const fade = Math.sin(p.t * Math.PI);
+        (p.mesh.material as THREE.MeshBasicMaterial).opacity = fade;
+        const scale = 0.6 + fade * 0.6;
+        p.mesh.scale.set(scale, scale, scale);
       }
 
       renderer.render(scene, camera);
     }
 
     if (reduced) {
-      // single static frame for reduced motion
+      // Single static render for users with reduced motion preferences
       for (const d of devices) {
         d.group.position.copy(d.position);
       }
-      rebuildConnections();
       renderer.render(scene, camera);
     } else {
       raf = requestAnimationFrame(tick);
     }
 
-    // ---------- cleanup ----------
+    // ---------- Cleanup ----------
     return () => {
       cancelAnimationFrame(raf);
-      clearInterval(rebuildInterval);
-      clearInterval(packetSpawnInterval);
+      clearInterval(packetInterval);
       window.removeEventListener("mousemove", onMouseMove);
       ro.disconnect();
       io.disconnect();
+
       for (const d of devices) {
         d.group.traverse((obj) => {
           if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
@@ -495,14 +561,17 @@ export default function NetworkDevicesField3D() {
           }
         });
       }
-      for (const c of connections) {
-        c.line.geometry.dispose();
-        (c.line.material as THREE.Material).dispose();
-      }
+
       for (const p of packets) {
         (p.mesh.material as THREE.Material).dispose();
       }
+
+      dustGeom.dispose();
+      dustMat.dispose();
+      latticeGeom.dispose();
+      latticeMat.dispose();
       packetGeom.dispose();
+
       if (renderer.domElement.parentNode === mount) {
         mount.removeChild(renderer.domElement);
       }
@@ -514,7 +583,7 @@ export default function NetworkDevicesField3D() {
     <div
       aria-hidden
       ref={mountRef}
-      className="pointer-events-none fixed inset-0 -z-10 opacity-70 dark:opacity-100"
+      className="pointer-events-none fixed inset-0 -z-10 opacity-70 dark:opacity-100 transition-opacity duration-1000"
     />
   );
 }

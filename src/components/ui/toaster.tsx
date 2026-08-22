@@ -1,31 +1,25 @@
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from "@/components/ui/toast";
-import { useToast } from "@/hooks/use-toast";
+/* Separator.tsx */
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-/**
- * Toaster — render the active toasts. Mount once near the root.
- */
-export function Toaster() {
-  const { toasts } = useToast();
-  return (
-    <ToastProvider>
-      {toasts.map(({ id, title, description, action, ...props }) => (
-        <Toast key={id} {...props}>
-          <div className="grid gap-1">
-            {title && <ToastTitle>{title}</ToastTitle>}
-            {description && <ToastDescription>{description}</ToastDescription>}
-          </div>
-          {action}
-          <ToastClose />
-        </Toast>
-      ))}
-      <ToastViewport />
-    </ToastProvider>
-  );
-}
+const Separator = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    orientation?: "horizontal" | "vertical";
+  }
+>(({ className, orientation = "horizontal", ...props }, ref) => (
+  <div
+    ref={ref}
+    role="separator"
+    aria-orientation={orientation}
+    className={cn(
+      "shrink-0 bg-white/10",
+      orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
+      className
+    )}
+    {...props}
+  />
+));
+Separator.displayName = "Separator";
+
+export { Separator };

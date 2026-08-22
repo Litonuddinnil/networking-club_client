@@ -120,7 +120,12 @@ export default function AdminDashboard(props: AdminDashboardProps) {
   const [editing, setEditing] = useState<{ kind: string; record: any } | null>(null);
   const [viewing, setViewing] = useState<{ kind: string; record: any } | null>(null);
 
-  const [postForm, setPostForm] = useState({ title: "", category: "General", content: "" });
+  const [postForm, setPostForm] = useState({
+    title: "",
+    category: "General",
+    content: "",
+    coverImage: "",
+  });
   const [eventForm, setEventForm] = useState({
     title: "",
     type: "Workshop",
@@ -129,7 +134,12 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     description: "",
     image: "",
   });
-  const [annForm, setAnnForm] = useState({ title: "", category: "Notice", content: "" });
+  const [annForm, setAnnForm] = useState({
+    title: "",
+    category: "Notice",
+    content: "",
+    coverImage: "",
+  });
   const [galleryForm, setGalleryForm] = useState({ title: "", category: "Workshop", imageUrl: "" });
   const [formSubmitting, setFormSubmitting] = useState(false);
 
@@ -517,8 +527,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
         content: postForm.content,
         author: adminName,
         date: new Date().toLocaleDateString(),
+        coverImage: postForm.coverImage || "",
       });
-      setPostForm({ title: "", category: "General", content: "" });
+      setPostForm({ title: "", category: "General", content: "", coverImage: "" });
       setPostDialogOpen(false);
       fetchAdminData();
       toastSuccess("Post published");
@@ -587,8 +598,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
         category: annForm.category || "Notice",
         content: annForm.content,
         date: new Date().toLocaleDateString(),
+        coverImage: annForm.coverImage || "",
       });
-      setAnnForm({ title: "", category: "Notice", content: "" });
+      setAnnForm({ title: "", category: "Notice", content: "", coverImage: "" });
       setAnnDialogOpen(false);
       fetchAdminData();
       toastSuccess("Announcement posted");
@@ -908,6 +920,11 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           placeholder="Write your post body (Markdown supported)..."
           rows={6}
         />
+        <ImageDropzone
+          label="Cover image (optional)"
+          value={postForm.coverImage}
+          onChange={(url) => setPostForm({ ...postForm, coverImage: url })}
+        />
       </EntityFormDialog>
 
       <EntityFormDialog
@@ -1007,6 +1024,11 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })}
           placeholder="Write the announcement..."
           rows={5}
+        />
+        <ImageDropzone
+          label="Cover image (optional)"
+          value={annForm.coverImage}
+          onChange={(url) => setAnnForm({ ...annForm, coverImage: url })}
         />
       </EntityFormDialog>
 

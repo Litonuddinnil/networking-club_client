@@ -1,27 +1,211 @@
-/**
+ /**
  * memberTabUtils.ts
  * -----------------
- * Shared helpers + types used by every per-tab view in the member dashboard.
- * Lifted out of MemberDashboard.tsx so each tab becomes a self-contained
- * component file under src/pages/member/tabs/.
+ * Shared helpers + strongly-typed models used by every per-tab view in the member dashboard.
+ * Lifted out of MemberDashboard.tsx so each tab becomes a self-contained,
+ * fully-typed component file under src/pages/member/tabs/.
  */
 
 import React from "react";
 
+/* -------------------------------------------------------------------------- */
+/*                                Core Models                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Represents a member student profile in the system.
+ */
 export interface MemberStudent {
-  id?: string;
-  memberId?: string;
   _id?: string;
+  id?: string | number;
+  memberId?: string | number;
   name?: string;
   displayName?: string;
+  fullName?: string;
   email?: string;
-  role?: "member" | "admin" | string;
+  role?: "member" | "admin" | "moderator" | "executive" | "lead" | string;
+  designation?: string;
   department?: string;
+  dept?: string;
+  batch?: string;
+  session?: string;
+  phone?: string;
+  contact?: string;
   attendance?: number;
+  attendanceRate?: number;
   xp?: number;
+  level?: number;
   joinedDate?: string;
+  createdAt?: string;
   photoURL?: string;
+  avatar?: string;
+  bio?: string;
+  skills?: string[];
+  badges?: string[];
+  status?: "active" | "inactive" | "pending" | "suspended" | string;
 }
+
+// Backwards compatibility alias
+export type StudentProfile = MemberStudent;
+
+/**
+ * Represents an announcement or official notice.
+ */
+export interface AnnouncementItem {
+  _id?: string;
+  id?: string;
+  title: string;
+  content?: string;
+  description?: string;
+  category?: "Notice" | "Urgent" | "General" | "Event" | "Academic" | string;
+  date?: string;
+  createdAt?: string;
+  priority?: "low" | "medium" | "high" | "urgent";
+  author?: string;
+  authorRole?: string;
+  link?: string;
+}
+
+/**
+ * Represents a club event, workshop, or webinar.
+ */
+export interface EventItem {
+  _id?: string;
+  id?: string | number;
+  title: string;
+  description?: string;
+  date?: string;
+  eventDateTime?: string;
+  time?: string;
+  location?: string;
+  venue?: string;
+  type?: "Workshop" | "Webinar" | "Seminar" | "Bootcamp" | "Contest" | "Meetup" | string;
+  image?: string;
+  coverImage?: string;
+  status?: "upcoming" | "live" | "completed" | "past" | "cancelled" | string;
+  capacity?: number;
+  registeredCount?: number;
+  speaker?: string;
+  speakerRole?: string;
+  tags?: string[];
+}
+
+/**
+ * Represents a member's event ticket / registration record.
+ */
+export interface RegistrationItem {
+  _id?: string;
+  id?: string;
+  eventId: string | number;
+  eventTitle?: string;
+  memberEmail?: string;
+  email?: string;
+  memberId?: string | number;
+  memberName?: string;
+  status?: "registered" | "attended" | "waitlist" | "cancelled" | string;
+  registeredAt?: string;
+  registrationDate?: string;
+  ticketId?: string;
+  qrCode?: string;
+}
+
+/**
+ * Represents a single session attendance log entry.
+ */
+export interface AttendanceItem {
+  _id?: string;
+  id?: string;
+  memberId?: string | number;
+  memberEmail?: string;
+  email?: string;
+  topic?: string;
+  session?: string;
+  title?: string;
+  date?: string;
+  time?: string;
+  status?: "present" | "absent" | "late" | "excused" | string;
+  note?: string;
+  verifiedBy?: string;
+}
+
+/**
+ * Represents a payment transaction, membership fee, or subscription.
+ */
+export interface PaymentItem {
+  _id?: string;
+  id?: string;
+  memberId?: string | number;
+  memberEmail?: string;
+  email?: string;
+  month?: string;
+  purpose?: string;
+  title?: string;
+  amount: number | string;
+  status?: "approved" | "paid" | "pending" | "rejected" | string;
+  method?: "bKash" | "Nagad" | "Rocket" | "Bank" | "Cash" | string;
+  paymentMethod?: string;
+  transactionId?: string;
+  trxId?: string;
+  date?: string;
+  createdAt?: string;
+  note?: string;
+  receiptUrl?: string;
+}
+
+/**
+ * Represents a community post, blog article, or technical story.
+ */
+export interface PostItem {
+  _id?: string;
+  id?: string;
+  title: string;
+  content?: string;
+  description?: string;
+  category?: string;
+  date?: string;
+  createdAt?: string;
+  author?: string;
+  authorName?: string;
+  authorAvatar?: string;
+  coverImage?: string;
+  image?: string;
+  tags?: string[];
+  readTime?: string;
+  likes?: number;
+  commentsCount?: number;
+}
+
+/**
+ * Represents a club gallery image.
+ */
+export interface GalleryItem {
+  _id?: string;
+  id?: string;
+  title?: string;
+  imageUrl?: string;
+  url?: string;
+  caption?: string;
+  category?: string;
+  date?: string;
+  album?: string;
+  likes?: number;
+}
+
+/**
+ * Member portal configuration and toggle state.
+ */
+export interface MemberSettingsState {
+  emailNotifications: boolean;
+  eventReminders: boolean;
+  paymentAlerts: boolean;
+  leaderboardVisibility: boolean;
+  showContactInfo: boolean;
+  autoCheckInPass: boolean;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            Tab Prop Interfaces                             */
+/* -------------------------------------------------------------------------- */
 
 export interface TabNavHandler {
   (targetTab: string): void;
@@ -32,49 +216,81 @@ export interface CommonTabProps {
   onNavigate?: TabNavHandler;
 }
 
-export interface PaymentsTabProps extends CommonTabProps {
-  myPayments: any[];
-}
-
-export interface AttendanceTabProps extends CommonTabProps {
-  myAttendance: any[];
+export interface AnnouncementsTabProps extends CommonTabProps {
+  items?: AnnouncementItem[];
 }
 
 export interface EventsTabProps extends CommonTabProps {
-  events: any[];
-  myRegistrations: any[];
-  student: MemberStudent;
+  events?: EventItem[];
+  myRegistrations?: RegistrationItem[];
+  student?: MemberStudent;
+}
+
+export interface MyRegistrationsTabProps extends CommonTabProps {
+  myRegistrations?: RegistrationItem[];
+  events?: EventItem[];
+  student?: MemberStudent;
+}
+
+export interface AttendanceTabProps extends CommonTabProps {
+  myAttendance?: AttendanceItem[];
+}
+
+export interface PaymentsTabProps extends CommonTabProps {
+  myPayments?: PaymentItem[];
 }
 
 export interface PostsTabProps extends CommonTabProps {
-  posts: any[];
+  posts?: PostItem[];
 }
 
 export interface GalleryTabProps extends CommonTabProps {
-  gallery: any[];
-}
-
-export interface AnnouncementsTabProps extends CommonTabProps {
-  items: any[];
+  gallery?: GalleryItem[];
 }
 
 export interface ProfileTabProps extends CommonTabProps {
-  student: MemberStudent;
+  student?: MemberStudent;
   onTabNavigate?: TabNavHandler;
 }
 
-export interface SettingsTabProps extends CommonTabProps {}
-
-export interface MyRegistrationsTabProps extends CommonTabProps {
-  myRegistrations: any[];
-  events: any[];
-  student: MemberStudent;
+export interface SettingsTabProps extends CommonTabProps {
+  student?: MemberStudent;
+  onSaveSettings?: (settings: MemberSettingsState) => void;
 }
 
 /**
+ * Overall MemberDashboard Root Props interface.
+ */
+export interface MemberDashboardProps {
+  tab?: string;
+  activeTab?: string;
+  user?: MemberStudent;
+  activeStudent?: MemberStudent;
+  matchedUser?: MemberStudent;
+  members?: MemberStudent[];
+  posts?: PostItem[];
+  notices?: AnnouncementItem[];
+  events?: EventItem[];
+  announcements?: AnnouncementItem[];
+  gallery?: GalleryItem[];
+  courses?: any[];
+  devices?: any[];
+  sponsors?: any[];
+  payments?: PaymentItem[];
+  attendance?: AttendanceItem[];
+  eventRegistrations?: RegistrationItem[];
+  dataWarning?: React.ReactNode;
+  onNavigate?: (tab: string) => void;
+  onRefreshData?: () => void;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Helper Functions                             */
+/* -------------------------------------------------------------------------- */
+
+/**
  * Create a `handleTabNavigate(targetTab)` function that prefers the prop
- * callback and falls back to react-router navigation. Each tab uses this
- * to keep the dashboard routing consistent.
+ * callback and falls back to react-router navigation.
  */
 export function createTabNavigator(
   onNavigate?: TabNavHandler,
@@ -92,19 +308,17 @@ export function createTabNavigator(
 }
 
 /**
- * Colour palette used by MemberEventsView for the per-type gradient fallback.
- * Centralised so other future tab pages can reuse the vocabulary.
+ * Colour palette used by MemberEventsView for per-type theme styling.
  */
-export const EVENT_TYPE_THEMES: Record<
-  string,
-  {
-    from: string;
-    to: string;
-    chip: string;
-    chipText: string;
-    chipBorder: string;
-  }
-> = {
+export interface EventTheme {
+  from: string;
+  to: string;
+  chip: string;
+  chipText: string;
+  chipBorder: string;
+}
+
+export const EVENT_TYPE_THEMES: Record<string, EventTheme> = {
   Workshop: {
     from: "from-emerald-500/30",
     to: "to-teal-500/10",
@@ -142,10 +356,10 @@ export const EVENT_TYPE_THEMES: Record<
   },
 };
 
-export const DEFAULT_EVENT_THEME = EVENT_TYPE_THEMES.Workshop;
+export const DEFAULT_EVENT_THEME: EventTheme = EVENT_TYPE_THEMES.Workshop;
 
 /**
- * Tiny helpers shared across multiple tab components.
+ * Date formatting helpers
  */
 export function formatLongDate(input?: string): string {
   if (!input) return "Date TBD";
@@ -161,14 +375,50 @@ export function formatLongDate(input?: string): string {
 
 export function formatShortDate(input?: string): string {
   if (!input) return "TBD";
-  return input;
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return input;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
 
+/**
+ * Formats currency into Bangladeshi Taka (৳) string.
+ */
+export function formatBDT(amount: number | string = 0): string {
+  const num = Number(amount) || 0;
+  return `৳ ${num.toLocaleString("en-US")}`;
+}
+
+/**
+ * Dynamic XP Level & Progression Calculator
+ * Every 100 XP grants 1 Level.
+ */
+export function calculateMemberLevel(xp: number = 0) {
+  const safeXp = Math.max(0, Number(xp) || 0);
+  const level = Math.max(1, Math.floor(safeXp / 100) + 1);
+  const currentLevelXp = safeXp % 100;
+  const progressPercent = Math.min(100, Math.max(0, currentLevelXp));
+  const nextLevelXp = 100 - currentLevelXp;
+
+  return {
+    level,
+    currentLevelXp,
+    progressPercent,
+    nextLevelXp,
+    totalXp: safeXp,
+  };
+}
+
+/**
+ * Resolves a dynamic CSS class based on status mapping.
+ */
 export function statusChipClass(
   status: string,
   variants: Record<string, string>,
   fallback = "bg-amber-500/10 border-amber-500/30 text-amber-400",
 ): string {
-  const key = (status || "").toLowerCase();
+  const key = (status || "").toLowerCase().trim();
   return variants[key] || fallback;
 }

@@ -1,4 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -78,16 +86,22 @@ interface Notice {
   _id?: string;
   title?: string;
   description?: string;
+  content?: string;
   date?: string;
   category?: string;
+  coverImage?: string;
 }
 
 interface EventItem {
   _id?: string;
   title?: string;
   date?: string;
+  time?: string;
   description?: string;
+  content?: string;
   location?: string;
+  type?: string;
+  image?: string;
 }
 
 interface Member {
@@ -696,6 +710,13 @@ export default function HomeView() {
 
   const upcomingEvents = safeArr(events).slice(0, 4);
   const recentNotices = safeArr(notices).slice(0, 4);
+
+  // Click-to-open detail state (shared by events + notices)
+  const [detailModal, setDetailModal] = useState<
+    | { kind: "event"; item: EventItem }
+    | { kind: "notice"; item: Notice }
+    | null
+  >(null);
   const memberCount = safeArr(members).length;
   const courseCount = safeArr(courses).length;
   const deviceCount = safeArr(devices).length;
@@ -920,17 +941,70 @@ export default function HomeView() {
                   <p className="text-xs text-emerald-400 font-mono uppercase tracking-widest mt-1">Live Club Events</p>
                 </div>
               </div>
-              <div className="space-y-4">
-                {upcomingEvents.length === 0 && <Skeleton className="h-32 w-full rounded-2xl" />}
-                {upcomingEvents.map((ev, i) => (
-                  <div key={ev._id || i} data-reveal="slide-left" className="border border-white/15 bg-card/60 backdrop-blur-xl rounded-2xl p-6 card-lift shadow-xl space-y-2 hover:border-emerald-400/40 transition-colors">
-                    <div className="text-xs text-primary uppercase tracking-widest font-mono font-bold bg-primary/10 px-3 py-1 rounded-md border border-primary/25 w-fit">
-                      📅 {ev.date ? new Date(ev.date).toDateString() : "TBA"}
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">{ev.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{ev.description}</p>
-                  </div>
-                ))}
+              <div className="space-y-6">
+                {upcomingEvents.length === 0 && <Skeleton className="h-64 w-full rounded-2xl" />}
+                {upcomingEvents.map((ev, i) => {
+                  const cover = ev.image;
+                  return (
+                    <button
+                      type="button"
+                      key={ev._id || i}
+                      data-reveal="slide-left"
+                      onClick={() => setDetailModal({ kind: "event", item: ev })}
+                      className="group block w-full text-left border border-white/15 bg-card/60 backdrop-blur-xl rounded-2xl overflow-hidden card-lift shadow-xl hover:border-emerald-400/60 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/60"
+                    >
+                      {cover && (
+                        <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-muted/30">
+                          <img
+                            src={cover}
+                            alt={ev.title || "Event cover"}
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                          {ev.type && (
+                            <Badge className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border-emerald-500/40 backdrop-blur-md">
+                              {ev.type}
+                            </Badge>
+                          )}
+                          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
+                            <span className="font-mono font-semibold bg-black/55 backdrop-blur-md px-3 py-1 rounded-md border border-white/15">
+                              📅 {ev.date ? new Date(ev.date).toDateString() : "TBA"}
+                            </span>
+                            {ev.location && (
+                              <span className="font-mono text-[11px] bg-black/55 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/15 truncate max-w-[55%]">
+                                📍 {ev.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-6 space-y-2">
+                        {!cover && (
+                          <div className="text-xs text-primary uppercase tracking-widest font-mono font-bold bg-primary/10 px-3 py-1 rounded-md border border-primary/25 w-fit">
+                            📅 {ev.date ? new Date(ev.date).toDateString() : "TBA"}
+                          </div>
+                        )}
+                        <h3 className="text-xl sm:text-2xl font-black text-foreground group-hover:text-emerald-400 transition-colors">
+                          {ev.title}
+                        </h3>
+                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
+                          {ev.description}
+                        </p>
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-xs font-mono font-bold text-emerald-400 group-hover:tracking-widest transition-all">
+                            View details →
+                          </span>
+                          {!cover && ev.location && (
+                            <span className="text-xs text-muted-foreground font-mono truncate max-w-[60%]">
+                              📍 {ev.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -944,17 +1018,60 @@ export default function HomeView() {
                   <p className="text-xs text-accent font-mono uppercase tracking-widest mt-1">Official Club Circulars</p>
                 </div>
               </div>
-              <div className="space-y-4">
-                {recentNotices.length === 0 && <Skeleton className="h-32 w-full rounded-2xl" />}
-                {recentNotices.map((n, i) => (
-                  <div key={n._id || i} data-reveal="slide-right" className="border border-white/15 bg-card/60 backdrop-blur-xl rounded-2xl p-6 card-lift shadow-xl space-y-2">
-                    <div className="text-xs text-accent uppercase tracking-widest font-mono font-bold bg-accent/10 px-3 py-1 rounded-md border border-accent/25 w-fit">
-                      📢 {n.category || "Announcement"}
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">{n.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{n.description}</p>
-                  </div>
-                ))}
+              <div className="space-y-6">
+                {recentNotices.length === 0 && <Skeleton className="h-64 w-full rounded-2xl" />}
+                {recentNotices.map((n, i) => {
+                  const cover = n.coverImage;
+                  return (
+                    <button
+                      type="button"
+                      key={n._id || i}
+                      data-reveal="slide-right"
+                      onClick={() => setDetailModal({ kind: "notice", item: n })}
+                      className="group block w-full text-left border border-white/15 bg-card/60 backdrop-blur-xl rounded-2xl overflow-hidden card-lift shadow-xl hover:border-accent/60 hover:shadow-2xl hover:shadow-accent/10 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent/60"
+                    >
+                      {cover && (
+                        <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-muted/30">
+                          <img
+                            src={cover}
+                            alt={n.title || "Notice cover"}
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                          {n.category && (
+                            <Badge className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-widest bg-accent/20 text-accent-foreground border-accent/40 backdrop-blur-md">
+                              {n.category}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      <div className="p-6 space-y-2">
+                        {!cover && (
+                          <div className="text-xs text-accent uppercase tracking-widest font-mono font-bold bg-accent/10 px-3 py-1 rounded-md border border-accent/25 w-fit">
+                            📢 {n.category || "Announcement"}
+                          </div>
+                        )}
+                        <h3 className="text-xl sm:text-2xl font-black text-foreground group-hover:text-accent transition-colors">
+                          {n.title}
+                        </h3>
+                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
+                          {n.description}
+                        </p>
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-xs font-mono font-bold text-accent group-hover:tracking-widest transition-all">
+                            Read full notice →
+                          </span>
+                          {n.date && (
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {n.date}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1081,6 +1198,166 @@ export default function HomeView() {
           </Card>
         </div>
       </motion.section>
+
+      {/* DETAIL MODAL — opened when an event or notice card is clicked */}
+      <Dialog
+        open={detailModal !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailModal(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-hidden p-0 border border-white/15 bg-card/95 backdrop-blur-2xl shadow-2xl rounded-2xl">
+          {detailModal && (
+            <div className="flex flex-col max-h-[92vh]">
+              {detailModal.kind === "event" && detailModal.item.image && (
+                <div className="relative h-56 sm:h-72 w-full overflow-hidden shrink-0 bg-muted/30">
+                  <img
+                    src={detailModal.item.image}
+                    alt={detailModal.item.title || "Event cover"}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                    {detailModal.item.type && (
+                      <Badge className="font-mono text-[10px] uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border-emerald-500/40 backdrop-blur-md">
+                        {detailModal.item.type}
+                      </Badge>
+                    )}
+                    {detailModal.item.date && (
+                      <Badge className="font-mono text-[10px] uppercase tracking-widest bg-black/55 text-white border-white/15 backdrop-blur-md">
+                        📅 {new Date(detailModal.item.date).toDateString()}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <DialogHeader>
+                      <DialogTitle className="font-display text-2xl sm:text-3xl font-black text-white drop-shadow-lg">
+                        {detailModal.item.title}
+                      </DialogTitle>
+                    </DialogHeader>
+                  </div>
+                </div>
+              )}
+
+              {detailModal.kind === "notice" && detailModal.item.coverImage && (
+                <div className="relative h-56 sm:h-72 w-full overflow-hidden shrink-0 bg-muted/30">
+                  <img
+                    src={detailModal.item.coverImage}
+                    alt={detailModal.item.title || "Notice cover"}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                    {detailModal.item.category && (
+                      <Badge className="font-mono text-[10px] uppercase tracking-widest bg-accent/20 text-accent-foreground border-accent/40 backdrop-blur-md">
+                        {detailModal.item.category}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <DialogHeader>
+                      <DialogTitle className="font-display text-2xl sm:text-3xl font-black text-white drop-shadow-lg">
+                        {detailModal.item.title}
+                      </DialogTitle>
+                    </DialogHeader>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                {detailModal.kind === "event" && (
+                  <>
+                    {/* No-image events: render the title here */}
+                    {!detailModal.item.image && (
+                      <DialogHeader>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {detailModal.item.type && (
+                            <Badge className="font-mono text-[10px] uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border-emerald-500/40">
+                              {detailModal.item.type}
+                            </Badge>
+                          )}
+                          {detailModal.item.date && (
+                            <Badge className="font-mono text-[10px] uppercase tracking-widest bg-primary/15 text-primary border-primary/30">
+                              📅 {new Date(detailModal.item.date).toDateString()}
+                            </Badge>
+                          )}
+                        </div>
+                        <DialogTitle className="font-display text-2xl sm:text-3xl font-black text-foreground">
+                          {detailModal.item.title}
+                        </DialogTitle>
+                      </DialogHeader>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {detailModal.item.date && (
+                        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">When</div>
+                          <div className="text-sm font-semibold text-foreground mt-1">
+                            {new Date(detailModal.item.date).toDateString()}
+                            {detailModal.item.time && ` · ${detailModal.item.time}`}
+                          </div>
+                        </div>
+                      )}
+                      {detailModal.item.location && (
+                        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Where</div>
+                          <div className="text-sm font-semibold text-foreground mt-1 truncate">📍 {detailModal.item.location}</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">About this event</div>
+                      <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap text-sm">
+                        {detailModal.item.content || detailModal.item.description || "No additional details provided."}
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {detailModal.kind === "notice" && (
+                  <>
+                    {!detailModal.item.coverImage && (
+                      <DialogHeader>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {detailModal.item.category && (
+                            <Badge className="font-mono text-[10px] uppercase tracking-widest bg-accent/15 text-accent border-accent/40">
+                              {detailModal.item.category}
+                            </Badge>
+                          )}
+                          {detailModal.item.date && (
+                            <Badge className="font-mono text-[10px] uppercase tracking-widest bg-white/10 text-foreground border-white/15">
+                              {detailModal.item.date}
+                            </Badge>
+                          )}
+                        </div>
+                        <DialogTitle className="font-display text-2xl sm:text-3xl font-black text-foreground">
+                          {detailModal.item.title}
+                        </DialogTitle>
+                      </DialogHeader>
+                    )}
+
+                    <div className="space-y-2">
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Notice details</div>
+                      <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap text-sm">
+                        {detailModal.item.content || detailModal.item.description || "No additional details provided."}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="border-t border-white/10 bg-card/80 backdrop-blur-md px-6 py-3 flex items-center justify-end shrink-0">
+                <DialogClose asChild>
+                  <Button variant="outline" className="rounded-xl border-white/15 bg-white/5 hover:bg-white/10">
+                    Close
+                  </Button>
+                </DialogClose>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Trophy, MapPin, Clock, Sparkles, Radio, Check } from "lucide-react";
+import {
+  Trophy,
+  MapPin,
+  Clock,
+  Sparkles,
+  Radio,
+  Check,
+  CalendarDays,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/provider/AuthProvider";
 import { useAxiosPublic } from "@/hooks/useAxiosPublic";
 import { useToast } from "@/hooks/use-toast";
@@ -152,7 +161,7 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
 
   if (!activeEvent) {
     return (
-      <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-[#03070E] p-8 text-center font-mono text-xs text-slate-400">
+      <div className="relative overflow-hidden rounded-[28px] border border-emerald-500/20 bg-[#03070E] p-10 text-center font-mono text-xs text-slate-400">
         <Radio className="w-6 h-6 text-emerald-400 animate-pulse mx-auto mb-2" />
         No active scheduled event telemetry found in database.
       </div>
@@ -170,124 +179,190 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
     : "UPCOMING";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-r from-[#020408] via-[#03070E] to-[#08121e] p-6 sm:p-8 text-white shadow-2xl shadow-emerald-500/10">
-      {/* Background Dynamic Image Glow */}
+    <section
+      aria-label="Sports event spotlight"
+      className="relative overflow-hidden rounded-[28px] border border-emerald-500/30 bg-linear-to-br from-[#020408] via-[#040B14] to-[#0a1a26] text-white shadow-2xl shadow-emerald-500/10"
+    >
+      {/* Hero background image with cinematic overlay */}
       {activeEvent.image && (
-        <div className="pointer-events-none absolute inset-0 opacity-15 overflow-hidden">
+        <>
           <img
             src={activeEvent.image}
             alt={activeEvent.title}
-            className="w-full h-full object-cover filter blur-sm"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 scale-105"
           />
-        </div>
+          <div className="absolute inset-0 bg-linear-to-r from-[#020408] via-[#020408]/85 to-[#020408]/30" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(16,185,129,0.18),transparent_55%)]" />
+        </>
       )}
 
-      <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        {/* Left Side: Dynamic Event Information */}
-        <div className="space-y-4 max-w-xl">
-          <div className="flex items-center space-x-2 text-[10px] font-mono tracking-widest text-emerald-400 uppercase">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>NEXT MATCH • BRIEFING</span>
+      {/* Decorative grid + scanline */}
+      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(rgba(16,185,129,0.6)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.6)_1px,transparent_1px)] bg-size-[48px_48px] pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-emerald-400/60 to-transparent" />
+
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 p-8 sm:p-10 lg:p-14">
+        {/* LEFT: Event briefing (8 cols on desktop) */}
+        <div className="lg:col-span-8 space-y-7">
+          <div className="flex items-center gap-3 text-[11px] font-mono tracking-[0.35em] text-emerald-400 uppercase">
+            <span className="relative flex w-2.5 h-2.5">
+              <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              <span className="relative rounded-full w-2.5 h-2.5 bg-emerald-400" />
+            </span>
+            <span>Next Match • Briefing</span>
+            <span className="hidden sm:inline-block w-12 h-px bg-emerald-500/40" />
+            <span className="hidden sm:inline text-slate-400 tracking-widest">
+              ID • {activeEventId || "—"}
+            </span>
           </div>
 
-          <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <Trophy className="w-5 h-5" />
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_30px_rgba(16,185,129,0.25)]">
+              <Trophy className="w-7 h-7 sm:w-8 sm:h-8" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight leading-tight">
-              {activeEvent.title}
-            </h2>
+            <div className="min-w-0">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold leading-[1.05] tracking-tight">
+                <span className="bg-linear-to-r from-white via-emerald-100 to-emerald-400 bg-clip-text text-transparent">
+                  {activeEvent.title}
+                </span>
+              </h2>
+              <p className="mt-3 text-slate-400 font-mono text-sm max-w-2xl">
+                Join the JSTU Networking and Lab Core for an electrifying
+                showdown. Squad up, lock your loadout, and prepare to compete
+                on the campus grid.
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
-            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full font-bold uppercase flex items-center space-x-1">
-              <Sparkles className="w-3 h-3 mr-1" />
+          <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
+            <span className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 rounded-full font-bold uppercase flex items-center tracking-widest">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
               {activeEvent.type || "WORKSHOP"}
             </span>
 
             {activeEvent.location && (
-              <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-full flex items-center space-x-1">
-                <MapPin className="w-3 h-3 text-emerald-400 mr-1" />
+              <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-slate-200 rounded-full flex items-center">
+                <MapPin className="w-3.5 h-3.5 text-emerald-400 mr-1.5" />
                 {activeEvent.location}
               </span>
             )}
 
             {activeEvent.time && (
-              <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-full flex items-center space-x-1">
-                <Clock className="w-3 h-3 text-emerald-400 mr-1" />
+              <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-slate-200 rounded-full flex items-center">
+                <Clock className="w-3.5 h-3.5 text-emerald-400 mr-1.5" />
                 {activeEvent.time}
               </span>
             )}
+
+            <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-slate-200 rounded-full flex items-center">
+              <CalendarDays className="w-3.5 h-3.5 text-emerald-400 mr-1.5" />
+              {formattedDate}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <button
+              type="button"
+              onClick={handleRegister}
+              disabled={alreadyRegistered || submitting || isLive}
+              className={`group relative px-7 py-3.5 font-mono text-sm font-bold tracking-[0.25em] uppercase rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2 overflow-hidden ${
+                alreadyRegistered
+                  ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 cursor-default"
+                  : isLive
+                    ? "bg-rose-500/10 border border-rose-500/40 text-rose-300 cursor-not-allowed"
+                    : "bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 border border-emerald-400 text-[#02110b] shadow-emerald-500/30 hover:shadow-emerald-500/50 disabled:opacity-60"
+              }`}
+            >
+              {!alreadyRegistered && !isLive && (
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-0 transition-transform duration-700 bg-linear-to-r from-transparent via-white/30 to-transparent" />
+              )}
+              <span className="relative flex items-center gap-2">
+                {alreadyRegistered ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Registered
+                  </>
+                ) : submitting ? (
+                  "Registering..."
+                ) : isLive ? (
+                  <>
+                    <Radio className="w-4 h-4 animate-pulse" />• LIVE — LOBBY
+                    OPEN
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-4 h-4" />• Register for Event
+                  </>
+                )}
+              </span>
+            </button>
+
+            <span className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.3em] text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              {isLive ? "Live Now" : "Upcoming Briefing"}
+            </span>
           </div>
         </div>
 
-        {/* Right Side: Dynamic Countdown Timer */}
-        <div className="space-y-3 w-full lg:w-auto">
-          <div className="grid grid-cols-4 gap-3 text-center font-mono">
-            <div className="bg-[#020408] border border-emerald-500/20 p-3 sm:p-4 rounded-2xl">
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
-                {String(timeLeft.days).padStart(2, "0")}
-              </div>
-              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">DAYS</div>
-            </div>
-
-            <div className="bg-[#020408] border border-emerald-500/20 p-3 sm:p-4 rounded-2xl">
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
-                {String(timeLeft.hours).padStart(2, "0")}
-              </div>
-              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">HRS</div>
-            </div>
-
-            <div className="bg-[#020408] border border-emerald-500/20 p-3 sm:p-4 rounded-2xl">
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
-                {String(timeLeft.minutes).padStart(2, "0")}
-              </div>
-              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">MIN</div>
-            </div>
-
-            <div className="bg-[#020408] border border-emerald-500/20 p-3 sm:p-4 rounded-2xl">
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
-                {String(timeLeft.seconds).padStart(2, "0")}
-              </div>
-              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">SEC</div>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 px-1">
-            <span className="flex items-center text-emerald-400 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1.5" />
-              {isLive ? "LIVE NOW" : "UPCOMING BRIEFING"}
+        {/* RIGHT: Countdown (4 cols on desktop) */}
+        <div className="lg:col-span-4 space-y-4 lg:border-l lg:border-emerald-500/20 lg:pl-8">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.35em] text-slate-400">
+            <span>Countdown</span>
+            <span className="text-emerald-400">
+              {isLive ? "Live" : "T-Minus"}
             </span>
-            <span>📅 {formattedDate}</span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleRegister}
-            disabled={alreadyRegistered || submitting || isLive}
-            className={`w-full py-3 font-mono text-xs font-bold tracking-widest uppercase rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${
-              alreadyRegistered
-                ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 cursor-default"
-                : isLive
-                ? "bg-rose-500/10 border border-rose-500/30 text-rose-300 cursor-not-allowed"
-                : "bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 shadow-emerald-500/10 disabled:opacity-60"
-            }`}
-          >
-            {alreadyRegistered ? (
-              <>
-                <Check className="w-4 h-4" />
-                Registered
-              </>
-            ) : submitting ? (
-              "Registering..."
-            ) : isLive ? (
-              "• LIVE — LOBBY OPEN"
-            ) : (
-              "• Register for Event"
-            )}
-          </button>
+          <div className="grid grid-cols-4 gap-3 text-center font-mono">
+            {[
+              { v: timeLeft.days, label: "Days" },
+              { v: timeLeft.hours, label: "Hrs" },
+              { v: timeLeft.minutes, label: "Min" },
+              { v: timeLeft.seconds, label: "Sec" },
+            ].map((u) => (
+              <div
+                key={u.label}
+                className="relative bg-black/40 backdrop-blur border border-emerald-500/25 p-3 sm:p-4 rounded-2xl overflow-hidden"
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-emerald-400/60 to-transparent" />
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-emerald-400 tabular-nums leading-none">
+                  {String(u.v).padStart(2, "0")}
+                </div>
+                <div className="text-[9px] text-slate-400 uppercase tracking-[0.3em] mt-2">
+                  {u.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 pt-2 text-center font-mono">
+            <div className="bg-white/5 border border-white/10 rounded-xl py-3">
+              <div className="text-emerald-400 text-lg font-bold">42</div>
+              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">
+                Squads
+              </div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl py-3">
+              <div className="text-emerald-400 text-lg font-bold">128</div>
+              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">
+                Players
+              </div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl py-3">
+              <div className="text-emerald-400 text-lg font-bold">8</div>
+              <div className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">
+                Rounds
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.3em] pt-2">
+            📅 {formattedDate}
+          </p>
         </div>
       </div>
-    </div>
+
+      {/* Bottom accent bar */}
+      <div className="relative h-1 bg-linear-to-r from-emerald-500/0 via-emerald-400/70 to-teal-400/0" />
+    </section>
   );
 }
