@@ -10,6 +10,7 @@ import {
   SelectField,
 } from "@/components/admin/Field";
 import ImageDropzone from "@/components/admin/ImageDropzone";
+import { extractApiError } from "@/lib/extractApiError";
 
 interface EventFormPageProps {
   onSuccess?: () => void;
@@ -93,7 +94,7 @@ export default function EventFormPage({ onSuccess }: EventFormPageProps) {
         });
         setOriginalTitle(record.title ?? "");
       } catch (err: any) {
-        swalError(err?.message || "Failed to load event.");
+        swalError(extractApiError(err, "Failed to load event."));
         navigate("/dashboard/events", { replace: true });
       } finally {
         if (!cancelled) setFetching(false);
@@ -147,7 +148,7 @@ export default function EventFormPage({ onSuccess }: EventFormPageProps) {
       onSuccess?.();
       navigate("/dashboard/events", { replace: true });
     } catch (err: any) {
-      swalError(err?.message || "Failed to save event.");
+      swalError(extractApiError(err, "Failed to save event."));
     } finally {
       setLoading(false);
     }
@@ -178,6 +179,11 @@ export default function EventFormPage({ onSuccess }: EventFormPageProps) {
         value={form.title}
         onChange={(e) => setForm({ ...form, title: e.target.value })}
         placeholder="e.g. MikroTik RouterOS Lab"
+        labelExtra={
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {form.title.length}/120
+          </span>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -215,6 +221,7 @@ export default function EventFormPage({ onSuccess }: EventFormPageProps) {
         onChange={(e) => setForm({ ...form, description: e.target.value })}
         placeholder="What attendees will learn..."
         rows={8}
+        hint="Shown on the event card and the registration modal."
       />
 
       <ImageDropzone

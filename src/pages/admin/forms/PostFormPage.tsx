@@ -10,6 +10,7 @@ import {
   SelectField,
 } from "@/components/admin/Field";
 import ImageDropzone from "@/components/admin/ImageDropzone";
+import { extractApiError } from "@/lib/extractApiError";
 
 interface PostFormPageProps {
   /** When provided, the admin props.page receives injected state on submit-success */
@@ -77,7 +78,7 @@ export default function PostFormPage({ onSuccess }: PostFormPageProps) {
         });
         setOriginalTitle(record.title ?? "");
       } catch (err: any) {
-        swalError(err?.message || "Failed to load post.");
+        swalError(extractApiError(err, "Failed to load post."));
         navigate("/dashboard/posts", { replace: true });
       } finally {
         if (!cancelled) setFetching(false);
@@ -117,7 +118,7 @@ export default function PostFormPage({ onSuccess }: PostFormPageProps) {
       onSuccess?.();
       navigate("/dashboard/posts", { replace: true });
     } catch (err: any) {
-      swalError(err?.message || "Failed to save post.");
+      swalError(extractApiError(err, "Failed to save post."));
     } finally {
       setLoading(false);
     }
@@ -148,6 +149,12 @@ export default function PostFormPage({ onSuccess }: PostFormPageProps) {
         value={form.title}
         onChange={(e) => setForm({ ...form, title: e.target.value })}
         placeholder="e.g. Getting started with OSPF"
+        labelExtra={
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {form.title.length}/140
+          </span>
+        }
+        hint="Keep it punchy for the feed."
       />
       <SelectField
         label="Category"
@@ -168,6 +175,7 @@ export default function PostFormPage({ onSuccess }: PostFormPageProps) {
         onChange={(e) => setForm({ ...form, content: e.target.value })}
         placeholder="Write your post body (Markdown supported)..."
         rows={12}
+        hint="Markdown supported: # headings, **bold**, - lists, [links](url)"
       />
       <ImageDropzone
         label="Cover image (optional)"

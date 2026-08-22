@@ -9,6 +9,7 @@ import {
   SelectField,
 } from "@/components/admin/Field";
 import ImageDropzone from "@/components/admin/ImageDropzone";
+import { extractApiError } from "@/lib/extractApiError";
 
 interface GalleryFormPageProps {
   onSuccess?: () => void;
@@ -74,7 +75,7 @@ export default function GalleryFormPage({ onSuccess }: GalleryFormPageProps) {
         });
         setOriginalTitle(record.title ?? "");
       } catch (err: any) {
-        swalError(err?.message || "Failed to load gallery item.");
+        swalError(extractApiError(err, "Failed to load gallery item."));
         navigate("/dashboard/gallery", { replace: true });
       } finally {
         if (!cancelled) setFetching(false);
@@ -113,7 +114,7 @@ export default function GalleryFormPage({ onSuccess }: GalleryFormPageProps) {
       onSuccess?.();
       navigate("/dashboard/gallery", { replace: true });
     } catch (err: any) {
-      swalError(err?.message || "Failed to save gallery item.");
+      swalError(extractApiError(err, "Failed to save gallery item."));
     } finally {
       setLoading(false);
     }
@@ -148,6 +149,11 @@ export default function GalleryFormPage({ onSuccess }: GalleryFormPageProps) {
         value={form.title}
         onChange={(e) => setForm({ ...form, title: e.target.value })}
         placeholder="e.g. IPv6 Seminar group photo"
+        labelExtra={
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {form.title.length}/80
+          </span>
+        }
       />
       <SelectField
         label="Category"

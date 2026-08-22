@@ -6,6 +6,7 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useAxiosSecure } from "../../hooks/useAxiosSecure";
+import { extractApiError } from "@/lib/extractApiError";
 import { ViewMode } from "@/components/admin/AdminCrudToolbar";
 import SectionHeading from "@/components/admin/SectionHeading";
 import ConfirmActionDialog from "@/components/admin/ConfirmActionDialog";
@@ -260,7 +261,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           setConfirm((c) => ({ ...c, open: false }));
           toastSuccess(`Role updated to ${newRole.toUpperCase()}`);
         } catch (err: any) {
-          swalError(err.message || "Failed to update role.");
+          swalError(extractApiError(err, "Failed to update role."));
         }
       },
     });
@@ -279,7 +280,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           setConfirm((c) => ({ ...c, open: false }));
           toastSuccess(`Member status: ${status}`);
         } catch (err: any) {
-          swalError(err.message || "Failed to update member status.");
+          swalError(extractApiError(err, "Failed to update member status."));
         }
       },
     });
@@ -335,7 +336,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           setConfirm((c) => ({ ...c, open: false }));
           toastSuccess("Deleted");
         } catch (err: any) {
-          swalError(err.message || "Delete failed.");
+          swalError(extractApiError(err, "Delete failed."));
         }
       },
     });
@@ -652,7 +653,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                     .patch(`/api/payments/${id}`, { status: "approved" })
                     .then(() => fetchAdminData())
                     .then(() => toastSuccess("Payment approved"))
-                    .catch((err) => swalError(err.message))
+                    .catch((err) => swalError(extractApiError(err, "Failed to approve payment.")))
             }
             onReject={(id) =>
               props.onRejectPayment
@@ -661,7 +662,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                     .patch(`/api/payments/${id}`, { status: "rejected" })
                     .then(() => fetchAdminData())
                     .then(() => toastSuccess("Payment rejected"))
-                    .catch((err) => swalError(err.message))
+                    .catch((err) => swalError(extractApiError(err, "Failed to reject payment.")))
             }
             onDelete={(id) => handleDelete("payment", id, props.onDeletePayment)}
           />
@@ -685,7 +686,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                   .patch(`/api/attendance/${rec._id || rec.id}`, { status: newStatus })
                   .then(() => fetchAdminData())
                   .then(() => toastSuccess(`Status: ${newStatus}`))
-                  .catch((err) => swalError(err.message));
+                  .catch((err) => swalError(extractApiError(err, "Failed to update attendance.")));
               }
             }}
             onDelete={(id) => handleDelete("attendance", id, props.onDeleteAttendance)}
@@ -708,7 +709,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                   .patch(`/api/event-registrations/${id}`, { status: "cancelled" })
                   .then(() => fetchAdminData())
                   .then(() => toastSuccess("Registration cancelled"))
-                  .catch((err) => swalError(err.message));
+                  .catch((err) => swalError(extractApiError(err, "Failed to cancel registration.")));
               }
             }}
             onDelete={(id) =>

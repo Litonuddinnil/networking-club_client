@@ -10,6 +10,7 @@ import {
   SelectField,
 } from "@/components/admin/Field";
 import ImageDropzone from "@/components/admin/ImageDropzone";
+import { extractApiError } from "@/lib/extractApiError";
 
 interface AnnouncementFormPageProps {
   onSuccess?: () => void;
@@ -77,7 +78,7 @@ export default function AnnouncementFormPage({ onSuccess }: AnnouncementFormPage
         });
         setOriginalTitle(record.title ?? "");
       } catch (err: any) {
-        swalError(err?.message || "Failed to load announcement.");
+        swalError(extractApiError(err, "Failed to load announcement."));
         navigate("/dashboard/announcements", { replace: true });
       } finally {
         if (!cancelled) setFetching(false);
@@ -117,7 +118,7 @@ export default function AnnouncementFormPage({ onSuccess }: AnnouncementFormPage
       onSuccess?.();
       navigate("/dashboard/announcements", { replace: true });
     } catch (err: any) {
-      swalError(err?.message || "Failed to save announcement.");
+      swalError(extractApiError(err, "Failed to save announcement."));
     } finally {
       setLoading(false);
     }
@@ -152,6 +153,11 @@ export default function AnnouncementFormPage({ onSuccess }: AnnouncementFormPage
         value={form.title}
         onChange={(e) => setForm({ ...form, title: e.target.value })}
         placeholder="e.g. Lab booking opens tomorrow"
+        labelExtra={
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {form.title.length}/120
+          </span>
+        }
       />
       <SelectField
         label="Category"
@@ -172,6 +178,7 @@ export default function AnnouncementFormPage({ onSuccess }: AnnouncementFormPage
         onChange={(e) => setForm({ ...form, content: e.target.value })}
         placeholder="Write the announcement..."
         rows={10}
+        hint="Plain text or Markdown — this gets pushed to the dashboard feed."
       />
       <ImageDropzone
         label="Cover image (optional)"
