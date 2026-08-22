@@ -77,11 +77,36 @@ export function useLenis(routeKey?: string): void {
         smoothWheel: true,
         wheelMultiplier: 1,
         touchMultiplier: 1.4,
-        // Don't hijack wheel inside form fields so typing stays smooth
-        prevent: (node: Element | null) =>
-          !node?.closest?.(
-            "[data-lenis-ignore], input, textarea, select, [contenteditable]"
-          ),
+        // Skip Lenis hijacking when the wheel happens over a horizontal
+        // scroller, an ignored region, or a form field. The horizontal
+        // wheel helper handles the first case natively.
+        prevent: (node: Element | null) => {
+          if (!node) return true;
+          if (node.closest?.("[data-lenis-ignore]")) return false;
+          if (
+            node.closest?.(
+              "input, textarea, select, [contenteditable]"
+            )
+          ) {
+            return false;
+          }
+          // If the cursor sits inside a horizontal-scroll container,
+          // let the browser (and our use-horizontal-wheel hook) handle
+          // the gesture instead of Lenis animating the page vertically.
+          let cur: Element | null = node;
+          while (cur && cur !== document.body) {
+            if (
+              cur instanceof HTMLElement &&
+              cur.scrollWidth - cur.clientWidth > 4 &&
+              (getComputedStyle(cur).overflowX === "auto" ||
+                getComputedStyle(cur).overflowX === "scroll")
+            ) {
+              return false;
+            }
+            cur = cur.parentElement;
+          }
+          return true;
+        },
       });
 
       lenisSingleton = lenis;
