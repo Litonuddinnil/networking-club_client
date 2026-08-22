@@ -481,14 +481,22 @@ export default function AdminDashboard(props: AdminDashboardProps) {
   const isBn = appSettings.language === "bn";
 
   // form navigation: route to dedicated full-page form routes instead of opening modals
+  const ROUTE_PREFIX: Record<
+    "post" | "event" | "announcement" | "gallery",
+    string
+  > = {
+    post: "posts",
+    event: "events",
+    announcement: "announcements",
+    gallery: "gallery",
+  };
   const goToCreate = (kind: "post" | "event" | "announcement" | "gallery") => {
-    navigate(`/dashboard/${kind === "announcement" ? "announcements" : kind === "post" ? "posts" : kind}s/new`);
+    navigate(`/dashboard/${ROUTE_PREFIX[kind]}/new`);
   };
   const openEdit = (kind: "post" | "event" | "announcement" | "gallery", record: any) => {
     const id = record?._id || record?.id;
     if (!id) return;
-    const prefix = kind === "announcement" ? "announcements" : kind === "post" ? "posts" : `${kind}s`;
-    navigate(`/dashboard/${prefix}/${id}/edit`);
+    navigate(`/dashboard/${ROUTE_PREFIX[kind]}/${id}/edit`);
   };
   const refreshAdminData = () => {
     if (props.onRefreshData) {
