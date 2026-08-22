@@ -806,6 +806,25 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 /* Smooth scroll for anchor jumping */
 html { scroll-behavior: smooth; }
 
+/* Dashboard / any nested overflow container — smooth scroll
+   matches the window-level Lenis experience inside scrollable
+   regions like the sidebar nav and main outlet. */
+.overflow-y-auto,
+.overflow-x-auto,
+[data-smooth-scroll] {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  .overflow-y-auto,
+  .overflow-x-auto,
+  [data-smooth-scroll] {
+    scroll-behavior: auto;
+  }
+}
+
 /* Section-wide radial spotlight */
 .spotlight {
   background: radial-gradient(
