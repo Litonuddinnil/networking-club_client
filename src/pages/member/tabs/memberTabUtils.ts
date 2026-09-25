@@ -354,6 +354,34 @@ export const EVENT_TYPE_THEMES: Record<string, EventTheme> = {
     chipText: "text-rose-300",
     chipBorder: "border-rose-500/30",
   },
+  "E-Sports": {
+    from: "from-indigo-500/30",
+    to: "to-purple-500/10",
+    chip: "bg-indigo-500/15",
+    chipText: "text-indigo-300",
+    chipBorder: "border-indigo-500/30",
+  },
+  Hackathon: {
+    from: "from-cyan-500/30",
+    to: "to-sky-500/10",
+    chip: "bg-cyan-500/15",
+    chipText: "text-cyan-300",
+    chipBorder: "border-cyan-500/30",
+  },
+  Meetup: {
+    from: "from-lime-500/30",
+    to: "to-emerald-500/10",
+    chip: "bg-lime-500/15",
+    chipText: "text-lime-300",
+    chipBorder: "border-lime-500/30",
+  },
+  Networking: {
+    from: "from-teal-500/30",
+    to: "to-emerald-500/10",
+    chip: "bg-teal-500/15",
+    chipText: "text-teal-300",
+    chipBorder: "border-teal-500/30",
+  },
 };
 
 export const DEFAULT_EVENT_THEME: EventTheme = EVENT_TYPE_THEMES.Workshop;

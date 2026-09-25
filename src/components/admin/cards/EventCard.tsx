@@ -71,6 +71,8 @@ const TYPE_VARIANT: Record<
   workshop: "info",
   seminar: "default",
   contest: "accent",
+  "e-sports": "accent",
+  hackathon: "info",
   meetup: "secondary",
   networking: "default",
 };

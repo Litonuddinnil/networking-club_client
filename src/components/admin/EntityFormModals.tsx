@@ -499,6 +499,7 @@ function EventFormModal({
             { value: "Workshop", label: "Workshop" },
             { value: "Seminar", label: "Seminar" },
             { value: "Contest", label: "Contest" },
+            { value: "E-Sports", label: "E-Sports" },
             { value: "Hackathon", label: "Hackathon" },
             { value: "Meetup", label: "Meetup" },
             { value: "Networking", label: "Networking" },
