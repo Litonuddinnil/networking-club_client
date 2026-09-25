@@ -1,27 +1,34 @@
-import * as React from "react";
+﻿import * as React from "react";
+import * as SeparatorPrimitive from "@radix-ui/react-separator";
+
 import { cn } from "@/lib/utils";
 
 /**
- * Separator — shadcn-style horizontal/vertical divider.
+ * Separator — themed divider. `decorative=true` (default) hides
+ * it from assistive tech; consumers that use it as a section break
+ * should set `decorative={false}`.
  */
 const Separator = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    orientation?: "horizontal" | "vertical";
-  }
->(({ className, orientation = "horizontal", ...props }, ref) => (
-  <div
-    ref={ref}
-    role="separator"
-    aria-orientation={orientation}
-    className={cn(
-      "shrink-0 bg-border",
-      orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
-      className
-    )}
-    {...props}
-  />
-));
-Separator.displayName = "Separator";
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
+>(
+  (
+    { className, orientation = "horizontal", decorative = true, ...props },
+    ref
+  ) => (
+    <SeparatorPrimitive.Root
+      ref={ref}
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "shrink-0 bg-white/10",
+        orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
+        className
+      )}
+      {...props}
+    />
+  )
+);
+Separator.displayName = SeparatorPrimitive.Root.displayName;
 
 export { Separator };

@@ -158,7 +158,7 @@ export default function MemberProfileView({
               </div>
               <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-white/10">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 rounded-full"
+                  className="h-full bg-linear-to-r from-emerald-500 to-teal-400 transition-all duration-500 rounded-full"
                   style={{ width: `${xpProgressPercent}%` }}
                 />
               </div>

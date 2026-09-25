@@ -219,7 +219,7 @@ export default function MembersTab({
 
       {/* Bulk-action floating bar */}
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-teal-500/30 bg-gradient-to-r from-teal-500/15 via-emerald-500/10 to-card backdrop-blur-xl px-4 py-2.5 shadow-lg animate-fade-in">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-teal-500/30 bg-linear-to-r from-teal-500/15 via-emerald-500/10 to-card backdrop-blur-xl px-4 py-2.5 shadow-lg animate-fade-in">
           <div className="flex items-center gap-2 text-xs sm:text-sm">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-xs font-bold text-black">{selected.size}</span>
             <span className="font-semibold text-foreground">{selected.size} member{selected.size > 1 ? "s" : ""} selected</span>
@@ -303,7 +303,7 @@ export default function MembersTab({
                       <div className="flex items-center gap-3 min-w-0">
                         <Avatar className="h-9 w-9 ring-2 ring-card shrink-0">
                           {m.photoURL && <AvatarImage src={m.photoURL} alt={name} className="object-cover" />}
-                          <AvatarFallback className="bg-gradient-to-br from-teal-500/30 to-emerald-600/30 text-teal-300 text-xs font-bold font-display">{initials(name)}</AvatarFallback>
+                          <AvatarFallback className="bg-linear-to-br from-teal-500/30 to-emerald-600/30 text-teal-300 text-xs font-bold font-display">{initials(name)}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0">
@@ -393,7 +393,7 @@ function StatCard({ icon, label, value, accent, highlight }: { icon: React.React
     violet: "from-violet-500/20 to-violet-500/5 text-violet-300 border-violet-500/30",
   };
   return (
-    <div className={cn("relative overflow-hidden rounded-xl border bg-gradient-to-br backdrop-blur-xl p-3.5 shadow-md transition-all", accentMap[accent], highlight && "ring-2 ring-amber-400/40 animate-pulse-subtle")}>
+    <div className={cn("relative overflow-hidden rounded-xl border bg-linear-to-br backdrop-blur-xl p-3.5 shadow-md transition-all", accentMap[accent], highlight && "ring-2 ring-amber-400/40 animate-pulse-subtle")}>
       <div className="flex items-center gap-2">
         <div className="rounded-lg bg-black/30 p-1.5 backdrop-blur-sm">{icon}</div>
         <div className="text-[10px] font-mono uppercase tracking-wider opacity-80">{label}</div>

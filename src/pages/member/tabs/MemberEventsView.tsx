@@ -1,4 +1,5 @@
  import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Clock,
@@ -8,9 +9,12 @@ import {
   CheckCircle2,
   Radio,
   Ticket,
+  Hourglass,
+  XCircle,
 } from "lucide-react";
 import {
   EventsTabProps,
+  RegistrationItem,
   EVENT_TYPE_THEMES,
   DEFAULT_EVENT_THEME,
   formatLongDate,
@@ -33,22 +37,28 @@ export default function MemberEventsView({
   const myEmail = (student?.email || "").toLowerCase();
   const myStudentId = student?.id || student?.memberId || student?._id;
 
-  // Memoize registered event ID set for fast lookups
-  const registeredEventIds = useMemo(() => {
-    return new Set(
-      (myRegistrations || [])
-        .filter((r) => {
-          if (!r) return false;
-          if ((r.status || "registered").toLowerCase() === "cancelled") return false;
-          const sameEmail = Boolean(myEmail && (r.memberEmail || "").toLowerCase() === myEmail);
-          const sameId = Boolean(myStudentId && String(r.memberId || "") === String(myStudentId));
-          return sameEmail || sameId;
-        })
-        .map((r) => String(r.eventId))
-    );
+  // Map eventId -> my registration for that event. The card needs the whole
+  // record, not just a boolean, so it can show "awaiting approval" separately
+  // from "approved" — a submission is not a confirmed seat.
+  const myRegistrationByEvent = useMemo(() => {
+    const map = new Map<string, RegistrationItem>();
+    for (const r of myRegistrations || []) {
+      if (!r) continue;
+      if ((r.status || "").toLowerCase() === "cancelled") continue;
+      const sameEmail = Boolean(myEmail && (r.memberEmail || "").toLowerCase() === myEmail);
+      const sameId = Boolean(myStudentId && String(r.memberId || "") === String(myStudentId));
+      if (sameEmail || sameId) map.set(String(r.eventId), r);
+    }
+    return map;
   }, [myRegistrations, myEmail, myStudentId]);
 
+  const registeredEventIds = useMemo(
+    () => new Set(myRegistrationByEvent.keys()),
+    [myRegistrationByEvent]
+  );
+
   const go = createTabNavigator(onNavigate);
+  const navigate = useNavigate();
 
   const now = Date.now();
   const eventsCount = events.length;
@@ -130,34 +140,47 @@ export default function MemberEventsView({
             {events.map((ev, idx) => {
               const eventId = String(ev._id || ev.id || idx);
               const theme = (ev.type && EVENT_TYPE_THEMES[ev.type]) || DEFAULT_EVENT_THEME;
-              const isRegistered = registeredEventIds.has(eventId);
-              const hasImage = Boolean(ev.image);
-              
-              const eventTimestamp = ev.date ? new Date(ev.date).getTime() : NaN;
+              const myReg = myRegistrationByEvent.get(eventId);
+              const regStatus = (myReg?.status || "").toLowerCase();
+              const isRegistered = Boolean(myReg);
+              const isPendingReview = regStatus === "pending";
+              const isApproved = regStatus === "approved" || regStatus === "registered";
+              const isRejected = regStatus === "rejected";
+
+              // Events have been stored with the banner under three different
+              // keys and the date under four, depending on when they were
+              // created. Fall back through all of them so older records and
+              // records written by the admin form both render.
+              const banner = ev.image || (ev as any).coverImage || (ev as any).imageUrl;
+              const hasImage = Boolean(banner);
+              const when =
+                ev.date || (ev as any).eventDate || (ev as any).startDate || "";
+
+              const eventTimestamp = when ? new Date(when).getTime() : NaN;
               const isPast = !isNaN(eventTimestamp) && eventTimestamp <= now;
-              const formattedDate = formatLongDate(ev.date);
+              const formattedDate = formatLongDate(when);
 
               return (
                 <article
                   key={eventId}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-emerald-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-0.5"
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-emerald-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-0.5"
                 >
                   {/* Event Media */}
                   <div className="relative h-48 sm:h-52 overflow-hidden">
                     {hasImage ? (
                       <img
-                        src={ev.image}
+                        src={banner}
                         alt={ev.title || "Event banner"}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className={`w-full h-full grid place-items-center bg-gradient-to-br ${theme.from} ${theme.to}`}>
+                      <div className={`w-full h-full grid place-items-center bg-linear-to-br ${theme.from} ${theme.to}`}>
                         <Calendar className="w-16 h-16 opacity-30 text-white" aria-hidden="true" />
                       </div>
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#03070E] via-[#03070E]/40 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#03070E] via-[#03070E]/40 to-transparent" />
 
                     {/* Type Tag */}
                     <div className="absolute top-3 left-3">
@@ -171,10 +194,20 @@ export default function MemberEventsView({
 
                     {/* Status Tag */}
                     <div className="absolute top-3 right-3">
-                      {isRegistered ? (
+                      {isPendingReview ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500/20 border border-amber-500/40 text-amber-300 backdrop-blur-md">
+                          <Hourglass className="w-3 h-3" />
+                          Pending
+                        </span>
+                      ) : isRejected ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-500/20 border border-rose-500/40 text-rose-300 backdrop-blur-md">
+                          <XCircle className="w-3 h-3" />
+                          Rejected
+                        </span>
+                      ) : isApproved ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 backdrop-blur-md">
                           <CheckCircle2 className="w-3 h-3" />
-                          Registered
+                          Approved
                         </span>
                       ) : isPast ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-500/15 border border-rose-500/30 text-rose-300 backdrop-blur-md">
@@ -234,23 +267,38 @@ export default function MemberEventsView({
                   <div className="px-5 pb-5">
                     <button
                       type="button"
-                      onClick={() => go("my-events")}
-                      className={`w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-mono font-bold uppercase tracking-widest transition-all ${
+                      onClick={() =>
+                        isRegistered
+                          ? go("my-events")
+                          : navigate(`/dashboard/events/${eventId}/register`)
+                      }
+                      disabled={!isRegistered && isPast}
+                      className={`w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-mono font-bold uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                         isRegistered
                           ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
-                          : "bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 hover:text-emerald-300"
+                          : "bg-emerald-500/15 border border-emerald-500/35 text-emerald-200 hover:bg-emerald-500/25 hover:border-emerald-400/50"
                       }`}
                     >
                       <span className="flex items-center gap-2">
-                        {isRegistered ? (
+                        {isPendingReview ? (
+                          <>
+                            <Hourglass className="w-3.5 h-3.5" />
+                            Awaiting Approval
+                          </>
+                        ) : isRegistered ? (
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             View Registration
                           </>
+                        ) : isPast ? (
+                          <>
+                            <Radio className="w-3.5 h-3.5" />
+                            Registration Closed
+                          </>
                         ) : (
                           <>
                             <Ticket className="w-3.5 h-3.5" />
-                            Open Details
+                            Register Now
                           </>
                         )}
                       </span>
@@ -287,7 +335,7 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, hint, accent }: StatCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-transparent p-4">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-white/[0.03] to-transparent p-4">
       {icon}
       <div className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{label}</div>
       <div className={`text-2xl font-display font-extrabold mt-1 ${accent}`}>{value}</div>

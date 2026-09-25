@@ -127,7 +127,19 @@ export default function ConfirmActionDialog({
 
   const handleConfirm = async () => {
     if (isButtonDisabled) return;
-    await onConfirm();
+    try {
+      await Promise.resolve(onConfirm());
+    } catch {
+      /* swallow — caller is responsible for surfacing errors via toast */
+    }
+  };
+
+  // Stop click-propagation from the dialog content so unrelated
+  // Radix `onInteractOutside` handlers higher up the tree (e.g.
+  // Barba/GSAP portals or the admin layout's hot zones) can't
+  // dismiss the dialog mid-confirm.
+  const stopBubble = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -137,10 +149,15 @@ export default function ConfirmActionDialog({
         if (!loading) onOpenChange(val);
       }}
     >
-      <DialogContent className="relative max-w-md overflow-hidden rounded-2xl border border-white/10 bg-card/95 p-6 backdrop-blur-2xl shadow-2xl">
-        
+      <DialogContent
+        className="max-w-md overflow-hidden rounded-2xl border border-border bg-card/95 p-6 backdrop-blur-2xl shadow-2xl"
+        onClick={stopBubble}
+        onPointerDown={stopBubble}
+        onMouseDown={stopBubble}
+      >
+
         {/* Top Ambient Glow */}
-        <div className={`absolute -top-12 left-0 right-0 h-32 bg-gradient-to-b ${config.glow} pointer-events-none`} />
+        <div className={`absolute -top-12 left-0 right-0 h-32 bg-linear-to-b ${config.glow} pointer-events-none`} />
 
         {/* Dialog Header */}
         <DialogHeader>
@@ -216,26 +233,31 @@ export default function ConfirmActionDialog({
           </div>
         )}
 
-        {/* Action Footer Buttons */}
-        <DialogFooter className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        {/* Action Footer Buttons — centered stack.
+            Mobile (column): destructive Confirm sits ABOVE Cancel
+            (flex-col keeps source order; the destruct button is
+            visually prominent and easiest to reach by thumb).
+            Desktop (row): both buttons are centered side-by-side
+            with equal widths. */}
+        <DialogFooter className="mt-6 flex flex-col sm:flex-row sm:justify-center sm:items-center gap-2">
+          <Button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isButtonDisabled}
+            className={`order-1 sm:order-2 w-full sm:w-auto sm:min-w-[140px] rounded-xl gap-2 text-xs sm:text-sm h-10 transition-all ${config.btnClass}`}
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            <span>{loading ? "Processing..." : confirmLabel}</span>
+          </Button>
+
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={loading}
-            className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 hover:text-foreground text-xs sm:text-sm h-10"
+            className="order-2 sm:order-1 w-full sm:w-auto sm:min-w-[140px] rounded-xl border-white/10 bg-white/5 hover:bg-white/10 hover:text-foreground text-xs sm:text-sm h-10"
           >
             {cancelLabel}
-          </Button>
-
-          <Button
-            type="button"
-            onClick={handleConfirm}
-            disabled={isButtonDisabled}
-            className={`rounded-xl gap-2 text-xs sm:text-sm h-10 transition-all ${config.btnClass}`}
-          >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            <span>{loading ? "Processing..." : confirmLabel}</span>
           </Button>
         </DialogFooter>
 

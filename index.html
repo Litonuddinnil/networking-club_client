@@ -1,20 +1,56 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>JSTU Networking Club</title>
-    
-    <!-- Favicon Icon -->
-    <link rel="icon"  href="/src/asset/logo_copy_white.PNG" /> 
-    <!-- অথবা পিএনজি বা আইসিও ফাইলের জন্য: -->
-    <!-- <link rel="icon" type="image/png" href="/favicon.png" /> -->
+    <meta
+      name="description"
+      content="JSTU Networking Club — member portal for events, announcements, workshops and the networking lab."
+    />
+    <meta name="theme-color" content="#05110c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3faf5" media="(prefers-color-scheme: light)" />
 
+    <!-- Favicon -->
+    <link rel="icon" href="/src/asset/logo_copy_white.PNG" />
+
+    <!--
+      Apply the stored theme before first paint. Without this the page
+      renders in the default dark theme for a frame and then flips,
+      which reads as a flash on every load. Kept inline and tiny on
+      purpose — it must run before the stylesheet paints.
+    -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("netclub-theme");
+          var theme =
+            saved === "light" || saved === "dark"
+              ? saved
+              : window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
+
+    <!--
+      Fonts: display = Sora, body = Plus Jakarta Sans, mono = JetBrains Mono.
+      Loaded here rather than via @import in CSS so the connection opens and
+      the files start downloading while the stylesheet is still parsing.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>
-
-    <!-- Correct -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

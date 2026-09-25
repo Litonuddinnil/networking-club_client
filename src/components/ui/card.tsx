@@ -1,16 +1,23 @@
 import * as React from "react";
+
 import { cn } from "@/lib/utils";
 
+/**
+ * Card — sectioned surface for admin grids, modals and panels.
+ * The default variant renders on the card-token (a slightly lifted
+ * shade over the page background), so consumers don't have to
+ * repeat `bg-card text-card-foreground border border-white/10`
+ * everywhere.
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { glow?: boolean; hoverable?: boolean }
->(({ className, glow = false, hoverable = false, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "relative rounded-2xl border border-white/10 bg-card/60 text-card-foreground shadow-lg backdrop-blur-xl transition-all duration-300",
-      glow && "shadow-2xl shadow-primary/10 border-primary/30",
-      hoverable && "hover:-translate-y-1 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 cursor-pointer",
+      "rounded-2xl border border-white/10 bg-card text-card-foreground shadow-sm",
+      "backdrop-blur-sm",
       className
     )}
     {...props}
@@ -24,20 +31,20 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-5 sm:p-6", className)}
+    className={cn("flex flex-col gap-1.5 p-5 sm:p-6", className)}
     {...props}
   />
 ));
 CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<
-  HTMLHeadingElement,
-  React.HTMLAttributes<HTMLHeadingElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <h3
-    ref={ref}
+    ref={ref as React.Ref<HTMLHeadingElement>}
     className={cn(
-      "text-lg sm:text-xl font-bold leading-tight font-display text-foreground tracking-tight",
+      "font-display text-lg font-semibold tracking-tight leading-tight",
       className
     )}
     {...props}
@@ -51,7 +58,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-xs sm:text-sm text-muted-foreground/90 leading-relaxed", className)}
+    className={cn("text-sm text-muted-foreground leading-relaxed", className)}
     {...props}
   />
 ));
@@ -61,7 +68,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-5 sm:p-6 pt-0 sm:pt-0", className)} {...props} />
+  <div ref={ref} className={cn("px-5 sm:px-6 pb-5 sm:pb-6", className)} {...props} />
 ));
 CardContent.displayName = "CardContent";
 
@@ -71,7 +78,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-5 sm:p-6 pt-0 sm:pt-0 border-t border-white/5 mt-2", className)}
+    className={cn("flex items-center gap-3 px-5 sm:px-6 py-4 border-t border-white/10", className)}
     {...props}
   />
 ));

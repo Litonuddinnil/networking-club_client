@@ -53,13 +53,13 @@ export default function LoginView({ onBack, onLoginSuccess }: LoginViewProps) {
   return (
     <div className="min-h-screen bg-[#020408] text-slate-300 flex items-center justify-center p-4 md:p-8 relative font-sans overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-emerald-500/15 rounded-full blur-[140px] animate-blob" />
+        <div className="absolute -top-32 -left-32 size-125 bg-emerald-500/15 rounded-full blur-[140px] animate-blob" />
         <div
-          className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-teal-500/15 rounded-full blur-[140px] animate-blob"
+          className="absolute -bottom-32 -right-32 size-125 bg-teal-500/15 rounded-full blur-[140px] animate-blob"
           style={{ animationDelay: "4s" }}
         />
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-lime-500/10 rounded-full blur-[140px] animate-blob"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-100 bg-lime-500/10 rounded-full blur-[140px] animate-blob"
           style={{ animationDelay: "8s" }}
         />
       </div>
@@ -77,13 +77,13 @@ export default function LoginView({ onBack, onLoginSuccess }: LoginViewProps) {
       </svg>
 
       <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-stretch">
-        <div className="hidden lg:flex relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-[#0a0a18] via-[#060614] to-[#0a0a18] p-10 flex-col justify-between noise-overlay">
+        <div className="hidden lg:flex relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-linear-to-br from-[#0a0a18] via-[#060614] to-[#0a0a18] p-10 flex-col justify-between noise-overlay">
           <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full border border-emerald-500/20 animate-shimmer" />
           <div className="absolute top-1/2 -right-32 w-96 h-96 rounded-full border border-teal-500/10 animate-shimmer" />
 
           <div className="relative z-10">
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-600/40">
+              <div className="relative w-12 h-12 rounded-2xl bg-linear-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-600/40">
                 <Network className="w-6 h-6 text-white" />
                 <span className="absolute inset-0 rounded-2xl border border-emerald-400 animate-ring" />
               </div>
@@ -174,7 +174,7 @@ export default function LoginView({ onBack, onLoginSuccess }: LoginViewProps) {
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl p-4 mb-6">
+          <div className="bg-linear-to-r from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl p-4 mb-6">
             <div className="font-bold text-emerald-400 flex items-center text-xs gap-1.5 mb-2">
               <Shield className="w-3.5 h-3.5" />
               Test credentials
@@ -268,7 +268,7 @@ export default function LoginView({ onBack, onLoginSuccess }: LoginViewProps) {
                   </>
                 )}
               </span>
-              <span className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="absolute inset-0 bg-linear-to-r from-emerald-500 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </form>
 

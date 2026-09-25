@@ -151,7 +151,7 @@ export default function StatPill({
       )}
     >
       {/* Top Ambient Glow */}
-      <div className={cn("absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl pointer-events-none opacity-50", theme.glow)} />
+      <div className={cn("absolute -top-10 -right-10 h-32 w-32 rounded-full bg-linear-to-br blur-2xl pointer-events-none opacity-50", theme.glow)} />
 
       {/* Top Row: Label & Icon */}
       <div>
@@ -240,7 +240,7 @@ export default function StatPill({
         )}
 
         {hint && (
-          <span className="text-muted-foreground/80 truncate max-w-[130px]" title={hint}>
+          <span className="text-muted-foreground/80 truncate max-w-32" title={hint}>
             {hint}
           </span>
         )}

@@ -57,7 +57,7 @@ export default function MemberGalleryView({
                           loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2.5">
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2.5">
                           <span className="p-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white/80 border border-white/10">
                             <Maximize2 className="w-3.5 h-3.5" />
                           </span>

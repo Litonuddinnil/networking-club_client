@@ -117,12 +117,12 @@ export default function EntityViewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "relative flex flex-col p-0 overflow-hidden rounded-2xl border border-white/15 bg-card/95 backdrop-blur-2xl shadow-2xl max-h-[90vh]",
+          "flex flex-col p-0 overflow-hidden rounded-2xl border border-border bg-card/95 backdrop-blur-2xl shadow-2xl max-h-[90dvh]",
           SIZE_CLASSES[size] || SIZE_CLASSES.lg
         )}
       >
         {/* Top Gradient Stripe */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-sky-400 via-teal-400 to-emerald-400" />
+        <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-sky-400 via-teal-400 to-emerald-400" />
 
         {/* Sticky Header */}
         <div className="relative px-6 pt-6 pb-4 border-b border-white/10 bg-card/80 backdrop-blur-md shrink-0">
@@ -250,7 +250,7 @@ export default function EntityViewDialog({
                       <div
                         key={i}
                         className={cn(
-                          "group relative rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] p-3.5 transition-colors",
+                          "group relative rounded-xl border border-white/10 bg-white/2 hover:bg-white/4 p-3.5 transition-colors",
                           f.fullWidth && "sm:col-span-2"
                         )}
                       >
@@ -279,7 +279,7 @@ export default function EntityViewDialog({
                         </div>
 
                         {/* Field Value Display */}
-                        <div className="mt-1.5 text-xs sm:text-sm font-medium text-foreground break-words">
+                        <div className="mt-1.5 text-xs sm:text-sm font-medium text-foreground wrap-break-word">
                           {f.isLink && f.href ? (
                             <a
                               href={f.href}

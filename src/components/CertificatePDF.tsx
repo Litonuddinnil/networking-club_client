@@ -26,7 +26,7 @@ export default function CertificatePDF({ studentName, courseName, completionDate
         <div className="flex justify-between items-center relative z-10 border-b border-white/10 pb-4">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-6 h-6 text-amber-400" />
-            <span className="font-display font-extrabold text-white text-xs tracking-wider uppercase font-mono">JSTU Networking Club</span>
+            <span className="font-display font-extrabold text-white text-xs tracking-wider uppercase">JSTU Networking Club</span>
           </div>
           <span className="text-[10px] text-slate-500 font-mono">CERT-ID: JNC-2026-VERIFIED</span>
         </div>

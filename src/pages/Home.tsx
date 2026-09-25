@@ -42,7 +42,7 @@ export default function Home() {
         onClick={() => setIsAiOpen((v) => !v)}
         aria-label={isAiOpen ? "Close AI assistant" : "Open AI assistant"}
         aria-expanded={isAiOpen}
-        className="fixed bottom-6 right-6 z-50 group flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 transition-all border border-white/20"
+        className="fixed bottom-6 right-6 z-50 group flex items-center gap-2 px-4 py-3 rounded-full bg-linear-to-r from-cyan-500 to-emerald-500 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 transition-all border border-white/20"
       >
         <span className="relative flex items-center justify-center">
           <span className="absolute inset-0 rounded-full bg-white/40 animate-ping" />

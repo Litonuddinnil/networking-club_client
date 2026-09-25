@@ -129,13 +129,13 @@ export default function EntityFormDialog({
           }
         }}
         className={cn(
-          "relative flex flex-col p-0 overflow-hidden rounded-2xl border border-white/15 bg-card/95 backdrop-blur-2xl shadow-2xl max-h-[90vh]",
+          "flex flex-col p-0 overflow-hidden rounded-2xl border border-border bg-card/95 backdrop-blur-2xl shadow-2xl max-h-[90dvh]",
           SIZE_CLASSES[size],
           className
         )}
       >
         {/* Top Accent Gradient Line */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-teal-400 via-primary to-emerald-400" />
+        <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-teal-400 via-primary to-emerald-400" />
 
         {/* Sticky Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/10 bg-card/80 backdrop-blur-md shrink-0">
@@ -235,7 +235,7 @@ export default function EntityFormDialog({
               <Button
                 type="submit"
                 disabled={loading}
-                className="rounded-xl font-semibold shadow-lg hover:shadow-primary/20 text-xs sm:text-sm h-10 gap-2 transition-all min-w-[100px]"
+                className="rounded-xl font-semibold shadow-lg hover:shadow-primary/20 text-xs sm:text-sm h-10 gap-2 transition-all min-w-25"
               >
                 {loading ? (
                   <>

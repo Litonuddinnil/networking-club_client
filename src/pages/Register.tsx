@@ -15,7 +15,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
-import Swal from "sweetalert2";
+import { swalSuccess, swalError } from "@/lib/swal";
 import { uploadImageToImgbb, ImageUploadError } from "../lib/uploadImage";
 
 type RegisterFormInputs = {
@@ -81,30 +81,18 @@ export default function Register() {
     try {
       const url = await uploadImageToImgbb(photoFile);
       setPhotoUrl(url);
-      await Swal.fire({
-        icon: "success",
-        title: "Photo uploaded",
-        text: "Profile image is ready. Submit the form to complete registration.",
-        background: "#03070E",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        timer: 1600,
-        showConfirmButton: false,
-      });
+      await swalSuccess(
+        "Photo uploaded",
+        "Profile image is ready. Submit the form to complete registration.",
+        { timer: 1600 }
+      );
     } catch (err: any) {
       const msg =
         err instanceof ImageUploadError
           ? err.message
           : err?.message || "Could not upload image. Try again.";
       setLocalError(msg);
-      Swal.fire({
-        icon: "error",
-        title: "Image upload failed",
-        text: msg,
-        background: "#03070E",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-      });
+      swalError(msg, "Image upload failed");
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -138,14 +126,10 @@ export default function Register() {
         created?.memberId ?? "JNC-pending";
 
       // Success Alert
-      await Swal.fire({
-        icon: "success",
-        title: "Registration Successful!",
-        text: `Your Member ID is ${generatedMemberId}. Waiting for admin approval.`,
-        background: "#03070E",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-      });
+      await swalSuccess(
+        "Registration Successful!",
+        `Your Member ID is ${generatedMemberId}. Waiting for admin approval.`
+      );
 
       navigate("/dashboard");
     } catch (err: any) {
@@ -154,14 +138,7 @@ export default function Register() {
           "Registry conflict: This email might already be assigned to a node."
       );
 
-      Swal.fire({
-        icon: "error",
-        title: "Registration Failed",
-        text: err.message || "Something went wrong!",
-        background: "#03070E",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-      });
+      swalError(err.message || "Something went wrong!", "Registration Failed");
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +190,7 @@ export default function Register() {
 
           <label
             htmlFor="profile-photo-input"
-            className="group relative block w-full aspect-[16/9] sm:aspect-[5/2] rounded-2xl overflow-hidden border border-dashed border-white/15 hover:border-emerald-500/50 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10"
+            className="group relative block w-full aspect-[16/9] sm:aspect-[5/2] rounded-2xl overflow-hidden border border-dashed border-white/15 hover:border-emerald-500/50 bg-linear-to-br from-[#03070E] via-[#04091a] to-[#03070E] cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10"
           >
             {photoPreview ? (
               <>
@@ -222,7 +199,7 @@ export default function Register() {
                   alt="Profile cover preview"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#03070E] via-[#03070E]/30 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-[#03070E] via-[#03070E]/30 to-transparent" />
               </>
             ) : (
               <>

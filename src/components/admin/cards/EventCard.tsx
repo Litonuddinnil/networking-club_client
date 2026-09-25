@@ -1,229 +1,234 @@
-﻿ import React from "react";
-import { 
-  Calendar, 
-  Clock, 
-  Eye, 
-  MapPin, 
-  Pencil, 
-  Trash2, 
-  Users, 
-  ArrowUpRight 
+﻿import React, { useState } from "react";
+import {
+  CalendarDays,
+  Clock,
+  Eye,
+  MapPin,
+  Pencil,
+  Trash2,
+  Users as UsersIcon,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface EventCardProps {
-  event: {
-    _id?: string;
-    id?: string;
-    title?: string;
-    name?: string;
-    description?: string;
-    type?: string;
-    category?: string;
-    date?: string;
-    eventDate?: string;
-    time?: string;
-    venue?: string;
-    location?: string;
-    imageUrl?: string;
-    coverImage?: string;
-    status?: string;
-    registeredCount?: number;
-    capacity?: number;
-    createdByName?: string;
-    createdBy?: string;
-  };
+  event: any;
   onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-const TYPE_VARIANTS: Record<string, "default" | "secondary" | "accent" | "warning" | "destructive"> = {
-  Workshop: "accent",
-  Seminar: "secondary",
-  Contest: "warning",
-  Networking: "default",
-  Hackathon: "destructive",
-  Meetup: "accent",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  upcoming: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  ongoing: "bg-sky-500/10 text-sky-400 border-sky-500/20 animate-pulse",
-  completed: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-  cancelled: "bg-rose-500/10 text-rose-400 border-rose-500/20",
-};
-
-function parseDate(value?: string) {
-  if (!value) return null;
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  return {
-    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-    day: d.toLocaleDateString("en-US", { day: "2-digit" }),
-    full: d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-  };
+function formatLong(input?: string) {
+  if (!input) return "—";
+  const d = new Date(input);
+  if (isNaN(d.getTime())) return String(input);
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-export default function EventCard({ event, onView, onEdit, onDelete }: EventCardProps) {
-  const cover = event.coverImage || event.imageUrl;
-  const type = event.type || event.category || "Event";
-  const name = event.title || event.name || "Untitled event";
-  const preview = (event.description || "").slice(0, 150);
-  
-  const dateObj = parseDate(event.eventDate || event.date);
-  const statusKey = String(event.status || "upcoming").toLowerCase();
-  
-  const registered = event.registeredCount ?? 0;
-  const capacity = event.capacity;
-  const percentage = capacity ? Math.min(Math.round((registered / capacity) * 100), 100) : null;
+function dayOfMonth(input?: string) {
+  if (!input) return "—";
+  const d = new Date(input);
+  if (isNaN(d.getTime())) return "—";
+  return d.getDate().toString().padStart(2, "0");
+}
+
+function monthShort(input?: string) {
+  if (!input) return "—";
+  const d = new Date(input);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { month: "short" });
+}
+
+const STATUS_VARIANT: Record<
+  string,
+  React.ComponentProps<typeof Badge>["variant"]
+> = {
+  upcoming: "info",
+  ongoing: "success",
+  past: "muted",
+  cancelled: "destructive",
+  live: "accent",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  upcoming: "Upcoming",
+  ongoing: "Ongoing",
+  past: "Completed",
+  cancelled: "Cancelled",
+  live: "Live",
+};
+
+const TYPE_VARIANT: Record<
+  string,
+  React.ComponentProps<typeof Badge>["variant"]
+> = {
+  workshop: "info",
+  seminar: "default",
+  contest: "accent",
+  meetup: "secondary",
+  networking: "default",
+};
+
+export default function EventCard({
+  event,
+  onView,
+  onEdit,
+  onDelete,
+}: EventCardProps) {
+  const status = (event.status || "upcoming").toLowerCase();
+  const type = (event.type || "").toLowerCase();
+
+  const [imgFailed, setImgFailed] = useState(false);
+  const hasImage = !!event.coverImage && !imgFailed;
+
+  // Events have been stored with the schedule under startDate, eventDate or
+  // date depending on when and how they were created. Resolve once so the
+  // date plate and the meta strip never disagree — or come out blank.
+  const eventWhen =
+    (event as any).startDate ||
+    (event as any).eventDate ||
+    (event as any).date ||
+    "";
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-card/60 backdrop-blur-xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-primary/30">
-      
-      {/* Top Media / Hero Section (Bigger & Richer) */}
-      <div className="relative h-56 w-full overflow-hidden bg-muted">
-        {cover ? (
+    <article className="glass-card entity-card flex flex-col overflow-hidden group">
+      {/* Media header */}
+      <div
+        className={cn(
+          "image-well",
+          !hasImage && "image-well-shimmer aspect-[16/10]"
+        )}
+      >
+        {hasImage ? (
           <img
-            src={cover}
-            alt={name}
+            src={event.coverImage}
+            alt={event.title || "Event cover"}
+            onError={() => setImgFailed(true)}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-500/20 via-emerald-500/10 to-card text-teal-400/70">
-            <Calendar className="h-16 w-16 stroke-1 opacity-60" />
+          <div className="absolute inset-0 grid place-items-center">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur-md">
+              <CalendarIcon className="w-6 h-6 text-emerald-400" />
+              <div className="text-left">
+                <p className="font-display text-lg font-extrabold leading-none text-foreground">
+                  {event.title?.slice(0, 24) || "Event"}
+                </p>
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  No cover uploaded
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Gradient Overlay for Readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
-
-        {/* Floating Date Badge (Top Left - Modern Event Style) */}
-        {dateObj && (
-          <div className="absolute top-3.5 left-3.5 flex flex-col items-center justify-center rounded-xl bg-black/60 backdrop-blur-md border border-white/15 px-2.5 py-1.5 text-white shadow-md">
-            <span className="text-[10px] font-bold tracking-wider text-teal-400">{dateObj.month}</span>
-            <span className="text-lg font-black leading-none">{dateObj.day}</span>
-          </div>
-        )}
-
-        {/* Tags & Status (Top Right) */}
-        <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5">
-          <Badge
-            variant={TYPE_VARIANTS[type] || "secondary"}
-            className="border border-white/15 bg-black/50 text-xs backdrop-blur-md font-medium"
-          >
-            {type}
+        {/* Badge cluster */}
+        <div className="badge-cluster">
+          <Badge variant={STATUS_VARIANT[status] || "info"} size="sm" className="shadow-md">
+            {STATUS_LABEL[status] || status}
           </Badge>
-          {event.status && (
-            <span
-              className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md ${
-                STATUS_COLORS[statusKey] || "bg-card/70 text-foreground"
-              }`}
-            >
-              {event.status}
+          {type && TYPE_VARIANT[type] && (
+            <Badge variant={TYPE_VARIANT[type]} size="sm" className="shadow-md">
+              {event.type}
+            </Badge>
+          )}
+        </div>
+
+        {/* Date plate */}
+        <div className="absolute top-3 right-3 rounded-xl border border-white/15 bg-black/65 px-2.5 py-1.5 text-center leading-none backdrop-blur-md shadow-md">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-emerald-400">
+            {monthShort(eventWhen)}
+          </p>
+          <p className="font-display text-lg font-extrabold text-foreground">
+            {dayOfMonth(eventWhen)}
+          </p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-col flex-1 gap-2.5 p-4 sm:p-5">
+        {/* Title */}
+        <h3 className="font-display text-base sm:text-lg font-bold leading-snug text-foreground line-clamp-2 group-hover:text-emerald-300 transition-colors">
+          {event.title || "Untitled Event"}
+        </h3>
+
+        {(event.location || event.description) && (
+          <p className="text-xs text-muted-foreground/90 leading-relaxed line-clamp-2">
+            {event.description || event.location}
+          </p>
+        )}
+
+        {/* Meta strip */}
+        <div className="meta-strip border-t border-white/5 pt-3 mt-1">
+          <span title="Date">
+            <CalendarDays className="w-3 h-3 text-emerald-400" />
+            {formatLong(eventWhen)}
+          </span>
+          {event.time && (
+            <span title="Time">
+              <Clock className="w-3 h-3 text-teal-400" />
+              {event.time}
+            </span>
+          )}
+          {event.location && (
+            <span title="Location" className="truncate max-w-[160px]">
+              <MapPin className="w-3 h-3 text-lime-400" />
+              {event.location}
+            </span>
+          )}
+          {typeof event.registrations === "number" && (
+            <span title="Registrations">
+              <UsersIcon className="w-3 h-3 text-amber-400" />
+              {event.registrations} registered
             </span>
           )}
         </div>
 
-        {/* Time & Location on Image Bottom */}
-        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs text-white/90">
-          <div className="flex items-center gap-1.5 font-medium">
-            <Clock className="h-3.5 w-3.5 text-teal-400" />
-            <span>{event.time || "Time TBA"}</span>
-          </div>
-          {(event.venue || event.location) && (
-            <div className="flex max-w-[55%] items-center gap-1.5 font-medium">
-              <MapPin className="h-3.5 w-3.5 text-rose-400 shrink-0" />
-              <span className="truncate">{event.venue || event.location}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Body Content */}
-      <div className="flex flex-1 flex-col justify-between p-5 md:p-6 space-y-4">
-        <div>
-          <h3 
-            onClick={onView}
-            className="cursor-pointer font-display text-xl font-bold leading-tight text-foreground transition-colors duration-200 hover:text-primary line-clamp-2"
-          >
-            {name}
-          </h3>
-
-          {preview && (
-            <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground/90 line-clamp-2">
-              {preview}
-            </p>
-          )}
-        </div>
-
-        {/* Registered / Capacity Progress Section */}
-        {capacity ? (
-          <div className="space-y-1.5 pt-1">
-            <div className="flex justify-between text-xs font-medium text-muted-foreground">
-              <span className="flex items-center gap-1.5 text-foreground/80">
-                <Users className="h-3.5 w-3.5 text-emerald-400" />
-                {registered} Registered
-              </span>
-              <span>{capacity - registered > 0 ? `${capacity - registered} seats left` : "Full"}</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-teal-400 to-emerald-400 transition-all duration-500"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </div>
-        ) : typeof event.registeredCount === "number" ? (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Users className="h-3.5 w-3.5 text-emerald-400" />
-            <span>{registered} registered</span>
-          </div>
-        ) : null}
-
-        {/* Card Footer Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/10">
-          {/* Primary View Action */}
-          {onView ? (
-            <button
-              type="button"
-              onClick={onView}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-all hover:gap-2 hover:opacity-80"
-            >
-              View Details
-              <ArrowUpRight className="h-4 w-4" />
-            </button>
-          ) : <div />}
-
-          {/* Quick Edit/Delete Actions */}
-          <div className="flex items-center gap-1.5">
+        {/* Hover actions */}
+        <div className="md:!translate-y-full md:group-hover:!translate-y-0 md:pointer-events-none md:group-hover:pointer-events-auto md:!p-2 md:!bg-transparent md:!backdrop-blur-0 hover-actions !translate-y-0">
+          <div className="flex w-full items-center justify-end gap-1.5 pt-2 border-t border-white/5 md:border-0 md:pt-0">
+            {onView && (
+              <button
+                type="button"
+                onClick={onView}
+                className="icon-action text-sky-300"
+                title="View event"
+                aria-label="View event"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
             {onEdit && (
               <button
                 type="button"
                 onClick={onEdit}
-                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-amber-500/15 hover:text-amber-400"
+                className="icon-action text-amber-300"
                 title="Edit event"
                 aria-label="Edit event"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="w-4 h-4" />
               </button>
             )}
             {onDelete && (
               <button
                 type="button"
                 onClick={onDelete}
-                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-rose-500/15 hover:text-rose-400"
+                className="icon-action is-danger"
                 title="Delete event"
                 aria-label="Delete event"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="w-4 h-4" />
               </button>
             )}
           </div>
         </div>
-
       </div>
-    </div>
+    </article>
   );
 }

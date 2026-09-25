@@ -189,7 +189,7 @@ export default function DashboardView({
 
         {/* Left Side: AD banner card */}
         <div className="p-4 border-t border-white/5">
-          <div className="bg-gradient-to-tr from-slate-900 to-[#0e172a] border border-white/10 rounded-2xl p-4 space-y-3 relative overflow-hidden">
+          <div className="bg-linear-to-tr from-slate-900 to-[#0e172a] border border-white/10 rounded-2xl p-4 space-y-3 relative overflow-hidden">
             <div className="absolute -right-2 -bottom-2 text-emerald-500/5">
               <Network className="w-20 h-20" />
             </div>
@@ -247,7 +247,7 @@ export default function DashboardView({
               <Sparkles className="w-5 h-5 text-emerald-400" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
             </button>
-            <div className="h-4 w-[1px] bg-white/5" />
+            <div className="h-4 w-px bg-white/5" />
             <button 
               onClick={() => onNavigate("home")} 
               className="text-xs font-bold text-slate-400 hover:text-white flex items-center space-x-1.5"
@@ -425,7 +425,7 @@ export default function DashboardView({
                     <span className="text-[10px] text-slate-500">Recent posts</span>
                   </div>
 
-                  <div className="space-y-3.5 max-h-[180px] overflow-y-auto custom-scrollbar">
+                  <div className="space-y-3.5 max-h-45 overflow-y-auto custom-scrollbar">
                     {notices.map((n) => (
                       <div key={n.id} className="flex items-start space-x-3 text-xs border-b border-white/5 last:border-none pb-2.5">
                         <span className="w-2 h-2 rounded-full bg-orange-500 mt-1 shrink-0" />
@@ -482,9 +482,9 @@ export default function DashboardView({
 
       {/* Floating AI Diagnostics Assistant component */}
       {aiChatOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-[#060b14]/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-md">
+        <div className="fixed bottom-6 right-6 z-50 w-96 h-125 bg-[#060b14]/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-md">
           {/* Header */}
-          <div className="bg-gradient-to-tr from-orange-600 to-blue-600 p-4 flex items-center justify-between">
+          <div className="bg-linear-to-tr from-orange-600 to-blue-600 p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3 text-white">
               <div className="w-8 h-8 rounded-lg bg-black/40 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-orange-400" />
@@ -673,7 +673,7 @@ export default function DashboardView({
                 <CheckCircle className="w-8 h-8 text-emerald-400" />
               </div>
 
-              <div className="space-y-2 text-xs max-h-[220px] overflow-y-auto custom-scrollbar">
+              <div className="space-y-2 text-xs max-h-55 overflow-y-auto custom-scrollbar">
                 <div className="flex flex-col items-center justify-center text-center space-y-2 py-6 border border-dashed border-white/10 rounded-xl">
                   <CheckCircle className="w-7 h-7 text-slate-600" />
                   <p className="text-slate-400 font-semibold">No attendance logs found</p>

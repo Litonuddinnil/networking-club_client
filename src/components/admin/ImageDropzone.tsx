@@ -51,12 +51,16 @@ interface ImageDropzoneProps {
   disabled?: boolean;
 }
 
+// Each aspect ratio includes a max-height cap so the preview (and the
+// empty dropzone) cannot dominate a form body. This keeps the page
+// scrollable and prevents the image from overlapping surrounding
+// fields like the description textarea.
 const ASPECT_CLASSES: Record<DropzoneAspectRatio, string> = {
-  "16/9": "aspect-[16/9]",
-  "16/10": "aspect-[16/10]",
-  "4/3": "aspect-[4/3]",
-  "1/1": "aspect-square max-w-[240px] mx-auto",
-  auto: "min-h-[180px]",
+  "16/9": "aspect-[16/9] max-h-56 sm:max-h-64",
+  "16/10": "aspect-[16/10] max-h-60 sm:max-h-72",
+  "4/3": "aspect-[4/3] max-h-64 sm:max-h-80",
+  "1/1": "aspect-square max-w-[240px] mx-auto max-h-60",
+  auto: "min-h-[160px] max-h-72",
 };
 
 export default function ImageDropzone({
@@ -203,7 +207,7 @@ export default function ImageDropzone({
             />
 
             {/* Dark Vignette Overlay on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
             {/* Action Bar Floating Top Right */}
             <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-all">
@@ -305,7 +309,7 @@ export default function ImageDropzone({
             ASPECT_CLASSES[aspectRatio],
             dragOver
               ? "border-teal-400 bg-teal-500/10 scale-[0.99] shadow-lg shadow-teal-500/10"
-              : "border-white/15 bg-white/[0.02] hover:border-teal-400/50 hover:bg-white/[0.04]",
+              : "border-white/15 bg-white/2 hover:border-teal-400/50 hover:bg-white/4",
             disabled && "opacity-50 cursor-not-allowed pointer-events-none"
           )}
         >
@@ -331,7 +335,7 @@ export default function ImageDropzone({
                 <div>
                   <p className="text-xs font-bold text-foreground">Uploading to ImgBB...</p>
                   {fileName && (
-                    <p className="text-[10px] font-mono text-muted-foreground truncate max-w-[200px]">
+                    <p className="text-[10px] font-mono text-muted-foreground truncate max-w-50">
                       {fileName}
                     </p>
                   )}

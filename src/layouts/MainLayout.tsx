@@ -211,7 +211,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 selection:text-primary-foreground overflow-x-hidden">
+    <div className="relative min-h-svh bg-background text-foreground font-sans selection:bg-primary/30 selection:text-primary-foreground flex flex-col overflow-x-clip">
       {/* 3D Network Layer */}
       <ThreeJSErrorBoundary fallback={null}>
         <NetworkDevicesField3D />
@@ -360,8 +360,8 @@ export default function MainLayout() {
       </motion.header>
 
       {/* MAIN */}
-      <main className="relative z-10 flex-1">
-        <div data-barba="page" data-barba-namespace="main" className="barba-page">
+      <main className="relative z-10 flex-1 min-h-0 flex flex-col w-full">
+        <div data-barba="page" data-barba-namespace="main" className="barba-page flex-1 flex flex-col w-full">
           <Outlet />
         </div>
       </main>
@@ -370,7 +370,7 @@ export default function MainLayout() {
       <motion.footer
         {...sectionView}
         variants={fadeUp}
-        className="relative z-10 border-t border-border mt-24"
+        className="relative z-10 border-t border-border mt-12 sm:mt-20 lg:mt-24 shrink-0"
       >
         <div className="aurora-bg">
           <div className="sh-container py-16 grid gap-10 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">

@@ -1,20 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Shield,
-  Search,
-} from "lucide-react";
-import Swal from "sweetalert2";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+// The per-entity field/icon config moved to components/admin/entityViewConfig,
+// so only the two icons this shell actually renders are imported here.
+import { Shield, Search } from "lucide-react";
+import { swalError, swalToast, swalSuccess } from "@/lib/swal";
 import { useNavigate } from "react-router-dom";
 import { useAxiosSecure } from "../../hooks/useAxiosSecure";
 import { extractApiError } from "@/lib/extractApiError";
 import { ViewMode } from "@/components/admin/AdminCrudToolbar";
 import SectionHeading from "@/components/admin/SectionHeading";
 import ConfirmActionDialog from "@/components/admin/ConfirmActionDialog";
-import EntityViewDialog, {
-  EntityField,
-  formatDetailDate,
-  StatusBadge,
-} from "@/components/admin/EntityViewDialog";
+import { EditorKind } from "@/components/admin/EntityFormModals";
+import {
+  createPath,
+  detailPath,
+  editPath,
+  recordId,
+  type EntityKind,
+} from "@/lib/entityRoutes";
 
 import DashboardTab from "./tabs/DashboardTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
@@ -63,28 +65,7 @@ interface AdminDashboardProps {
   onCancelRegistration?: (id: string) => void;
 }
 
-const swalTheme = {
-  background: "#03070E",
-  color: "#fff",
-  confirmButtonColor: "#10b981",
-} as const;
-
-function toastSuccess(title: string) {
-  Swal.fire({
-    title,
-    icon: "success",
-    toast: true,
-    position: "top-end",
-    showConfirmButton: false,
-    timer: 2500,
-    background: "#03070E",
-    color: "#fff",
-  });
-}
-
-function swalError(text: string) {
-  Swal.fire({ title: "Error!", text, icon: "error", ...swalTheme });
-}
+const toastSuccess = swalToast;
 
 export default function AdminDashboard(props: AdminDashboardProps) {
   const axiosSecure = useAxiosSecure();
@@ -109,7 +90,22 @@ export default function AdminDashboard(props: AdminDashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  const [viewing, setViewing] = useState<{ kind: string; record: any } | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Scroll the local content wrapper back to the top after destructive ops
+  // so the user sees the toast and the first remaining card.
+  const scrollContentToTop = () => {
+    try {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* noop */
+    }
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* noop */
+    }
+  };
 
   const [confirm, setConfirm] = useState<{
     open: boolean;
@@ -117,6 +113,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     description: string;
     confirmLabel: string;
     variant: "danger" | "primary";
+    loading: boolean;
     onConfirm: () => Promise<void> | void;
   }>({
     open: false,
@@ -124,8 +121,12 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     description: "",
     confirmLabel: "Confirm",
     variant: "danger",
+    loading: false,
     onConfirm: () => {},
   });
+  // Guard against double-clicks before React has flushed the
+  // `loading: true` state into <ConfirmActionDialog>.
+  const confirmInFlightRef = useRef(false);
 
   const [appSettings, setAppSettings] = useState({
     language: "en",
@@ -150,15 +151,12 @@ export default function AdminDashboard(props: AdminDashboardProps) {
 
   const handleSaveSettings = () => {
     localStorage.setItem("jstu_portal_config", JSON.stringify(appSettings));
-    Swal.fire({
-      title: appSettings.language === "bn" ? "কনফিগারেশন সেভ হয়েছে!" : "Settings Saved!",
-      text:
-        appSettings.language === "bn"
-          ? "পোর্টাল কনফিগারেশন সফলভাবে আপডেট করা হয়েছে।"
-          : "System configuration updated successfully.",
-      icon: "success",
-      ...swalTheme,
-    });
+    swalSuccess(
+      appSettings.language === "bn" ? "কনফিগারেশন সেভ হয়েছে!" : "Settings Saved!",
+      appSettings.language === "bn"
+        ? "পোর্টাল কনফিগারেশন সফলভাবে আপডেট করা হয়েছে।"
+        : "System configuration updated successfully."
+    );
   };
 
   useEffect(() => {
@@ -234,12 +232,14 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     variant?: "danger" | "primary";
     onConfirm: () => Promise<void> | void;
   }) => {
+    confirmInFlightRef.current = false;
     setConfirm({
       open: true,
       title: cfg.title,
       description: cfg.description,
       confirmLabel: cfg.confirmLabel,
       variant: cfg.variant || "danger",
+      loading: false,
       onConfirm: cfg.onConfirm,
     });
   };
@@ -335,6 +335,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           }
           setConfirm((c) => ({ ...c, open: false }));
           toastSuccess("Deleted");
+          // Surface the toast and bring the user back to the top of the list
+          // so the next record is visible right away.
+          scrollContentToTop();
         } catch (err: any) {
           swalError(extractApiError(err, "Delete failed."));
         }
@@ -481,24 +484,22 @@ export default function AdminDashboard(props: AdminDashboardProps) {
 
   const isBn = appSettings.language === "bn";
 
-  // form navigation: route to dedicated full-page form routes instead of opening modals
-  const ROUTE_PREFIX: Record<
-    "post" | "event" | "announcement" | "gallery",
-    string
-  > = {
-    post: "posts",
-    event: "events",
-    announcement: "announcements",
-    gallery: "gallery",
-  };
-  const goToCreate = (kind: "post" | "event" | "announcement" | "gallery") => {
-    navigate(`/dashboard/${ROUTE_PREFIX[kind]}/new`);
-  };
-  const openEdit = (kind: "post" | "event" | "announcement" | "gallery", record: any) => {
-    const id = record?._id || record?.id;
+  // View / create / edit are routes now, not modals, so each record has a
+  // shareable URL and the browser back button behaves as users expect.
+  const openCreate = (kind: EditorKind) => navigate(createPath(kind));
+
+  const openEdit = (kind: EditorKind, record: any) => {
+    const id = recordId(record);
     if (!id) return;
-    navigate(`/dashboard/${ROUTE_PREFIX[kind]}/${id}/edit`);
+    navigate(editPath(kind, id));
   };
+
+  const openDetail = (kind: EntityKind, record: any) => {
+    const id = recordId(record);
+    if (!id) return;
+    navigate(detailPath(kind, id));
+  };
+
   const refreshAdminData = () => {
     if (props.onRefreshData) {
       props.onRefreshData();
@@ -507,8 +508,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
     }
   };
 
+
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans flex-1 flex flex-col min-w-0">
+    <div className="min-h-0 bg-background text-foreground font-sans flex-1 flex flex-col min-w-0">
       <header className="h-16 bg-card/60 backdrop-blur border-b border-border px-4 sm:px-8 flex items-center justify-between gap-4 shrink-0">
         <h2 className="text-lg font-display font-extrabold text-foreground flex items-center gap-2 truncate">
           <Shield className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -533,7 +535,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
         </div>
       </header>
 
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8 admin-mesh">
+      <div ref={scrollRef} className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 space-y-8 admin-mesh">
         {(activeTab === "overview" || activeTab === "dashboard") && (
           <DashboardTab
             totalMembers={totalMembers}
@@ -569,7 +571,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onApprove={(id) => handleUpdateStatus(id, "active")}
             onToggleRole={handleToggleRole}
             onDelete={(id) => handleDelete("member", id, props.onDeleteMember)}
-            onView={(m) => setViewing({ kind: "member", record: m })}
+            onView={(m) => openDetail("member", m)}
           />
         )}
 
@@ -581,9 +583,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onSearchChange={setSearchTerm}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onCreate={() => goToCreate("post")}
+            onCreate={() => openCreate("post")}
             onDelete={(id) => handleDelete("post", id, props.onDeletePost)}
-            onView={(p) => setViewing({ kind: "post", record: p })}
+            onView={(p) => openDetail("post", p)}
             onEdit={(p) => openEdit("post", p)}
           />
         )}
@@ -596,9 +598,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onSearchChange={setSearchTerm}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onCreate={() => goToCreate("event")}
+            onCreate={() => openCreate("event")}
             onDelete={(id) => handleDelete("event", id, props.onDeleteEvent)}
-            onView={(e) => setViewing({ kind: "event", record: e })}
+            onView={(e) => openDetail("event", e)}
             onEdit={(e) => openEdit("event", e)}
           />
         )}
@@ -611,7 +613,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             onSearchChange={setSearchTerm}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onCreate={() => goToCreate("announcement")}
+            onCreate={() => openCreate("announcement")}
             onDelete={(id) =>
               handleDelete(
                 "announcement",
@@ -619,7 +621,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                 props.onDeleteAnnouncement || props.onDeleteNotice
               )
             }
-            onView={(a) => setViewing({ kind: "announcement", record: a })}
+            onView={(a) => openDetail("announcement", a)}
             onEdit={(a) => openEdit("announcement", a)}
           />
         )}
@@ -630,9 +632,9 @@ export default function AdminDashboard(props: AdminDashboardProps) {
             totalCount={gallery.length}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            onCreate={() => goToCreate("gallery")}
+            onCreate={() => openCreate("gallery")}
             onEdit={(item) => openEdit("gallery", item)}
-            onView={(item) => setViewing({ kind: "gallery", record: item })}
+            onView={(item) => openDetail("gallery", item)}
             onDelete={(id) => handleDelete("gallery", id, props.onDeleteGallery)}
           />
         )}
@@ -712,6 +714,52 @@ export default function AdminDashboard(props: AdminDashboardProps) {
                   .catch((err) => swalError(extractApiError(err, "Failed to cancel registration.")));
               }
             }}
+            onApprove={(id) =>
+              ask({
+                title: "Approve registration?",
+                description:
+                  "Confirm the details and payment are correct. The member's seat will be booked and their status turns to APPROVED.",
+                confirmLabel: "Yes, approve",
+                variant: "primary",
+                onConfirm: async () => {
+                  try {
+                    await axiosSecure.patch(`/api/event-registrations/${id}`, {
+                      status: "approved",
+                    });
+                    fetchAdminData();
+                    setConfirm((c) => ({ ...c, open: false }));
+                    toastSuccess("Registration approved");
+                  } catch (err: any) {
+                    swalError(
+                      extractApiError(err, "Failed to approve registration.")
+                    );
+                  }
+                },
+              })
+            }
+            onReject={(id) =>
+              ask({
+                title: "Reject registration?",
+                description:
+                  "The member will see this submission as REJECTED. They can submit again afterwards.",
+                confirmLabel: "Yes, reject",
+                variant: "danger",
+                onConfirm: async () => {
+                  try {
+                    await axiosSecure.patch(`/api/event-registrations/${id}`, {
+                      status: "rejected",
+                    });
+                    fetchAdminData();
+                    setConfirm((c) => ({ ...c, open: false }));
+                    toastSuccess("Registration rejected");
+                  } catch (err: any) {
+                    swalError(
+                      extractApiError(err, "Failed to reject registration.")
+                    );
+                  }
+                },
+              })
+            }
             onDelete={(id) =>
               handleDelete("registration", id, props.onDeleteRegistration)
             }
@@ -756,7 +804,6 @@ export default function AdminDashboard(props: AdminDashboardProps) {
         onConfirm={confirm.onConfirm}
       />
 
-      {/* Create / edit flows route to dedicated full-page forms */}
     </div>
   );
 }

@@ -442,7 +442,7 @@ export function TagsInputField({
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ""}
-          className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none min-w-[120px]"
+          className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none min-w-30"
         />
       </div>
 
@@ -482,7 +482,7 @@ export function SwitchField({
     <div
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
-        "flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] p-3.5 transition-colors cursor-pointer select-none",
+        "flex items-center justify-between rounded-xl border border-white/10 bg-white/2 hover:bg-white/4 p-3.5 transition-colors cursor-pointer select-none",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}

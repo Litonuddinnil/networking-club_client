@@ -120,7 +120,7 @@ export default function AdminCrudToolbar({
       
       {/* If items are selected -> Show Bulk Action Bar */}
       {selectedCount > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:px-4 rounded-xl border border-teal-500/30 bg-gradient-to-r from-teal-500/15 via-emerald-500/10 to-card backdrop-blur-xl shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:px-4 rounded-xl border border-teal-500/30 bg-linear-to-r from-teal-500/15 via-emerald-500/10 to-card backdrop-blur-xl shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="flex items-center gap-2.5">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-xs font-bold text-black">
               {selectedCount}

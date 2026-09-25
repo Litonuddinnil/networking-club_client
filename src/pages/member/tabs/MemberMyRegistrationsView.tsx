@@ -216,7 +216,7 @@ export default function MemberMyRegistrationsView({
               return (
                 <article
                   key={uniqueKey}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5"
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-[#03070E] via-[#04091a] to-[#03070E] hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5"
                 >
                   {/* Card Header Media or Theme Strip */}
                   <div className="relative h-36 overflow-hidden bg-slate-950">
@@ -228,12 +228,12 @@ export default function MemberMyRegistrationsView({
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className={`w-full h-full grid place-items-center bg-gradient-to-br ${theme.from || "from-slate-900"} ${theme.to || "to-slate-950"}`}>
+                      <div className={`w-full h-full grid place-items-center bg-linear-to-br ${theme.from || "from-slate-900"} ${theme.to || "to-slate-950"}`}>
                         <Ticket className="w-12 h-12 opacity-30 text-white" />
                       </div>
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#03070E] via-[#03070E]/50 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#03070E] via-[#03070E]/50 to-transparent" />
 
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3">

@@ -15,12 +15,14 @@ import ErrorPage from "../pages/ErrorPage";
 import FacebookRedirect from "../pages/FacebookRedirect";
 import Contact from "../pages/Contact";
 import NetworkLab from "../pages/NetworkLab";
+import EventDetails from "../pages/EventDetails";
 
-// Admin full-page form routes
-import PostFormPage from "../pages/admin/forms/PostFormPage";
-import EventFormPage from "../pages/admin/forms/EventFormPage";
-import AnnouncementFormPage from "../pages/admin/forms/AnnouncementFormPage";
-import GalleryFormPage from "../pages/admin/forms/GalleryFormPage";
+// Admin view + create/edit flows are real routes, not modals, so a record
+// can be linked, bookmarked and reopened with the browser back button.
+import EntityDetailPage from "../pages/admin/EntityDetailPage";
+import EntityFormPage from "../pages/admin/EntityFormPage";
+import EventRegisterPage from "../pages/member/EventRegisterPage";
+import RegistrationReviewPage from "../pages/admin/RegistrationReviewPage";
 
 export const router = createBrowserRouter([
   // 1. PUBLIC FACING SEGMENT (wrapped in MainLayout)
@@ -33,6 +35,8 @@ export const router = createBrowserRouter([
       { path: "connect/facebook", element: <FacebookRedirect /> },
       { path: "contact", element: <Contact /> },
       { path: "lab", element: <NetworkLab /> },
+      // Public event page — shareable, no login needed to read.
+      { path: "events/:id", element: <EventDetails /> },
     ],
   },
 
@@ -62,24 +66,22 @@ export const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       { index: true, element: <Dashboard /> },
+
+      // Member-facing event sign-up form. Declared before the generic
+      // entity routes so the static "events" segment ranks highest.
+      { path: "events/:id/register", element: <EventRegisterPage /> },
+
+      // Admin review of one submitted registration form.
+      { path: "registrations/:id", element: <RegistrationReviewPage /> },
+
+      // Entity routes are declared before the catch-all `:tab` so the
+      // static "new" segment and the two-segment record paths win the
+      // ranking. `:tab` still serves /dashboard/posts, /dashboard/events…
+      { path: ":entity/new", element: <EntityFormPage /> },
+      { path: ":entity/:id/edit", element: <EntityFormPage /> },
+      { path: ":entity/:id", element: <EntityDetailPage /> },
+
       { path: ":tab", element: <Dashboard /> },
-
-      // Full-page admin forms (replacing modals) --------------
-      // Posts
-      { path: "posts/new", element: <PostFormPage /> },
-      { path: "posts/:id/edit", element: <PostFormPage /> },
-
-      // Events
-      { path: "events/new", element: <EventFormPage /> },
-      { path: "events/:id/edit", element: <EventFormPage /> },
-
-      // Announcements
-      { path: "announcements/new", element: <AnnouncementFormPage /> },
-      { path: "announcements/:id/edit", element: <AnnouncementFormPage /> },
-
-      // Gallery
-      { path: "gallery/new", element: <GalleryFormPage /> },
-      { path: "gallery/:id/edit", element: <GalleryFormPage /> },
     ],
   },
 

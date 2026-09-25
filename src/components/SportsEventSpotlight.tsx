@@ -12,16 +12,23 @@ import {
 import { useAuth } from "@/provider/AuthProvider";
 import { useAxiosPublic } from "@/hooks/useAxiosPublic";
 import { useToast } from "@/hooks/use-toast";
+import { resolveEventCover, resolveEventWhen } from "@/pages/EventDetails";
 
 interface EventItem {
   _id?: string;
   id?: string;
   title?: string;
   type?: string;
+  // Schedule and banner have been stored under several keys over time; read
+  // them through resolveEventWhen / resolveEventCover, never directly.
   date?: string;
+  eventDate?: string;
+  startDate?: string;
   time?: string;
   location?: string;
   image?: string;
+  imageUrl?: string;
+  coverImage?: string;
 }
 
 interface SportsEventSpotlightProps {
@@ -47,13 +54,15 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
   const [submitting, setSubmitting] = useState(false);
 
   const activeEventId = activeEvent?._id || activeEvent?.id;
+  const activeEventWhen = activeEvent ? resolveEventWhen(activeEvent) : "";
+  const activeEventCover = activeEvent ? resolveEventCover(activeEvent) : "";
 
   // রিয়েল-টাইম কাউন্টডাউন টাইমার ক্যালকুলেশন
   useEffect(() => {
-    if (!activeEvent?.date) return;
+    if (!activeEventWhen) return;
 
     const timer = setInterval(() => {
-      const targetTime = new Date(activeEvent.date!).getTime();
+      const targetTime = new Date(activeEventWhen).getTime();
       const now = new Date().getTime();
       const difference = targetTime - now;
 
@@ -70,7 +79,7 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [activeEvent]);
+  }, [activeEventWhen]);
 
   // বর্তমান ইউজার ইতিমধ্যে রেজিস্টার্ড কি না — চেক করা হচ্ছে (duplicate prevention)
   useEffect(() => {
@@ -174,8 +183,8 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
     timeLeft.minutes === 0 &&
     timeLeft.seconds === 0;
 
-  const formattedDate = activeEvent.date
-    ? new Date(activeEvent.date).toDateString().toUpperCase()
+  const formattedDate = activeEventWhen
+    ? new Date(activeEventWhen).toDateString().toUpperCase()
     : "UPCOMING";
 
   return (
@@ -184,10 +193,10 @@ export default function SportsEventSpotlight({ events = [] }: SportsEventSpotlig
       className="relative overflow-hidden rounded-[28px] border border-emerald-500/30 bg-linear-to-br from-[#020408] via-[#040B14] to-[#0a1a26] text-white shadow-2xl shadow-emerald-500/10"
     >
       {/* Hero background image with cinematic overlay */}
-      {activeEvent.image && (
+      {activeEventCover && (
         <>
           <img
-            src={activeEvent.image}
+            src={activeEventCover}
             alt={activeEvent.title}
             className="absolute inset-0 w-full h-full object-cover opacity-30 scale-105"
           />

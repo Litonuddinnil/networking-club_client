@@ -41,6 +41,11 @@ import {
   Database,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  formatEventDate,
+  resolveEventCover,
+  resolveEventWhen,
+} from "@/pages/EventDetails";
 import { fetchApiJson } from "@/lib/api";
 import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
 import NetworkGlobe3D from "./NetworkGlobe3D";
@@ -88,20 +93,40 @@ interface Notice {
   description?: string;
   content?: string;
   date?: string;
+  createdAt?: string;
   category?: string;
+  coverImage?: string;
+}
+
+interface PostItem {
+  _id?: string;
+  title?: string;
+  category?: string;
+  content?: string;
+  excerpt?: string;
+  date?: string;
+  createdAt?: string;
   coverImage?: string;
 }
 
 interface EventItem {
   _id?: string;
+  id?: string;
   title?: string;
+  // The schedule and banner are stored under several names depending on when
+  // and how the record was created — resolve with the helpers from
+  // pages/EventDetails rather than reading one key.
   date?: string;
+  eventDate?: string;
+  startDate?: string;
   time?: string;
   description?: string;
   content?: string;
   location?: string;
   type?: string;
   image?: string;
+  imageUrl?: string;
+  coverImage?: string;
 }
 
 interface Member {
@@ -429,7 +454,7 @@ function TeamSlider({ team }: { team: TeamMember[] }) {
       onMouseLeave={() => setPaused(false)}
     >
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 lg:gap-8 items-stretch">
-        <div className="relative h-[440px] sm:h-[500px] lg:h-[580px] rounded-3xl overflow-hidden border border-white/15 bg-slate-950 shadow-2xl shadow-primary/20 group">
+        <div className="relative h-110 sm:h-125 lg:h-145 rounded-3xl overflow-hidden border border-white/15 bg-slate-950 shadow-2xl shadow-primary/20 group">
           <AnimatePresence mode="wait">
             <motion.div
               key={`photo-${active.name}`}
@@ -551,7 +576,7 @@ function TeamSlider({ team }: { team: TeamMember[] }) {
             <button
               key={m.name}
               onClick={() => setIdx(i)}
-              className={`group relative shrink-0 snap-center w-[160px] sm:w-[180px] h-[110px] rounded-2xl overflow-hidden border transition-all ${
+              className={`group relative shrink-0 snap-center w-40 sm:w-45 h-28 rounded-2xl overflow-hidden border transition-all ${
                 isActive
                   ? "border-primary shadow-[0_0_20px_rgba(34,197,94,0.4)] scale-105"
                   : "border-white/10 hover:border-primary/50 opacity-60 hover:opacity-100"
@@ -620,6 +645,16 @@ export default function HomeView() {
     queryFn: async () => fetchApiJson<EventItem[]>("/api/events"),
   });
 
+  const { data: posts = [] } = useQuery<PostItem[]>({
+    queryKey: ["public-posts"],
+    queryFn: async () => fetchApiJson<PostItem[]>("/api/posts"),
+  });
+
+  const { data: announcements = [] } = useQuery<Notice[]>({
+    queryKey: ["public-announcements"],
+    queryFn: async () => fetchApiJson<Notice[]>("/api/announcements"),
+  });
+
   const { data: members = [] } = useQuery<Member[]>({
     queryKey: ["public-members"],
     queryFn: async () => fetchApiJson<Member[]>("/api/members"),
@@ -640,41 +675,67 @@ export default function HomeView() {
     queryFn: async () => fetchApiJson<Sponsor[]>("/api/sponsors"),
   });
 
-  // Dynamic Ticker compiled from Live Database Notices & Events
+  /**
+   * Ticker content, compiled live from the database: every upcoming event,
+   * announcement and post, each with its own date. Falls back to `notices`
+   * when the announcements collection is empty, because older records were
+   * stored there and the two are used interchangeably across the app.
+   */
   const ticker = React.useMemo(() => {
-    const items: { icon: any; text: string }[] = [];
-    safeArr(notices).forEach((n) => {
-      if (n.title) {
-        items.push({
-          icon: Megaphone,
-          text: `NOTICE: ${n.title} ${n.date ? `(${n.date})` : ""}`,
-        });
-      }
+    const items: { icon: any; label: string; title: string; date: string }[] = [];
+
+    const shortDate = (value?: string) => {
+      if (!value) return "";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    };
+
+    safeArr(events).slice(0, 6).forEach((e) => {
+      if (!e.title) return;
+      items.push({
+        icon: Calendar,
+        label: "Event",
+        title: e.title,
+        date: shortDate(resolveEventWhen(e)),
+      });
     });
-    safeArr(events).forEach((e) => {
-      if (e.title) {
-        items.push({
-          icon: Calendar,
-          text: `EVENT: ${e.title} ${e.date ? `- ${e.date}` : ""}`,
-        });
-      }
+
+    const announcementSource = safeArr(announcements).length
+      ? safeArr(announcements)
+      : safeArr(notices);
+    announcementSource.slice(0, 6).forEach((n) => {
+      if (!n.title) return;
+      items.push({
+        icon: Megaphone,
+        label: "Announcement",
+        title: n.title,
+        date: shortDate(n.date || n.createdAt),
+      });
     });
-    safeArr(courses).forEach((c) => {
-      if (c.title) {
-        items.push({
-          icon: Terminal,
-          text: `COURSE TRACK: ${c.title}`,
-        });
-      }
+
+    safeArr(posts).slice(0, 6).forEach((p) => {
+      if (!p.title) return;
+      items.push({
+        icon: Terminal,
+        label: "Post",
+        title: p.title,
+        date: shortDate(p.date || p.createdAt),
+      });
     });
+
     if (items.length === 0) {
       items.push(
-        { icon: Radio, text: "LIVE: JSTU Networking Club Central Hub Online" },
-        { icon: ShieldCheck, text: "Lab Security Protocols Verified" }
+        { icon: Radio, label: "Live", title: "JSTU Networking Club Central Hub Online", date: "" },
+        { icon: ShieldCheck, label: "Status", title: "Lab Security Protocols Verified", date: "" }
       );
     }
     return items;
-  }, [notices, events, courses]);
+  }, [events, posts, announcements, notices]);
 
   const filteredCourses = React.useMemo(() => {
     const q = courseQuery.trim().toLowerCase();
@@ -772,10 +833,10 @@ export default function HomeView() {
   };
 
   return (
-    <div className="overflow-hidden bg-background text-foreground relative selection:bg-primary/30 selection:text-primary-foreground">
+    <div className="overflow-x-clip bg-background text-foreground relative selection:bg-primary/30 selection:text-primary-foreground">
       {/* HERO SECTION */}
-      <section ref={heroRef} data-reveal="parallax" className="relative min-h-[95vh] flex items-center pt-28 pb-16">
-        <div className="absolute inset-0 z-0 pointer-events-none bg-gradient-to-b from-background via-background/80 to-card/40" />
+      <section ref={heroRef} data-reveal="parallax" className="relative min-h-[80vh] sm:min-h-[90vh] lg:min-h-[95vh] flex items-center pt-24 pb-12 sm:pt-28 sm:pb-16">
+        <div className="absolute inset-0 z-0 pointer-events-none bg-linear-to-b from-background via-background/80 to-card/40" />
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
@@ -800,7 +861,7 @@ export default function HomeView() {
               className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight text-foreground"
             >
               <span className="block">Connect.</span>
-              <span className="block bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+              <span className="block bg-linear-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
                 Build.
               </span>
               <span className="block">Innovate.</span>
@@ -830,15 +891,20 @@ export default function HomeView() {
               transition={{ delay: 0.6 }}
               className="flex flex-wrap gap-4 pt-2"
             >
-              <Button asChild size="lg" className="group shadow-xl shadow-primary/20 px-8 py-6 text-base rounded-2xl">
+              <Button
+                asChild
+                size="lg"
+                className="group relative overflow-hidden px-8 py-6 text-base rounded-2xl bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500 text-primary-foreground shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400"
+              >
                 <Link to="/login">
-                  <span className="flex items-center gap-2">
+                  <span className="relative z-10 flex items-center gap-2">
                     Member Portal
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </span>
+                  <span className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/0 via-white/35 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="px-8 py-6 text-base rounded-2xl border-white/20 bg-card/40 backdrop-blur-md hover:bg-card">
+              <Button asChild size="lg" variant="outline" className="px-8 py-6 text-base rounded-2xl border-white/20 bg-card/40 backdrop-blur-md hover:bg-card hover:border-white/35">
                 <Link to="/lab">
                   <Network size={18} />
                   Explore Network Lab
@@ -855,7 +921,7 @@ export default function HomeView() {
               {stats.map((s) => (
                 <Card key={s.label} className="relative overflow-hidden p-4 card-lift bg-card/50 backdrop-blur-xl border-white/10 shadow-xl">
                   <s.icon className="text-primary mb-2" size={22} />
-                  <div className="text-3xl font-black bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  <div className="text-3xl font-black bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
                     <Counter value={s.value} />
                   </div>
                   <Separator className="my-2 bg-white/10" />
@@ -871,9 +937,9 @@ export default function HomeView() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative h-[480px] md:h-[600px] w-full"
+            className="relative h-120 md:h-150 w-full"
           >
-            <div className="absolute inset-0 rounded-3xl overflow-hidden border border-primary/30 shadow-2xl shadow-primary/20 bg-gradient-to-br from-card/60 to-transparent backdrop-blur-xl">
+            <div className="absolute inset-0 rounded-3xl overflow-hidden border border-primary/30 shadow-2xl shadow-primary/20 bg-linear-to-br from-card/60 to-transparent backdrop-blur-xl">
               <ThreeJSErrorBoundary fallback={<div className="absolute inset-0 bg-primary/10" />}>
                 <NetworkGlobe3D />
               </ThreeJSErrorBoundary>
@@ -884,12 +950,26 @@ export default function HomeView() {
 
       {/* TICKER SECTION */}
       <section id="ticker" data-reveal="up" className="relative border-y border-white/10 bg-card/60 backdrop-blur-xl overflow-hidden shadow-2xl">
-        <div className="flex animate-marquee whitespace-nowrap py-3.5">
+        {/* The track holds the list twice and scrolls by exactly -50%, so the
+            second copy lands where the first started and the loop is seamless.
+            `w-max` keeps the track as wide as its content and `shrink-0` stops
+            the items being squeezed into each other. */}
+        <div className="flex w-max animate-marquee py-3.5">
           {[...ticker, ...ticker].map((t, i) => (
-            <div key={i} className="flex items-center gap-3 px-8 text-sm font-mono">
-              <t.icon size={16} className="text-primary animate-pulse" />
-              <span className="text-foreground/90 font-medium">{t.text}</span>
-              <span className="text-primary/40">●</span>
+            <div
+              key={i}
+              className="flex shrink-0 items-center gap-2.5 whitespace-nowrap px-7 text-sm font-mono"
+              aria-hidden={i >= ticker.length}
+            >
+              <t.icon size={15} className="shrink-0 text-primary" />
+              <span className="text-[10px] uppercase tracking-[0.18em] text-primary/70">
+                {t.label}
+              </span>
+              <span className="font-medium text-foreground/90">{t.title}</span>
+              {t.date && (
+                <span className="text-xs text-muted-foreground">· {t.date}</span>
+              )}
+              <span className="pl-3 text-primary/40">●</span>
             </div>
           ))}
         </div>
@@ -903,7 +983,7 @@ export default function HomeView() {
               <Sparkles size={14} /> Core Capabilities
             </span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tight text-foreground">
-              Engineered for <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">Network Specialists</span>
+              Engineered for <span className="bg-linear-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">Network Specialists</span>
             </h2>
           </div>
 
@@ -944,13 +1024,16 @@ export default function HomeView() {
               <div className="space-y-6">
                 {upcomingEvents.length === 0 && <Skeleton className="h-64 w-full rounded-2xl" />}
                 {upcomingEvents.map((ev, i) => {
-                  const cover = ev.image;
+                  // The banner comes back as imageUrl/coverImage from the API;
+                  // reading only `ev.image` left every card without a picture.
+                  const cover = resolveEventCover(ev);
+                  const when = resolveEventWhen(ev);
+                  const eventId = ev._id || ev.id;
                   return (
-                    <button
-                      type="button"
-                      key={ev._id || i}
+                    <Link
+                      key={eventId || i}
+                      to={eventId ? `/events/${eventId}` : "#events"}
                       data-reveal="slide-left"
-                      onClick={() => setDetailModal({ kind: "event", item: ev })}
                       className="group block w-full text-left border border-white/15 bg-card/60 backdrop-blur-xl rounded-2xl overflow-hidden card-lift shadow-xl hover:border-emerald-400/60 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/60"
                     >
                       {cover && (
@@ -961,7 +1044,7 @@ export default function HomeView() {
                             loading="lazy"
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent" />
                           {ev.type && (
                             <Badge className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border-emerald-500/40 backdrop-blur-md">
                               {ev.type}
@@ -969,7 +1052,7 @@ export default function HomeView() {
                           )}
                           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
                             <span className="font-mono font-semibold bg-black/55 backdrop-blur-md px-3 py-1 rounded-md border border-white/15">
-                              📅 {ev.date ? new Date(ev.date).toDateString() : "TBA"}
+                              📅 {formatEventDate(when, "Date TBA")}
                             </span>
                             {ev.location && (
                               <span className="font-mono text-[11px] bg-black/55 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/15 truncate max-w-[55%]">
@@ -982,7 +1065,7 @@ export default function HomeView() {
                       <div className="p-6 space-y-2">
                         {!cover && (
                           <div className="text-xs text-primary uppercase tracking-widest font-mono font-bold bg-primary/10 px-3 py-1 rounded-md border border-primary/25 w-fit">
-                            📅 {ev.date ? new Date(ev.date).toDateString() : "TBA"}
+                            📅 {formatEventDate(when, "Date TBA")}
                           </div>
                         )}
                         <h3 className="text-xl sm:text-2xl font-black text-foreground group-hover:text-emerald-400 transition-colors">
@@ -991,9 +1074,10 @@ export default function HomeView() {
                         <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
                           {ev.description}
                         </p>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-xs font-mono font-bold text-emerald-400 group-hover:tracking-widest transition-all">
-                            View details →
+                        <div className="flex items-center justify-between pt-3">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 group-hover:gap-2.5 transition-all">
+                            View details
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                           </span>
                           {!cover && ev.location && (
                             <span className="text-xs text-muted-foreground font-mono truncate max-w-[60%]">
@@ -1002,7 +1086,7 @@ export default function HomeView() {
                           )}
                         </div>
                       </div>
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
@@ -1038,7 +1122,7 @@ export default function HomeView() {
                             loading="lazy"
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent" />
                           {n.category && (
                             <Badge className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-widest bg-accent/20 text-accent-foreground border-accent/40 backdrop-blur-md">
                               {n.category}
@@ -1058,9 +1142,10 @@ export default function HomeView() {
                         <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
                           {n.description}
                         </p>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-xs font-mono font-bold text-accent group-hover:tracking-widest transition-all">
-                            Read full notice →
+                        <div className="flex items-center justify-between pt-3">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-accent group-hover:gap-2.5 transition-all">
+                            Read full notice
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                           </span>
                           {n.date && (
                             <span className="text-xs text-muted-foreground font-mono">
@@ -1086,7 +1171,7 @@ export default function HomeView() {
               <GraduationCap size={14} /> Academic Infrastructure
             </span>
             <h2 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
-              Resources <span className="bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">Hub</span>
+              Resources <span className="bg-linear-to-r from-secondary to-primary bg-clip-text text-transparent">Hub</span>
             </h2>
           </div>
 
@@ -1138,7 +1223,7 @@ export default function HomeView() {
               <Building2 size={14} /> Club Leadership
             </span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tight text-foreground">
-              Meet the <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">Executive Board</span>
+              Meet the <span className="bg-linear-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">Executive Board</span>
             </h2>
           </div>
           <TeamSlider team={TEAM} />
@@ -1153,7 +1238,7 @@ export default function HomeView() {
               <Mail size={14} /> Direct Dispatch
             </span>
             <h2 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
-              Let's <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Connect</span>
+              Let's <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">Connect</span>
             </h2>
           </div>
           <Card className="bg-card/50 backdrop-blur-2xl border-white/15 shadow-2xl p-4">
@@ -1216,7 +1301,7 @@ export default function HomeView() {
                     alt={detailModal.item.title || "Event cover"}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                     {detailModal.item.type && (
                       <Badge className="font-mono text-[10px] uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border-emerald-500/40 backdrop-blur-md">
@@ -1246,7 +1331,7 @@ export default function HomeView() {
                     alt={detailModal.item.title || "Notice cover"}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                     {detailModal.item.category && (
                       <Badge className="font-mono text-[10px] uppercase tracking-widest bg-accent/20 text-accent-foreground border-accent/40 backdrop-blur-md">
@@ -1290,7 +1375,7 @@ export default function HomeView() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {detailModal.item.date && (
-                        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <div className="rounded-xl border border-white/10 bg-white/3 p-3">
                           <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">When</div>
                           <div className="text-sm font-semibold text-foreground mt-1">
                             {new Date(detailModal.item.date).toDateString()}
@@ -1299,7 +1384,7 @@ export default function HomeView() {
                         </div>
                       )}
                       {detailModal.item.location && (
-                        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <div className="rounded-xl border border-white/10 bg-white/3 p-3">
                           <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">Where</div>
                           <div className="text-sm font-semibold text-foreground mt-1 truncate">📍 {detailModal.item.location}</div>
                         </div>

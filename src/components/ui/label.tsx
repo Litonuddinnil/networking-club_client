@@ -1,22 +1,32 @@
 import * as React from "react";
+import * as LabelPrimitive from "@radix-ui/react-label";
+import { cva, type VariantProps } from "class-variance-authority";
+
 import { cn } from "@/lib/utils";
 
 /**
- * Label — accessible label with peer-disabled state, shadcn-style.
+ * Label — Radix-backed so clicking it focuses the associated control
+ * and screen readers announce it correctly.
  */
+const labelVariants = cva(
+  [
+    "text-xs font-mono font-semibold uppercase tracking-wider",
+    "text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+    "leading-none",
+  ].join(" ")
+);
+
 const Label = React.forwardRef<
-  HTMLLabelElement,
-  React.LabelHTMLAttributes<HTMLLabelElement>
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
 >(({ className, ...props }, ref) => (
-  <label
+  <LabelPrimitive.Root
     ref={ref}
-    className={cn(
-      "text-xs font-semibold uppercase tracking-widest text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-      className
-    )}
+    className={cn(labelVariants(), className)}
     {...props}
   />
 ));
-Label.displayName = "Label";
+Label.displayName = LabelPrimitive.Root.displayName;
 
 export { Label };

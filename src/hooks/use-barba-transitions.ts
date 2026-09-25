@@ -87,8 +87,15 @@ function injectStyles() {
     [data-barba-curtain-status]::before {
       content: "> "; color: rgb(74 222 128);
     }
+    /* IMPORTANT: do NOT set will-change: transform permanently on
+       [data-barba="page"]. A will-change value other than 'auto'
+       creates a CSS containing block, which traps any descendant
+       using 'position: fixed' (e.g. Radix DialogPortal content)
+       and breaks viewport-relative positioning.
+       GSAP manages will-change internally during the active
+       transition timeline, so a static rule is unnecessary. */
     [data-barba="page"] {
-      will-change: opacity, transform;
+      will-change: auto;
     }
   `;
   document.head.appendChild(style);

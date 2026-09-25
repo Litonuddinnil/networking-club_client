@@ -104,7 +104,7 @@ export default function SectionHeading({
                 className={cn(
                   "font-display leading-tight tracking-tight text-foreground",
                   config.title,
-                  gradientTitle && "bg-gradient-to-r from-teal-400 via-emerald-300 to-sky-400 bg-clip-text text-transparent"
+                  gradientTitle && "bg-linear-to-r from-teal-400 via-emerald-300 to-sky-400 bg-clip-text text-transparent"
                 )}
               >
                 {title}
@@ -153,7 +153,7 @@ export default function SectionHeading({
 
       {/* Optional Divider Line */}
       {divider && (
-        <div className="h-px w-full bg-gradient-to-r from-white/10 via-white/5 to-transparent pt-1" />
+        <div className="h-px w-full bg-linear-to-r from-white/10 via-white/5 to-transparent pt-1" />
       )}
     </div>
   );

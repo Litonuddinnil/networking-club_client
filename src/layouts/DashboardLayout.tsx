@@ -15,6 +15,7 @@ import {
   LogOut,
   Command,
   Menu,
+  Ticket,
   X,
 } from "lucide-react";
 import CommandPalette from "../components/CommandPalette";
@@ -106,6 +107,9 @@ export default function DashboardLayout() {
         { id: "events", label: "Events", path: "/dashboard?tab=events", icon: <Calendar className="w-4.5 h-4.5" /> },
         { id: "announcements", label: "Announcements", path: "/dashboard?tab=announcements", icon: <Megaphone className="w-4.5 h-4.5" /> },
         { id: "gallery", label: "Gallery", path: "/dashboard?tab=gallery", icon: <Image className="w-4.5 h-4.5" /> },
+        // The registrations tab already existed in AdminDashboard but had no
+        // way to reach it — there was no sidebar entry pointing at it.
+        { id: "registrations", label: "Registrations", path: "/dashboard?tab=registrations", icon: <Ticket className="w-4.5 h-4.5" /> },
         { id: "analytics", label: "Analytics", path: "/dashboard?tab=analytics", icon: <BarChart2 className="w-4.5 h-4.5" /> },
         { id: "settings", label: "Settings", path: "/dashboard?tab=settings", icon: <Settings className="w-4.5 h-4.5" /> },
         { id: "profile", label: "Profile", path: "/dashboard?tab=profile", icon: <User className="w-4.5 h-4.5" /> },
@@ -221,7 +225,7 @@ export default function DashboardLayout() {
             <div className="w-7 h-7 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
               <ClubLogo size={24} compact />
             </div>
-            <span className="font-display font-extrabold text-white text-xs tracking-wider font-mono">
+            <span className="font-display font-extrabold text-white text-xs tracking-wider">
               JSTU NetClub
             </span>
           </div>
@@ -244,8 +248,8 @@ export default function DashboardLayout() {
 
         {/* Primary Nested Routing Content — flows with the document so the
             window handles scroll. Sidebar uses lg:sticky to stay in view. */}
-        <main className="flex-1 min-w-0 bg-[#020408]">
-          <div data-barba="page" data-barba-namespace="dashboard" className="barba-page">
+        <main className="flex-1 min-w-0 min-h-0 flex flex-col bg-[#020408]">
+          <div data-barba="page" data-barba-namespace="dashboard" className="barba-page flex-1 min-h-0 flex flex-col">
             <Outlet />
           </div>
         </main>
@@ -260,7 +264,7 @@ export default function DashboardLayout() {
                 <div className="w-8 h-8 rounded-lg bg-slate-950 border border-emerald-500/20 flex items-center justify-center overflow-hidden">
                   <ClubLogo size={28} compact />
                 </div>
-                <span className="font-display font-extrabold text-white text-sm font-mono">
+                <span className="font-display font-extrabold text-white text-sm">
                   JSTU NetClub
                 </span>
               </div>

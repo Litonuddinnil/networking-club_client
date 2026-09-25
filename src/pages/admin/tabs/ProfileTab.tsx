@@ -23,7 +23,7 @@ export default function ProfileTab({ adminName, adminEmail, role }: ProfileTabPr
     <div className="glass-card p-6 sm:p-8 rounded-3xl max-w-2xl space-y-6 animate-fade-in">
       <header className="flex items-center gap-4 pb-4 border-b border-white/5">
         <div className="relative">
-          <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-emerald-500/60 via-teal-400/40 to-lime-400/50 blur-[1px] opacity-80" />
+          <div className="absolute -inset-0.5 rounded-full bg-linear-to-br from-emerald-500/60 via-teal-400/40 to-lime-400/50 blur-[1px] opacity-80" />
           <Avatar className="relative h-16 w-16 ring-2 ring-background">
             <AvatarFallback className="bg-emerald-500/15 text-emerald-400 text-lg font-bold font-mono">
               {initials(adminName)}

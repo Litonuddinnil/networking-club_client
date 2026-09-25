@@ -17,8 +17,12 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Forward /api/** to the local Express server (server/index.ts) so
+      // dev logs match the browser console. Use the env var
+      // VITE_API_PROXY_TARGET to point at a remote deployment when needed
+      // (e.g. VITE_API_PROXY_TARGET=https://networking-club-server.onrender.com).
       "/api": {
-        target: "https://networking-club-server.onrender.com",
+        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:5000",
         changeOrigin: true,
         secure: false,
       },

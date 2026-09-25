@@ -32,6 +32,23 @@ axiosSecure.interceptors.request.use(async (config) => {
     );
   }
 
+  if (import.meta.env.DEV) {
+    const method = config.method?.toUpperCase();
+    const url = config.url;
+    const hasAuth = Boolean(config.headers?.Authorization);
+    const bodyPreview =
+      config.data && typeof config.data === "string"
+        ? config.data.slice(0, 200)
+        : config.data
+        ? "(body present)"
+        : undefined;
+    console.info(
+      `[api-secure] → ${method} ${url}`,
+      hasAuth ? "(auth attached)" : "(no auth)",
+      bodyPreview
+    );
+  }
+
   return config;
 });
 
@@ -40,7 +57,8 @@ axiosSecure.interceptors.response.use(
   (res) => {
     if (import.meta.env.DEV) {
       console.info(
-        `[api] ${res.config.method?.toUpperCase()} ${res.config.url} → ${res.status}`
+        `[api-secure] ← ${res.config.method?.toUpperCase()} ${res.config.url} ${res.status}`,
+        Array.isArray(res.data) ? `(${res.data.length} item${res.data.length === 1 ? "" : "s"})` : res.data
       );
     }
     return res;
@@ -49,7 +67,7 @@ axiosSecure.interceptors.response.use(
     if (import.meta.env.DEV) {
       const status = err.response?.status ?? "no-response";
       console.error(
-        `[api] ${err.config?.method?.toUpperCase()} ${err.config?.url} → ${status}`,
+        `[api-secure] ✖ ${err.config?.method?.toUpperCase()} ${err.config?.url} → ${status}`,
         err.response?.data || err.message
       );
     }
