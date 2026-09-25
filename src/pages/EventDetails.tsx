@@ -19,6 +19,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fetchApiJson } from "@/lib/api";
 import { swalToast } from "@/lib/swal";
+import {
+  formatEventDate,
+  getEventTiming,
+  resolveEventCover,
+  resolveEventWhen,
+} from "@/lib/eventSchedule";
+
+// Re-exported so existing importers of these helpers keep working; the
+// implementations live in lib/eventSchedule alongside the schedule maths.
+export { formatEventDate, resolveEventCover, resolveEventWhen };
 
 /**
  * Public event details — /events/:id
@@ -52,30 +62,7 @@ interface EventRecord {
   image?: string;
   imageUrl?: string;
   coverImage?: string;
-}
-
-/** First non-empty value — events carry the same data under several keys. */
-const firstOf = (...values: Array<unknown>): string =>
-  (values.find((v) => typeof v === "string" && v.trim()) as string) || "";
-
-export function resolveEventCover(ev: Partial<EventRecord>): string {
-  return firstOf(ev.image, ev.coverImage, ev.imageUrl);
-}
-
-export function resolveEventWhen(ev: Partial<EventRecord>): string {
-  return firstOf(ev.eventDate, ev.date, ev.startDate);
-}
-
-export function formatEventDate(value?: string, fallback = "Date to be announced") {
-  if (!value) return fallback;
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString(undefined, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  [key: string]: unknown;
 }
 
 const STATUS_TONE: Record<string, string> = {
@@ -105,11 +92,15 @@ export default function EventDetails() {
 
   const cover = event ? resolveEventCover(event) : "";
   const when = event ? resolveEventWhen(event) : "";
+  const timing = getEventTiming(event);
   const status = (event?.status || "upcoming").toLowerCase();
   const feeRaw = event?.fee ?? event?.price;
   const fee = Number(feeRaw);
   const hasFee = Number.isFinite(fee) && fee > 0;
-  const body = firstOf(event?.description, event?.content);
+  const body =
+    (typeof event?.description === "string" && event.description.trim()) ||
+    (typeof event?.content === "string" && event.content.trim()) ||
+    "";
 
   const share = async () => {
     const url = window.location.href;
@@ -311,14 +302,14 @@ export default function EventDetails() {
                 onClick={() =>
                   navigate(`/dashboard/events/${event._id || event.id || id}/register`)
                 }
-                disabled={status === "cancelled" || status === "completed"}
+                disabled={timing.isClosed || status === "completed"}
                 className="h-10 min-w-[9rem] gap-2 rounded-xl font-semibold text-xs sm:text-sm"
               >
                 <Ticket className="h-4 w-4" />
-                {status === "cancelled"
+                {timing.isCancelled
                   ? "Cancelled"
-                  : status === "completed"
-                  ? "Event ended"
+                  : timing.isClosed || status === "completed"
+                  ? "Registration closed"
                   : "Register"}
               </Button>
             </div>
